@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.apexfission.android.tflitetest.ui.YoloCameraScreen
+import com.apexfission.android.carddetectionlite.ui.YoloCameraScreen
 import com.apexfission.android.tflitetest.ui.theme.TfLiteTestTheme
 
 class MainActivity : ComponentActivity() {

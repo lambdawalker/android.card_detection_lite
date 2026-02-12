@@ -1,4 +1,4 @@
-package com.apexfission.android.tflitetest.ui
+package com.apexfission.android.carddetectionlite.ui
 
 import android.app.Application
 import android.graphics.Bitmap
@@ -41,7 +41,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.apexfission.android.tflitetest.tflite.Det
+import com.apexfission.android.carddetectionlite.Det
 import java.util.concurrent.Executors
 import kotlin.math.max
 

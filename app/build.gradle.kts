@@ -34,32 +34,10 @@ android {
     buildFeatures {
         compose = true
     }
-
 }
 
 dependencies {
-    /* -------------------- CameraX -------------------- */
-    implementation("androidx.camera:camera-core:1.3.4")
-    implementation("androidx.camera:camera-camera2:1.3.4")
-    implementation("androidx.camera:camera-lifecycle:1.3.4")
-    implementation("androidx.camera:camera-view:1.3.4")
-
-    /* ---------------- TensorFlow Lite ---------------- */
-    implementation("org.tensorflow:tensorflow-lite:2.16.1")
-
-    // Optional but recommended if you later add GPU
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.16.1")
-    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation("com.google.android.gms:play-services-tflite-gpu:16.4.0") // check latest
-
-
-    //OCR
-    implementation("com.google.mlkit:text-recognition:16.0.0")
-
-    // For viewModel() delegate
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
-// For collectAsStateWithLifecycle()
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
+    implementation(project(":cardDetectionLite"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

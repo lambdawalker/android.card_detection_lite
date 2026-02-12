@@ -1,4 +1,4 @@
-package com.apexfission.android.tflitetest
+package com.apexfission.android.carddetectionlite
 
 import android.graphics.Bitmap
 import com.google.android.gms.tasks.Tasks

@@ -1,4 +1,4 @@
-package com.apexfission.android.tflitetest.util
+package com.apexfission.android.carddetectionlite.util
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -6,7 +6,7 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.tflitetest.tflite.Det
+import com.apexfission.android.carddetectionlite.Det
 import java.io.ByteArrayOutputStream
 
 /* --------------------------- YUV -> RGB --------------------------- */

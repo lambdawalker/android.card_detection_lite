@@ -1,4 +1,4 @@
-package com.apexfission.android.tflitetest.tflite
+package com.apexfission.android.carddetectionlite.tflite
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -10,11 +10,12 @@ import android.graphics.RectF
 import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.tflitetest.util.DetCutout
-import com.apexfission.android.tflitetest.util.YuvToRgbConverter
-import com.apexfission.android.tflitetest.util.cropDet
-import com.apexfission.android.tflitetest.util.intersectedWith
-import com.apexfission.android.tflitetest.util.rotateRectToUpright
+import com.apexfission.android.carddetectionlite.Det
+import com.apexfission.android.carddetectionlite.util.DetCutout
+import com.apexfission.android.carddetectionlite.util.YuvToRgbConverter
+import com.apexfission.android.carddetectionlite.util.cropDet
+import com.apexfission.android.carddetectionlite.util.intersectedWith
+import com.apexfission.android.carddetectionlite.util.rotateRectToUpright
 import java.io.Closeable
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -26,13 +27,6 @@ import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
-
-/**
- * Detection output in crop-normalized coords: [0..1] relative to cropBitmap width/height.
- */
-data class Det(
-    val x1: Float, val y1: Float, val x2: Float, val y2: Float, val score: Float, val cls: Int = 0
-)
 
 class YoloLiteDetector(
     context: Context,
