@@ -2,6 +2,13 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    id("com.vanniktech.maven.publish") version "0.36.0"
+}
+android {
+    androidResources {
+        noCompress += listOf("tflite")
+    }
 }
 
 android {
@@ -41,13 +48,12 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     /* ---------------- TensorFlow Lite ---------------- */
-    implementation(libs.tensorflow.lite)
+    implementation(libs.litert.gpu)
+    implementation(libs.litert.support){
+        exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
+    }
 
-    implementation(libs.tensorflow.lite.gpu)
-    implementation(libs.tensorflow.lite.support)
-    implementation(libs.play.services.tflite.gpu) // check latest
-    implementation(libs.text.recognition)
-
+    implementation(libs.accompanist.permissions)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -61,11 +67,54 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-    testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    testImplementation(libs.junit)
 }
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+}
+
+mavenPublishing {
+    coordinates(
+        "com.apexfission.android.carddetectionlite",
+        "card-detection-lite",
+        "0.0.8"
+    )
+
+    pom {
+        name.set("Card Detection Lite")
+        description.set("Card Detection Lite is a high-performance Android module that provides developers with a ready-to-use solution for real-time ID card detection and extraction using YOLO models and TensorFlow Lite. Built with Jetpack Compose and CameraX, the module features an optimized inference pipeline with GPU acceleration that handles complex coordinate mapping from the camera's cropRect to a dynamic UI overlay. It is designed for seamless integration into existing apps, offering customizable bounding box visualization, class labeling, and a robust \"cutout\" feature that automatically captures and crops high-resolution images of detected ID cards for further processing or identity verification workflows.")
+        inceptionYear.set("2026")
+        url.set("https://github.com/lambdawalker/android.card_detection_lite")
+
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("lambdawalker")
+                name.set("David Garcia")
+                url.set("https://github.com/lambdawalker")
+                email.set("lambdawalker@isdavid.com")
+            }
+        }
+        scm {
+            url.set("https://github.com/lambdawalker/android.card_detection_lite")
+            connection.set("scm:git:git://github.com:lambdawalker/android.card_detection_lite.git")
+            developerConnection.set("scm:git:ssh://git@github.com:lambdawalker/android.card_detection_lite.git")
+        }
+    }
+}
+
+
