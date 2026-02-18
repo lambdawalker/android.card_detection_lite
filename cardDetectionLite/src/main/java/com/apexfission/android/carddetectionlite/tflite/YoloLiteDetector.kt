@@ -16,6 +16,7 @@ import com.apexfission.android.carddetectionlite.util.YuvToRgbConverter
 import com.apexfission.android.carddetectionlite.util.cropDet
 import com.apexfission.android.carddetectionlite.util.intersectedWith
 import com.apexfission.android.carddetectionlite.util.rotateRectToUpright
+
 import java.io.Closeable
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -27,6 +28,7 @@ import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
+
 
 class YoloLiteDetector(
     context: Context,
@@ -171,6 +173,25 @@ class YoloLiteDetector(
         lastInferenceTimeMs = SystemClock.uptimeMillis() - startTime
     }
 
+    fun detect(bitmap: Bitmap): List<Det> {
+        if (!enabled || isClosed) return emptyList()
+        val lb = letterboxToSquareReusable(bitmap, inputImageWidth)
+        runInference(lb.bitmap)
+
+        val raw = decodeToCropNormalized(
+            output = outFloats,
+            scoreThresh = scoreThreshold,
+            cropW = bitmap.width,
+            cropH = bitmap.height,
+            lbScale = lb.scale,
+            padX = lb.padX,
+            padY = lb.padY
+        )
+
+        val capped = if (raw.size > maxNmsCandidates) raw.sortedByDescending { it.score }.take(maxNmsCandidates) else raw
+        return nms(capped, iouThreshold)
+    }
+
     fun detect(imageProxy: ImageProxy): List<Det> {
         if (!enabled || isClosed) return emptyList()
         val (cropBitmap, lb) = prepareCropAndLetterbox(imageProxy)
@@ -286,6 +307,7 @@ class YoloLiteDetector(
             val best = sorted.removeAt(0)
             keep += best
             val it = sorted.iterator()
+
             while (it.hasNext()) {
                 val d = it.next()
                 if (d.cls == best.cls && iou(best, d) > iouThresh) it.remove()
