@@ -21,5 +21,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "TfLiteTest"
+
 include(":app")
 include(":cardDetectionLite")
