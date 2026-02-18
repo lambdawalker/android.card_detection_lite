@@ -3,6 +3,8 @@ package com.apexfission.android.carddetectionlite.ui
 import android.app.Application
 import android.graphics.Bitmap
 import android.util.Log
+import android.view.MotionEvent
+import android.view.View
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -28,7 +30,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -39,6 +40,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.apexfission.android.carddetectionlite.Det
@@ -60,10 +62,11 @@ class YoloCameraViewModelFactory(
 fun YoloCameraScreen(
     modelName: String,
     isDetectionEnabled: Boolean,
+    modifier: Modifier = Modifier,
     showBoundingBoxes: Boolean = true,
     showClassNames: Boolean = true,
     classLabels: Map<Int, String> = emptyMap(),
-    onDetections: (List<Bitmap>) -> Unit,
+    onDetections: (List<Bitmap>) -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: YoloCameraViewModel = viewModel(
@@ -78,25 +81,36 @@ fun YoloCameraScreen(
     val detections by viewModel.detections.collectAsStateWithLifecycle()
     val scalingInfo by viewModel.scalingInfo.collectAsStateWithLifecycle()
 
-    Box(Modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize()) {
         CameraPreview(
             lifecycleOwner = LocalLifecycleOwner.current,
             onFrame = { imageProxy -> viewModel.processImage(imageProxy, onDetections) },
-            onFocusEvent = { cameraControl, meteringPoint -> viewModel.onFocusEvent(cameraControl, meteringPoint) },
+            onFocusEvent = { cameraControl, meteringPoint ->
+                viewModel.onFocusEvent(
+                    cameraControl,
+                    meteringPoint
+                )
+            },
             flashlightEnabled = flashlightEnabled,
         )
 
         if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
             DetectionOverlay(
-                detections = detections, scalingInfo = scalingInfo, showClassNames = showClassNames, classLabels = classLabels
+                detections = detections,
+                scalingInfo = scalingInfo,
+                showClassNames = showClassNames,
+                classLabels = classLabels
             )
         }
 
         Switch(
-            checked = flashlightEnabled, onCheckedChange = { viewModel.toggleFlashlight() }, modifier = Modifier.padding(16.dp)
+            checked = flashlightEnabled,
+            onCheckedChange = { viewModel.toggleFlashlight() },
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
+
 
 @Composable
 fun DetectionOverlay(
@@ -133,7 +147,10 @@ fun DetectionOverlay(
             val y2 = cropY2 * scale + offsetY
 
             drawRect(
-                color = Color.Cyan, topLeft = Offset(x1, y1), size = Size(x2 - x1, y2 - y1), style = Stroke(width = 2.dp.toPx())
+                color = Color.Cyan,
+                topLeft = Offset(x1, y1),
+                size = Size(x2 - x1, y2 - y1),
+                style = Stroke(width = 2.dp.toPx())
             )
 
             if (showClassNames) {
@@ -180,12 +197,17 @@ private fun CameraPreview(
 
             try {
                 cameraProvider.unbindAll()
-                val camera = cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, previewUseCase, analysisUseCase)
-                camera.cameraControl.enableTorch(flashlightEnabled)
-                previewView.setOnTouchListener { _, event ->
+                val camera = cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    previewUseCase,
+                    analysisUseCase
+                )
+                camera.cameraControl.enableTorch( flashlightEnabled)
+                previewView.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
                     onFocusEvent(camera.cameraControl, previewView.meteringPointFactory.createPoint(event.x, event.y))
-                    true
-                }
+                    return true
+                })
             } catch (e: Exception) {
                 Log.e("CAM", "Bind failed", e)
             }
