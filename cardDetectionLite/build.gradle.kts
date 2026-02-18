@@ -5,13 +5,11 @@ plugins {
 
     id("com.vanniktech.maven.publish") version "0.36.0"
 }
+
 android {
     androidResources {
         noCompress += listOf("tflite")
     }
-}
-
-android {
     namespace = "com.apexfission.android.carddetectionlite"
     compileSdk = 36
 
@@ -28,16 +26,19 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+
     buildFeatures {
         compose = true
     }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 dependencies {
@@ -116,5 +117,3 @@ mavenPublishing {
         }
     }
 }
-
-
