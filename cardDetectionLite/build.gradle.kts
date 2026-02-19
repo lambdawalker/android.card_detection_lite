@@ -91,8 +91,8 @@ mavenPublishing {
 mavenPublishing {
     coordinates(
         "com.apexfission.android.carddetectionlite",
-        "card-detection-lite",
-        "0.0.9"
+        "core",
+        "0.0.10"
     )
 
     pom {
