@@ -6,6 +6,7 @@ import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
+
 import java.io.Closeable
 
 class YoloLiteDetector(
@@ -13,6 +14,7 @@ class YoloLiteDetector(
     modelName: String,
     scoreThreshold: Float,
     iouThreshold: Float,
+    useGpu: Boolean,
     maxNmsCandidates: Int = 300,
     debugLogs: Boolean = false,
     numThreads: Int? = null,
@@ -22,7 +24,7 @@ class YoloLiteDetector(
     private val yuvToRgb = YuvToRgbConverter()
     private var isClosed = false
 
-    private val interpreter = TfliteInterpreter(context, modelName, numThreads)
+    private val interpreter = TfliteInterpreter(context, modelName, useGpu, numThreads)
     private val postProcessor = YoloPostProcessor(
         interpreter.outLayout,
         interpreter.outBoxes,

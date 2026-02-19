@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.ui.HandleCameraPermission
-import com.apexfission.android.carddetectionlite.ui.YoloCameraScreen
+import com.apexfission.android.carddetectionlite.ui.CardDetectorLite
 import com.apexfission.android.tflitetest.ui.theme.TfLiteTestTheme
 
 class MainActivity : ComponentActivity() {
@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                     ) {
                         val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
-                        YoloCameraScreen(
+                        CardDetectorLite(
                             modelName = "E38Y11_640B1F16.tflite",
                             isDetectionEnabled = isDetectionEnabled,
                             onDetections = {

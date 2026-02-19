@@ -18,6 +18,7 @@ import org.tensorflow.lite.gpu.GpuDelegate
 class TfliteInterpreter(
     context: Context,
     modelName: String,
+    useGpu: Boolean,
     numThreads: Int?
 ) : Closeable {
 
@@ -77,7 +78,7 @@ class TfliteInterpreter(
             setNumThreads(numThreads ?: max(2, Runtime.getRuntime().availableProcessors() / 2))
         }
 
-        if (!isInt8) {
+        if (useGpu && !isInt8) {
             try {
                 val compat = CompatibilityList()
                 if (compat.isDelegateSupportedOnThisDevice) {

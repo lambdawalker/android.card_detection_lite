@@ -10,9 +10,11 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.MeteringPoint
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
+
 import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
 import com.apexfission.android.carddetectionlite.domain.tflite.rotateRectToUpright
+
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,9 +27,10 @@ data class PreviewScalingInfo(
     val cropW: Float = 0f, val cropH: Float = 0f, val fullW: Float = 0f, val fullH: Float = 0f
 )
 
-class YoloCameraViewModel(
+class CardDetectorLiteViewModel(
     application: Application,
     modelName: String,
+    useGpu: Boolean
 ) : AndroidViewModel(application) {
 
     private val _detections = MutableStateFlow<List<Det>>(emptyList())
@@ -47,6 +50,7 @@ class YoloCameraViewModel(
         modelName = modelName,
         scoreThreshold = 0.30f,
         iouThreshold = 0.45f,
+        useGpu = useGpu
     )
 
     private val lastInferMs = AtomicLong(0L)

@@ -18,30 +18,35 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-class YoloCameraViewModelFactory(
-    private val application: Application, private val modelName: String
+class CardDetectorLiteViewModelFactory(
+    private val application: Application, private val modelName: String, private val useGpu: Boolean
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(YoloCameraViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST") return YoloCameraViewModel(application, modelName) as T
+        if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST") return CardDetectorLiteViewModel(application, modelName, useGpu) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 
 @Composable
-fun YoloCameraScreen(
+fun CardDetectorLite(
     modelName: String,
     isDetectionEnabled: Boolean,
     modifier: Modifier = Modifier,
+    useGpu: Boolean = true,
     showBoundingBoxes: Boolean = true,
     showClassNames: Boolean = true,
     classLabels: Map<Int, String> = emptyMap(),
     onDetections: (List<Bitmap>) -> Unit
 ) {
     val context = LocalContext.current
-    val viewModel: YoloCameraViewModel = viewModel(
-        factory = YoloCameraViewModelFactory(context.applicationContext as Application, modelName)
+    val viewModel: CardDetectorLiteViewModel = viewModel(
+        factory = CardDetectorLiteViewModelFactory(
+            application = context.applicationContext as Application,
+            modelName = modelName,
+            useGpu = useGpu
+        )
     )
 
     LaunchedEffect(isDetectionEnabled) {
