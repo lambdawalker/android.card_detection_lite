@@ -37,6 +37,10 @@ extensions.configure<LibraryExtension>  {
     buildFeatures {
         compose = true
     }
+
+    androidResources {
+        noCompress += setOf("tflite")
+    }
 }
 
 kotlin {
