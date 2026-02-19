@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.LibraryExtension
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -6,7 +8,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.36.0"
 }
 
-android {
+extensions.configure<LibraryExtension>  {
     androidResources {
         noCompress += listOf("tflite")
     }
