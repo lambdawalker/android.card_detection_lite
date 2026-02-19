@@ -19,11 +19,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 class CardDetectorLiteViewModelFactory(
-    private val application: Application, private val modelName: String, private val useGpu: Boolean
+    private val application: Application,
+    private val modelName: String,
+    private val useGpu: Boolean,
+    private val scoreThreshold: Float
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST") return CardDetectorLiteViewModel(application, modelName, useGpu) as T
+            @Suppress("UNCHECKED_CAST") return CardDetectorLiteViewModel(
+                application,
+                modelName,
+                useGpu,
+                scoreThreshold
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
@@ -37,6 +45,8 @@ fun CardDetectorLite(
     useGpu: Boolean = true,
     showBoundingBoxes: Boolean = true,
     showClassNames: Boolean = true,
+    showFlashlightSwitch: Boolean = true,
+    scoreThreshold: Float = 0.30f,
     classLabels: Map<Int, String> = emptyMap(),
     onDetections: (List<Bitmap>) -> Unit
 ) {
@@ -45,7 +55,8 @@ fun CardDetectorLite(
         factory = CardDetectorLiteViewModelFactory(
             application = context.applicationContext as Application,
             modelName = modelName,
-            useGpu = useGpu
+            useGpu = useGpu,
+            scoreThreshold = scoreThreshold
         )
     )
 
@@ -79,10 +90,12 @@ fun CardDetectorLite(
             )
         }
 
-        Switch(
-            checked = flashlightEnabled,
-            onCheckedChange = { viewModel.toggleFlashlight() },
-            modifier = Modifier.padding(16.dp)
-        )
+        if (showFlashlightSwitch) {
+            Switch(
+                checked = flashlightEnabled,
+                onCheckedChange = { viewModel.toggleFlashlight() },
+                modifier = Modifier.padding(16.dp)
+            )
+        }
     }
 }

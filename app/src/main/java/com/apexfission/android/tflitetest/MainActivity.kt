@@ -32,8 +32,13 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                     ) {
                         val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
+
                         CardDetectorLite(
-                            modelName = "E38Y11_640B1F16.tflite",
+                            modelName = "E83Y11_640B1F16.tflite",
+                            useGpu = true,
+                            showBoundingBoxes = true,
+                            showClassNames = true,
+                            showFlashlightSwitch = true,
                             isDetectionEnabled = isDetectionEnabled,
                             onDetections = {
                                 mainViewModel.onDetections(it)

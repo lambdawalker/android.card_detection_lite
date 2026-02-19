@@ -30,7 +30,8 @@ data class PreviewScalingInfo(
 class CardDetectorLiteViewModel(
     application: Application,
     modelName: String,
-    useGpu: Boolean
+    useGpu: Boolean,
+    scoreThreshold: Float
 ) : AndroidViewModel(application) {
 
     private val _detections = MutableStateFlow<List<Det>>(emptyList())
@@ -48,7 +49,7 @@ class CardDetectorLiteViewModel(
     private val detector = YoloLiteDetector(
         context = application.applicationContext,
         modelName = modelName,
-        scoreThreshold = 0.30f,
+        scoreThreshold = scoreThreshold,
         iouThreshold = 0.45f,
         useGpu = useGpu
     )
