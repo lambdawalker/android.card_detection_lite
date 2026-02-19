@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.util
+package com.apexfission.android.carddetectionlite.domain.tflite
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -6,7 +6,8 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.Det
+import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
+import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import java.io.ByteArrayOutputStream
 
 /* --------------------------- YUV -> RGB --------------------------- */
@@ -137,8 +138,3 @@ fun cropDet(cropBitmap: Bitmap, det: Det, padPx: Int = 0): DetCutout {
     return DetCutout(det = det, rectPx = r, bitmap = cut)
 }
 
-data class DetCutout(
-    val det: Det,
-    val rectPx: Rect,
-    val bitmap: Bitmap     // cropped pixels
-)

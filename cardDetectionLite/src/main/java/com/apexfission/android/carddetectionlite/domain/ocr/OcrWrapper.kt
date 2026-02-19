@@ -1,5 +1,5 @@
-//package com.apexfission.android.carddetectionlite
-//
+package com.apexfission.android.carddetectionlite.domain.ocr
+
 //import android.graphics.Bitmap
 //import com.google.android.gms.tasks.Tasks
 //import com.google.mlkit.vision.common.InputImage
