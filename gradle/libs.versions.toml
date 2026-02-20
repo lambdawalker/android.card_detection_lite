@@ -16,8 +16,6 @@ materialIconsExtended = "1.7.8"
 textRecognition = "16.0.1"
 litert = "1.4.1"
 
-
-
 [libraries]
 
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
