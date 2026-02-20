@@ -1,0 +1,6 @@
+<resources>
+    <string name="camera_permission_title">Camera Access Required</string>
+    <string name="camera_permission_body">To provide a seamless experience, we need access to your camera. This allows us to scan documents, verify your identity, and more.</string>
+    <string name="permission_feature_title_identity">Identity Verification</string>
+    <string name="permission_feature_subtitle_identity">Securely confirm your identity to prevent fraud.</string>
+</resources>
