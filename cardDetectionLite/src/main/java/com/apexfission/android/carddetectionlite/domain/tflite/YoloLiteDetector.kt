@@ -2,14 +2,12 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import java.io.Closeable
-import kotlin.math.max
-import kotlin.math.min
 
 class YoloLiteDetector(
     context: Context,
@@ -17,8 +15,9 @@ class YoloLiteDetector(
     scoreThreshold: Float,
     iouThreshold: Float,
     useGpu: Boolean,
-    private val detectionMargin: Int = 20,
+    private val detectionFilters: List<DetectionFilter> = emptyList(),
     maxNmsCandidates: Int = 300,
+    debugLogs: Boolean = false,
     numThreads: Int? = null,
 ) : Closeable {
 
@@ -88,27 +87,13 @@ class YoloLiteDetector(
             padY = lb.padY
         ).sortedByDescending { it.score }
 
-        val filteredDets = dets.filter {
-            val x1 = min(it.x1, it.x2) * cropBitmap.width
-            val y1 = min(it.y1, it.y2) * cropBitmap.height
-            val x2 = max(it.x1, it.x2) * cropBitmap.width
-            val y2 = max(it.y1, it.y2) * cropBitmap.height
-
-            x1 >= detectionMargin &&
-            y1 >= detectionMargin &&
-            x2 <= cropBitmap.width - detectionMargin &&
-            y2 <= cropBitmap.height - detectionMargin
+        val filteredDets = detectionFilters.fold(dets) { filtered, filter ->
+            filter.filter(filtered, cropBitmap.width, cropBitmap.height)
         }.take(maxCutouts)
 
         return filteredDets.map {
-            val paddedDet = it.copy(
-                x1 = max(0f, it.x1),
-                y1 = max(0f, it.y1),
-                x2 = min(cropBitmap.width.toFloat(), it.x2),
-                y2 = min(cropBitmap.height.toFloat(), it.y2)
-            )
-            val detectionMargin = detectionMargin / 2
-            cropDet(cropBitmap, paddedDet, detectionMargin)
+            // The margin is no longer applied here for padding, but the param could be repurposed
+            cropDet(cropBitmap, it, 0)
         }
     }
 
@@ -128,7 +113,6 @@ class YoloLiteDetector(
         val lb = ImageProcessor.letterboxToSquareReusable(cropBitmap, interpreter.inputImageWidth)
         return cropBitmap to lb
     }
-
 
 
     @Synchronized

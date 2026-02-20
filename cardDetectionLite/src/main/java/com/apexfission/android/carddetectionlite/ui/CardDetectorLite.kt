@@ -2,7 +2,6 @@ package com.apexfission.android.carddetectionlite.ui
 
 import android.app.Application
 import android.graphics.Bitmap
-import android.util.Log
 import android.util.Size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,13 +22,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
 
 class CardDetectorLiteViewModelFactory(
     private val application: Application,
     private val modelPath: String,
     private val useGpu: Boolean,
     private val scoreThreshold: Float,
-    private val detectionMargin: Int = 20
+    private val detectionFilters: List<DetectionFilter>
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
@@ -38,7 +40,7 @@ class CardDetectorLiteViewModelFactory(
                 modelPath,
                 useGpu,
                 scoreThreshold,
-                detectionMargin
+                detectionFilters
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
@@ -57,7 +59,10 @@ fun CardDetectorLite(
     showFlashlightSwitch: Boolean = true,
     scoreThreshold: Float = 0.70f,
     analysisTargetResolution: Size = Size(1920, 1080),
-    detectionMargin: Int = 20,
+    detectionFilters: List<DetectionFilter> = listOf(
+        MarginFilter(),
+        AspectRatioFilter()
+    ),
     onDetections: (List<Bitmap>) -> Unit
 ) {
     val context = LocalContext.current
@@ -67,7 +72,7 @@ fun CardDetectorLite(
             modelPath = modelPath,
             useGpu = useGpu,
             scoreThreshold = scoreThreshold,
-            detectionMargin = detectionMargin
+            detectionFilters = detectionFilters
         )
     )
 
