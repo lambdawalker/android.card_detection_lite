@@ -87,23 +87,28 @@ class YoloLiteDetector(
             padX = lb.padX,
             padY = lb.padY
         ).sortedByDescending { it.score }
-        Log.d("YOLO", ">>>>>>>>>>>>> ${dets.size}")
+
         val filteredDets = dets.filter {
-            it.x1 >= detectionMargin &&
-            it.y1 >= detectionMargin &&
-            it.x2 <= cropBitmap.width - detectionMargin &&
-            it.y2 <= cropBitmap.height - detectionMargin
+            val x1 = min(it.x1, it.x2) * cropBitmap.width
+            val y1 = min(it.y1, it.y2) * cropBitmap.height
+            val x2 = max(it.x1, it.x2) * cropBitmap.width
+            val y2 = max(it.y1, it.y2) * cropBitmap.height
+
+            x1 >= detectionMargin &&
+            y1 >= detectionMargin &&
+            x2 <= cropBitmap.width - detectionMargin &&
+            y2 <= cropBitmap.height - detectionMargin
         }.take(maxCutouts)
-        Log.d("YOLO", ">>>>>>>>>>>>> ${filteredDets.size}")
+
         return filteredDets.map {
-            val detectionMargin = detectionMargin / 2
             val paddedDet = it.copy(
-                x1 = max(0f, it.x1 - detectionMargin),
-                y1 = max(0f, it.y1 - detectionMargin),
-                x2 = min(cropBitmap.width.toFloat(), it.x2 + detectionMargin),
-                y2 = min(cropBitmap.height.toFloat(), it.y2 + detectionMargin)
+                x1 = max(0f, it.x1),
+                y1 = max(0f, it.y1),
+                x2 = min(cropBitmap.width.toFloat(), it.x2),
+                y2 = min(cropBitmap.height.toFloat(), it.y2)
             )
-            cropDet(cropBitmap, paddedDet, 0)
+            val detectionMargin = detectionMargin / 2
+            cropDet(cropBitmap, paddedDet, detectionMargin)
         }
     }
 

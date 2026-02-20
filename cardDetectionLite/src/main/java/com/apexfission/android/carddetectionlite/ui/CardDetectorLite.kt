@@ -2,6 +2,7 @@ package com.apexfission.android.carddetectionlite.ui
 
 import android.app.Application
 import android.graphics.Bitmap
+import android.util.Log
 import android.util.Size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

@@ -33,7 +33,6 @@ class MainViewModel : ViewModel() {
                     }
                     _ocrResult.value = result
 
-                    Log.d("OCR", ">>>>>>>>>>>>> ${cutout.width} ${cutout.height}")
                     result.forEach {
                         Log.d("OCR", "${it.text.replace("\n", " ")}, ${it.boundingBox}")
                     }
