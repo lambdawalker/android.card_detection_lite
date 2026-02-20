@@ -20,7 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 class CardDetectorLiteViewModelFactory(
     private val application: Application,
-    private val modelName: String,
+    private val modelPath: String,
     private val useGpu: Boolean,
     private val scoreThreshold: Float
 ) : ViewModelProvider.Factory {
@@ -28,7 +28,7 @@ class CardDetectorLiteViewModelFactory(
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST") return CardDetectorLiteViewModel(
                 application,
-                modelName,
+                modelPath,
                 useGpu,
                 scoreThreshold
             ) as T
@@ -39,22 +39,22 @@ class CardDetectorLiteViewModelFactory(
 
 @Composable
 fun CardDetectorLite(
-    modelName: String,
+    modelPath: String,
+    classLabels: Map<Int, String>,
     isDetectionEnabled: Boolean,
     modifier: Modifier = Modifier,
     useGpu: Boolean = true,
     showBoundingBoxes: Boolean = true,
     showClassNames: Boolean = true,
     showFlashlightSwitch: Boolean = true,
-    scoreThreshold: Float = 0.30f,
-    classLabels: Map<Int, String> = emptyMap(),
+    scoreThreshold: Float = 0.70f,
     onDetections: (List<Bitmap>) -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: CardDetectorLiteViewModel = viewModel(
         factory = CardDetectorLiteViewModelFactory(
             application = context.applicationContext as Application,
-            modelName = modelName,
+            modelPath = modelPath,
             useGpu = useGpu,
             scoreThreshold = scoreThreshold
         )

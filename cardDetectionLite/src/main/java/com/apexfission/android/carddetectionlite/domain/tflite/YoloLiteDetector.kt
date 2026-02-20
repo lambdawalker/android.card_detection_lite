@@ -11,7 +11,7 @@ import java.io.Closeable
 
 class YoloLiteDetector(
     context: Context,
-    modelName: String,
+    modelPath: String,
     scoreThreshold: Float,
     iouThreshold: Float,
     useGpu: Boolean,
@@ -24,7 +24,7 @@ class YoloLiteDetector(
     private val yuvToRgb = YuvToRgbConverter()
     private var isClosed = false
 
-    private val interpreter = TfliteInterpreter(context, modelName, useGpu, numThreads)
+    private val interpreter = TfliteInterpreter(context, modelPath, useGpu, numThreads)
     private val postProcessor = YoloPostProcessor(
         interpreter.outLayout,
         interpreter.outBoxes,

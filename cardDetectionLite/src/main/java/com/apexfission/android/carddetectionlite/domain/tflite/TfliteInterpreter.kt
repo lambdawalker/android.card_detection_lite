@@ -3,7 +3,6 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.SystemClock
-import android.util.Log
 import java.io.Closeable
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -17,7 +16,7 @@ import org.tensorflow.lite.gpu.GpuDelegate
 
 class TfliteInterpreter(
     context: Context,
-    modelName: String,
+    modelPath: String,
     useGpu: Boolean,
     numThreads: Int?
 ) : Closeable {
@@ -51,7 +50,7 @@ class TfliteInterpreter(
         private set
 
     init {
-        val model = loadModelFile(context, modelName)
+        val model = loadModelFile(context, modelPath)
 
         val temp = Interpreter(model)
         val inputTensor = temp.getInputTensor(0)

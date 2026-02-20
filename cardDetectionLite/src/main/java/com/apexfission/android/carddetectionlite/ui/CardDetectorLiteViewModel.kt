@@ -29,7 +29,7 @@ data class PreviewScalingInfo(
 
 class CardDetectorLiteViewModel(
     application: Application,
-    modelName: String,
+    modelPath: String,
     useGpu: Boolean,
     scoreThreshold: Float
 ) : AndroidViewModel(application) {
@@ -48,7 +48,7 @@ class CardDetectorLiteViewModel(
 
     private val detector = YoloLiteDetector(
         context = application.applicationContext,
-        modelName = modelName,
+        modelPath = modelPath,
         scoreThreshold = scoreThreshold,
         iouThreshold = 0.45f,
         useGpu = useGpu
