@@ -58,6 +58,7 @@ dependencies {
         exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
     }
 
+    implementation(libs.text.recognition)
     implementation(libs.accompanist.permissions)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -90,7 +91,7 @@ mavenPublishing {
     coordinates(
         "com.apexfission.android.carddetectionlite",
         "core",
-        "0.0.1-A0"
+        "0.0.1-A1"
     )
 
     pom {
