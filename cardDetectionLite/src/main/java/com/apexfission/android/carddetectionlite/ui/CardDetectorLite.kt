@@ -2,6 +2,7 @@ package com.apexfission.android.carddetectionlite.ui
 
 import android.app.Application
 import android.graphics.Bitmap
+import android.util.Size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,7 +27,8 @@ class CardDetectorLiteViewModelFactory(
     private val application: Application,
     private val modelPath: String,
     private val useGpu: Boolean,
-    private val scoreThreshold: Float
+    private val scoreThreshold: Float,
+    private val detectionMargin: Int = 20
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
@@ -34,7 +36,8 @@ class CardDetectorLiteViewModelFactory(
                 application,
                 modelPath,
                 useGpu,
-                scoreThreshold
+                scoreThreshold,
+                detectionMargin
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
@@ -52,6 +55,8 @@ fun CardDetectorLite(
     showClassNames: Boolean = true,
     showFlashlightSwitch: Boolean = true,
     scoreThreshold: Float = 0.70f,
+    analysisTargetResolution: Size = Size(1920, 1080),
+    detectionMargin: Int = 20,
     onDetections: (List<Bitmap>) -> Unit
 ) {
     val context = LocalContext.current
@@ -60,7 +65,8 @@ fun CardDetectorLite(
             application = context.applicationContext as Application,
             modelPath = modelPath,
             useGpu = useGpu,
-            scoreThreshold = scoreThreshold
+            scoreThreshold = scoreThreshold,
+            detectionMargin = detectionMargin
         )
     )
 
@@ -83,6 +89,7 @@ fun CardDetectorLite(
                 )
             },
             flashlightEnabled = flashlightEnabled,
+            analysisTargetResolution = analysisTargetResolution
         )
 
         if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {

@@ -2,12 +2,14 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
-
 import java.io.Closeable
+import kotlin.math.max
+import kotlin.math.min
 
 class YoloLiteDetector(
     context: Context,
@@ -15,8 +17,8 @@ class YoloLiteDetector(
     scoreThreshold: Float,
     iouThreshold: Float,
     useGpu: Boolean,
+    private val detectionMargin: Int = 20,
     maxNmsCandidates: Int = 300,
-    debugLogs: Boolean = false,
     numThreads: Int? = null,
 ) : Closeable {
 
@@ -71,7 +73,7 @@ class YoloLiteDetector(
         )
     }
 
-    fun detectCutouts(imageProxy: ImageProxy, padPx: Int = 8, maxCutouts: Int = 5): List<DetCutout> {
+    fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): List<DetCutout> {
         if (!enabled) return emptyList()
 
         val (cropBitmap, lb) = prepareCropAndLetterbox(imageProxy)
@@ -84,9 +86,25 @@ class YoloLiteDetector(
             lbScale = lb.scale,
             padX = lb.padX,
             padY = lb.padY
-        ).sortedByDescending { it.score }.take(maxCutouts)
-
-        return dets.map { cropDet(cropBitmap, it, padPx) }
+        ).sortedByDescending { it.score }
+        Log.d("YOLO", ">>>>>>>>>>>>> ${dets.size}")
+        val filteredDets = dets.filter {
+            it.x1 >= detectionMargin &&
+            it.y1 >= detectionMargin &&
+            it.x2 <= cropBitmap.width - detectionMargin &&
+            it.y2 <= cropBitmap.height - detectionMargin
+        }.take(maxCutouts)
+        Log.d("YOLO", ">>>>>>>>>>>>> ${filteredDets.size}")
+        return filteredDets.map {
+            val detectionMargin = detectionMargin / 2
+            val paddedDet = it.copy(
+                x1 = max(0f, it.x1 - detectionMargin),
+                y1 = max(0f, it.y1 - detectionMargin),
+                x2 = min(cropBitmap.width.toFloat(), it.x2 + detectionMargin),
+                y2 = min(cropBitmap.height.toFloat(), it.y2 + detectionMargin)
+            )
+            cropDet(cropBitmap, paddedDet, 0)
+        }
     }
 
     private fun prepareCropAndLetterbox(imageProxy: ImageProxy): Pair<Bitmap, LetterboxResult> {

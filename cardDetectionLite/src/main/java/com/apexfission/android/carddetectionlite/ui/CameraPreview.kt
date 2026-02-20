@@ -1,6 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui
 
 import android.util.Log
+import android.util.Size
 import android.view.MotionEvent
 import android.view.View
 import androidx.camera.core.CameraControl
@@ -9,6 +10,8 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.MeteringPoint
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,11 +27,13 @@ import androidx.lifecycle.LifecycleOwner
 import java.util.concurrent.Executors
 
 @Composable
+@Suppress("DEPRECATION")
 fun CameraPreview(
     onFrame: (ImageProxy) -> Unit,
     onFocusEvent: (CameraControl, MeteringPoint) -> Unit,
     lifecycleOwner: LifecycleOwner,
     flashlightEnabled: Boolean,
+    analysisTargetResolution: Size = Size(1920, 1080)
 ) {
     val context = LocalContext.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
@@ -42,9 +47,28 @@ fun CameraPreview(
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
-            val previewUseCase = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
-            val analysisUseCase = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetRotation(previewView.display.rotation).build()
+            val previewUseCase = Preview.Builder()
+                .build()
+                .also {
+                    it.surfaceProvider = previewView.surfaceProvider
+                }
+
+            val resolutionStrategy = ResolutionStrategy(
+                analysisTargetResolution,
+                ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
+            )
+
+            val resolutionSelector = ResolutionSelector.Builder()
+                .setResolutionStrategy(resolutionStrategy)
+                .build()
+
+            val analysisUseCaseBuilder = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setTargetRotation(previewView.display.rotation)
+                .setResolutionSelector(resolutionSelector)
+
+
+            val analysisUseCase = analysisUseCaseBuilder.build()
 
             analysisUseCase.setAnalyzer(analysisExecutor) { imageProxy ->
                 try {

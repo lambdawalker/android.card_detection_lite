@@ -10,11 +10,9 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.MeteringPoint
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-
 import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
 import com.apexfission.android.carddetectionlite.domain.tflite.rotateRectToUpright
-
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +29,8 @@ class CardDetectorLiteViewModel(
     application: Application,
     modelPath: String,
     useGpu: Boolean,
-    scoreThreshold: Float
+    scoreThreshold: Float,
+    detectionMargin: Int
 ) : AndroidViewModel(application) {
 
     private val _detections = MutableStateFlow<List<Det>>(emptyList())
@@ -51,7 +50,8 @@ class CardDetectorLiteViewModel(
         modelPath = modelPath,
         scoreThreshold = scoreThreshold,
         iouThreshold = 0.45f,
-        useGpu = useGpu
+        useGpu = useGpu,
+        detectionMargin = detectionMargin
     )
 
     private val lastInferMs = AtomicLong(0L)
