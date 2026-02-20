@@ -11,8 +11,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.apexfission.android.carddetectionlite.ui.HandleCameraPermission
+import com.apexfission.android.carddetectionlite.domain.ModelCatalog
+import com.apexfission.android.carddetectionlite.tfmodel.classes
+import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.CardDetectorLite
+import com.apexfission.android.carddetectionlite.ui.permissions.HandleCameraPermission
 import com.apexfission.android.tflitetest.ui.theme.TfLiteTestTheme
 
 class MainActivity : ComponentActivity() {
@@ -29,13 +32,19 @@ class MainActivity : ComponentActivity() {
                     HandleCameraPermission(
                         modifier = Modifier
                             .padding(innerPadding)
-                            .fillMaxSize()
+                            .fillMaxSize(),
+                        onBack = { finish() },
+                        onNotNow = { finish() }
                     ) {
                         val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
 
                         CardDetectorLite(
-                            modelName = "E83Y11_640B1F16.tflite",
+                            modifier = Modifier
+                                .padding(innerPadding),
+                            modelPath = ModelCatalog.TfLite.modelPath,
+                            classLabels = ModelCatalog.TfLite.classes,
                             useGpu = true,
+                            scoreThreshold = 0.50f,
                             showBoundingBoxes = true,
                             showClassNames = true,
                             showFlashlightSwitch = true,
