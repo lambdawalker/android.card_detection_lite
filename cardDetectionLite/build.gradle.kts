@@ -37,10 +37,6 @@ extensions.configure<LibraryExtension>  {
     buildFeatures {
         compose = true
     }
-
-    androidResources {
-        noCompress += setOf("tflite")
-    }
 }
 
 kotlin {
@@ -48,6 +44,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.material.icons.extended)
+
     /* -------------------- CameraX -------------------- */
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
@@ -92,7 +90,7 @@ mavenPublishing {
     coordinates(
         "com.apexfission.android.carddetectionlite",
         "core",
-        "0.0.10"
+        "0.0.1-A0"
     )
 
     pom {
@@ -116,6 +114,7 @@ mavenPublishing {
                 email.set("lambdawalker@isdavid.com")
             }
         }
+
         scm {
             url.set("https://github.com/lambdawalker/android.card_detection_lite")
             connection.set("scm:git:git://github.com:lambdawalker/android.card_detection_lite.git")

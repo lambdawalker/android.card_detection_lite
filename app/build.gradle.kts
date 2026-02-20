@@ -43,6 +43,7 @@ kotlin {
 
 dependencies {
     implementation(project(":cardDetectionLite"))
+    implementation(project(":tfmodel"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
