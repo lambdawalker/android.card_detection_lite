@@ -143,7 +143,7 @@ fun PermissionScreen(
             }
 
             Text(
-                text = "SWORN INK SECURITY PROTOCOL V2.4",
+                text = "Powered by LambdaWalker",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 16.dp),

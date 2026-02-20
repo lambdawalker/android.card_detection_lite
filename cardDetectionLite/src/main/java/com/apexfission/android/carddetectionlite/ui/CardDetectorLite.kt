@@ -5,7 +5,11 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Switch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -91,11 +95,15 @@ fun CardDetectorLite(
         }
 
         if (showFlashlightSwitch) {
-            Switch(
-                checked = flashlightEnabled,
-                onCheckedChange = { viewModel.toggleFlashlight() },
+            IconButton(
+                onClick = { viewModel.toggleFlashlight() },
                 modifier = Modifier.padding(16.dp)
-            )
+            ) {
+                Icon(
+                    imageVector = if (flashlightEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
+                    contentDescription = "Toggle Flashlight"
+                )
+            }
         }
     }
 }
