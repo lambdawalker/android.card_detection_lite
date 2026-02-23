@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
 import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.CardDetectorLite
@@ -51,7 +52,8 @@ class MainActivity : ComponentActivity() {
                             isDetectionEnabled = isDetectionEnabled,
                             onDetections = {
                                 mainViewModel.onDetections(it)
-                            }
+                            },
+                            detectionFilters = listOf(MarginFilter())
                         )
                     }
                 }

@@ -17,34 +17,29 @@ class MainViewModel : ViewModel() {
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
 
     private val _ocrResult = MutableStateFlow<List<OcrResult>>(emptyList())
-    val ocrResult = _ocrResult.asStateFlow()
-
     private val ocrWrapper = OcrWrapper()
 
     fun onDetections(newCutouts: List<Bitmap>) {
-        if (newCutouts.isNotEmpty() && _isDetectionEnabled.value) {
-            _isDetectionEnabled.value = false
-            viewModelScope.launch {
-                try {
-                    val cutout = newCutouts.first()
-
-                    val result = withContext(Dispatchers.IO) {
-                        ocrWrapper.run(cutout)
-                    }
-                    _ocrResult.value = result
-
-                    result.forEach {
-                        Log.d("OCR", "${it.text.replace("\n", " ")}, ${it.boundingBox}")
-                    }
-
-                } finally {
-                    _isDetectionEnabled.value = true
-                }
-            }
-        }
-    }
-
-    fun setDetectionEnabled(enabled: Boolean) {
-        _isDetectionEnabled.value = enabled
+//
+//        if (newCutouts.isNotEmpty() && _isDetectionEnabled.value) {
+//            _isDetectionEnabled.value = false
+//            viewModelScope.launch {
+//                try {
+//                    val cutout = newCutouts.first()
+//
+//                    val result = withContext(Dispatchers.IO) {
+//                        ocrWrapper.run(cutout)
+//                    }
+//                    _ocrResult.value = result
+//
+//                    result.forEach {
+//                        Log.d("OCR", "${it.text.replace("\n", " ")}, ${it.boundingBox}")
+//                    }
+//
+//                } finally {
+//                    _isDetectionEnabled.value = true
+//                }
+//            }
+//        }
     }
 }
