@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
 import kotlin.math.min
+import androidx.core.graphics.createBitmap
 
 object ImageProcessor {
 
@@ -23,7 +24,7 @@ object ImageProcessor {
     }
 
     fun letterboxToSquareReusable(src: Bitmap, outSize: Int): LetterboxResult {
-        val out = lbOut?.takeIf { it.width == outSize } ?: Bitmap.createBitmap(outSize, outSize, Bitmap.Config.ARGB_8888).also { lbOut = it }
+        val out = lbOut?.takeIf { it.width == outSize } ?: createBitmap(outSize, outSize).also { lbOut = it }
         val canvas = lbCanvas ?: Canvas(out).also { lbCanvas = it }
         val scale = min(outSize / src.width.toFloat(), outSize / src.height.toFloat())
         val newW = (src.width * scale).toInt()

@@ -50,8 +50,6 @@ fun DetectionOverlay(
             val cropX2 = det.x2 * scalingInfo.cropW
             val cropY2 = det.y2 * scalingInfo.cropH
 
-            // Since the detector worked on the crop, and FILL_CENTER crops the buffer to fit screen,
-            // we calculate the position relative to the centered preview.
             val x1 = cropX1 * scale + offsetX
             val y1 = cropY1 * scale + offsetY
             val x2 = cropX2 * scale + offsetX
@@ -66,9 +64,13 @@ fun DetectionOverlay(
 
             if (showClassNames) {
                 val label = classLabels[det.cls] ?: "ID: ${det.cls}"
-                val displayString = "$label (${(det.score * 100).toInt()}%)"
+
+
+
+                val displayString = "$label (${(det.score * 100).toInt()}%) [${x1}, ${y1}, ${x2}, ${y2}]"
                 val textLayout = textMeasurer.measure(displayString, textStyle)
                 val textTop = if (y1 - textLayout.size.height < 0) y1 else y1 - textLayout.size.height
+
                 drawText(textLayoutResult = textLayout, topLeft = Offset(x1, textTop))
             }
         }

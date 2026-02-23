@@ -87,7 +87,9 @@ fun CardDetectorLite(
     Box(modifier.fillMaxSize()) {
         CameraPreview(
             lifecycleOwner = LocalLifecycleOwner.current,
-            onFrame = { imageProxy -> viewModel.processImage(imageProxy, onDetections) },
+            onFrame = { imageProxy ->
+                viewModel.processImage(imageProxy, onDetections)
+            },
             onFocusEvent = { cameraControl, meteringPoint ->
                 viewModel.onFocusEvent(
                     cameraControl,

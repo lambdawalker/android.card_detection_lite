@@ -73,7 +73,7 @@ fun CameraPreview(
             analysisUseCase.setAnalyzer(analysisExecutor) { imageProxy ->
                 try {
                     onFrameState.value(imageProxy)
-                } catch (t: Throwable) {
+                } catch (_: Throwable) {
                     imageProxy.close()
                 }
             }

@@ -17,7 +17,6 @@ class YoloLiteDetector(
     useGpu: Boolean,
     private val detectionFilters: List<DetectionFilter> = emptyList(),
     maxNmsCandidates: Int = 300,
-    debugLogs: Boolean = false,
     numThreads: Int? = null,
 ) : Closeable {
 
@@ -36,9 +35,6 @@ class YoloLiteDetector(
         iouThreshold,
         maxNmsCandidates
     )
-
-    val lastInferenceTimeMs: Long
-        get() = interpreter.lastInferenceTimeMs
 
     fun detect(bitmap: Bitmap): List<Det> {
         if (!enabled || isClosed) return emptyList()
@@ -92,7 +88,7 @@ class YoloLiteDetector(
         }.take(maxCutouts)
 
         return filteredDets.map {
-            // The margin is no longer applied here for padding, but the param could be repurposed
+            // The margin is no longer applied here for pa dding, but the param could be repurposed
             cropDet(cropBitmap, it, 0)
         }
     }
