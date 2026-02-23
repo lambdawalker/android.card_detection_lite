@@ -19,11 +19,12 @@ fun interface DetectionFilter {
 class MarginFilter(private val margin: Int = 20) : DetectionFilter {
     override fun filter(detections: List<Det>, imageWidth: Int, imageHeight: Int): List<Det> {
         if (margin <= 0) return detections
+
         return detections.filter {
-            it.x1 >= margin &&
-            it.y1 >= margin &&
-            it.x2 <= imageWidth - margin &&
-            it.y2 <= imageHeight - margin
+            it.x1 * imageWidth >= margin &&
+                it.y1 * imageHeight >= margin &&
+                it.x2 * imageWidth <= imageWidth - margin &&
+                it.y2 * imageHeight <= imageHeight - margin
         }
     }
 }
