@@ -100,7 +100,7 @@ class CardDetectorLiteViewModel(
 
                 val newDetections = detector.detectCutouts(imageProxy)
                 _detections.value = newDetections.map { it.det }
-                onDetections(newDetections.map { it.bitmap })
+                onDetections(newDetections.map { it.objectBitmap })
 
             } catch (t: Throwable) {
                 Log.e("YOLO", "Inference failed", t)

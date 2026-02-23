@@ -6,5 +6,5 @@ import android.graphics.Rect
 data class DetCutout(
     val det: Det,
     val rectPx: Rect,
-    val bitmap: Bitmap     // cropped pixels
+    val objectBitmap: Bitmap
 )

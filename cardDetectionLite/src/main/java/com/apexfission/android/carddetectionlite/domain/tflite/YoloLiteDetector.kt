@@ -88,7 +88,6 @@ class YoloLiteDetector(
         }.take(maxCutouts)
 
         return filteredDets.map {
-            // The margin is no longer applied here for pa dding, but the param could be repurposed
             cropDet(cropBitmap, it, 0)
         }
     }

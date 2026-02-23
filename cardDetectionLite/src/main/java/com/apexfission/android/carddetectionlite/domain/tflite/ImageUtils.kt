@@ -135,6 +135,6 @@ fun detToRectPx(det: Det, cropW: Int, cropH: Int, padPx: Int = 0): Rect {
 fun cropDet(cropBitmap: Bitmap, det: Det, padPx: Int = 0): DetCutout {
     val r: Rect = detToRectPx(det, cropBitmap.width, cropBitmap.height, padPx)
     val cut = Bitmap.createBitmap(cropBitmap, r.left, r.top, r.width(), r.height())
-    return DetCutout(det = det, rectPx = r, bitmap = cut)
+    return DetCutout(det = det, rectPx = r, objectBitmap = cut)
 }
 
