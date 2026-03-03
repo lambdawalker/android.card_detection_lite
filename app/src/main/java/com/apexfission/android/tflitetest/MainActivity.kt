@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
 import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
@@ -53,7 +54,11 @@ class MainActivity : ComponentActivity() {
                             onDetections = {
                                 mainViewModel.onDetections(it)
                             },
-                            detectionFilters = listOf(MarginFilter())
+                            detectionFilters = listOf(
+                                MarginFilter(),
+                                AspectRatioFilter()
+
+                            )
                         )
                     }
                 }

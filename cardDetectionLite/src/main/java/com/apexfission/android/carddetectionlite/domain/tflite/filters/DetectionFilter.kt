@@ -41,8 +41,13 @@ class AspectRatioFilter(
 ) : DetectionFilter {
     override fun filter(detections: List<Det>, imageWidth: Int, imageHeight: Int): List<Det> {
         return detections.filter {
-            val width = it.x2 - it.x1
-            val height = it.y2 - it.y1
+            val x1 = it.x1 * imageWidth
+            val y1 = it.y1 * imageHeight
+            val x2 = it.x2 * imageWidth
+            val y2 = it.y2 * imageHeight
+
+            val width = x2 - x1
+            val height = y2 - y1
             val u = min(width, height)
             val v = max(width, height)
             if (u > 0) {
