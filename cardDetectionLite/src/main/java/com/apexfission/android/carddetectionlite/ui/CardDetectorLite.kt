@@ -22,6 +22,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
@@ -63,7 +64,7 @@ fun CardDetectorLite(
         MarginFilter(),
         AspectRatioFilter()
     ),
-    onDetections: (List<Bitmap>) -> Unit
+    onDetections: (List<DetCutout>) -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: CardDetectorLiteViewModel = viewModel(

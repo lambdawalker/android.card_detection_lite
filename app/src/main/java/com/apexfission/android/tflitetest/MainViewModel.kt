@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -16,14 +17,15 @@ class MainViewModel : ViewModel() {
     private var previous: ULong = 0u
     private var count = 0
 
-    fun onDetections(newCutouts: List<Bitmap>) {
+    fun onDetections(newCutouts: List<DetCutout>) {
         if (newCutouts.isNotEmpty() && _isDetectionEnabled.value) {
             _isDetectionEnabled.value = false
 
             viewModelScope.launch {
                 try {
                     val cutout = newCutouts.first()
-                    val current = cutout.generateDHash(16)
+
+                    val current = cutout.objectBitmap.generateDHash(16)
 
                     val isSimilar = isVisuallySimilar(previous, current, 18)
 

@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
+import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.rotateRectToUpright
 import java.util.concurrent.atomic.AtomicLong
@@ -75,7 +76,7 @@ class CardDetectorLiteViewModel(
         cameraControl.startFocusAndMetering(action)
     }
 
-    fun processImage(imageProxy: ImageProxy, onDetections: (List<Bitmap>) -> Unit) {
+    fun processImage(imageProxy: ImageProxy, onDetections: (List<DetCutout>) -> Unit) {
         viewModelScope.launch {
             try {
                 if (!_detectorEnabled.value) return@launch
@@ -100,7 +101,7 @@ class CardDetectorLiteViewModel(
 
                 val newDetections = detector.detectCutouts(imageProxy)
                 _detections.value = newDetections.map { it.det }
-                onDetections(newDetections.map { it.objectBitmap })
+                onDetections(newDetections)
 
             } catch (t: Throwable) {
                 Log.e("YOLO", "Inference failed", t)
