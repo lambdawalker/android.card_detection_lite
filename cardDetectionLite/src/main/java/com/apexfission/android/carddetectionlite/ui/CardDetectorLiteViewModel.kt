@@ -1,7 +1,6 @@
 package com.apexfission.android.carddetectionlite.ui
 
 import android.app.Application
-import android.graphics.Bitmap
 import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.CameraControl
@@ -28,11 +27,7 @@ data class PreviewScalingInfo(
 )
 
 class CardDetectorLiteViewModel(
-    application: Application,
-    modelPath: String,
-    useGpu: Boolean,
-    scoreThreshold: Float,
-    detectionFilters: List<DetectionFilter>
+    application: Application, modelPath: String, useGpu: Boolean, scoreThreshold: Float, detectionFilters: List<DetectionFilter>
 ) : AndroidViewModel(application) {
 
     private val _detections = MutableStateFlow<List<Det>>(emptyList())

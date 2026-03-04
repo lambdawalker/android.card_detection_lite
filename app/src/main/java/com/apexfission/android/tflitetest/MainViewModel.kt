@@ -1,7 +1,6 @@
 package com.apexfission.android.tflitetest
 
 
-import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,13 +28,13 @@ class MainViewModel : ViewModel() {
 
                     val isSimilar = isVisuallySimilar(previous, current, 18)
 
-                    if(isSimilar) {
+                    if (isSimilar) {
                         count += 1
-                    }else {
+                    } else {
                         count = 0
                     }
 
-                    if(count > 10) {
+                    if (count > 10) {
                         count = 0
                         Log.d("COMPX", "HERE")
                     }

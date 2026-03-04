@@ -1,7 +1,6 @@
 package com.apexfission.android.carddetectionlite.ui
 
 import android.app.Application
-import android.graphics.Bitmap
 import android.util.Size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,11 +36,7 @@ class CardDetectorLiteViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST") return CardDetectorLiteViewModel(
-                application,
-                modelPath,
-                useGpu,
-                scoreThreshold,
-                detectionFilters
+                application, modelPath, useGpu, scoreThreshold, detectionFilters
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
@@ -61,8 +56,7 @@ fun CardDetectorLite(
     scoreThreshold: Float = 0.70f,
     analysisTargetResolution: Size = Size(1920, 1080),
     detectionFilters: List<DetectionFilter> = listOf(
-        MarginFilter(),
-        AspectRatioFilter()
+        MarginFilter(), AspectRatioFilter()
     ),
     onDetections: (List<DetCutout>) -> Unit
 ) {
@@ -87,37 +81,27 @@ fun CardDetectorLite(
 
     Box(modifier.fillMaxSize()) {
         CameraPreview(
-            lifecycleOwner = LocalLifecycleOwner.current,
-            onFrame = { imageProxy ->
-                viewModel.processImage(imageProxy, onDetections)
-            },
-            onFocusEvent = { cameraControl, meteringPoint ->
-                viewModel.onFocusEvent(
-                    cameraControl,
-                    meteringPoint
-                )
-            },
-            flashlightEnabled = flashlightEnabled,
-            analysisTargetResolution = analysisTargetResolution
+            lifecycleOwner = LocalLifecycleOwner.current, onFrame = { imageProxy ->
+            viewModel.processImage(imageProxy, onDetections)
+        }, onFocusEvent = { cameraControl, meteringPoint ->
+            viewModel.onFocusEvent(
+                cameraControl, meteringPoint
+            )
+        }, flashlightEnabled = flashlightEnabled, analysisTargetResolution = analysisTargetResolution
         )
 
         if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
             DetectionOverlay(
-                detections = detections,
-                scalingInfo = scalingInfo,
-                showClassNames = showClassNames,
-                classLabels = classLabels
+                detections = detections, scalingInfo = scalingInfo, showClassNames = showClassNames, classLabels = classLabels
             )
         }
 
         if (showFlashlightSwitch) {
             IconButton(
-                onClick = { viewModel.toggleFlashlight() },
-                modifier = Modifier.padding(16.dp)
+                onClick = { viewModel.toggleFlashlight() }, modifier = Modifier.padding(16.dp)
             ) {
                 Icon(
-                    imageVector = if (flashlightEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
-                    contentDescription = "Toggle Flashlight"
+                    imageVector = if (flashlightEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff, contentDescription = "Toggle Flashlight"
                 )
             }
         }
