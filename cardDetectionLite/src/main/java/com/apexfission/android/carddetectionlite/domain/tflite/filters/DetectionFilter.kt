@@ -21,10 +21,10 @@ class MarginFilter(private val margin: Int = 20) : DetectionFilter {
         if (margin <= 0) return detections
 
         return detections.filter {
-            it.x1 * imageWidth >= margin &&
-                it.y1 * imageHeight >= margin &&
-                it.x2 * imageWidth <= imageWidth - margin &&
-                it.y2 * imageHeight <= imageHeight - margin
+            it.x1Pct * imageWidth >= margin &&
+                it.y1Pct * imageHeight >= margin &&
+                it.x2Pct * imageWidth <= imageWidth - margin &&
+                it.y2Pct * imageHeight <= imageHeight - margin
         }
     }
 }
@@ -41,10 +41,10 @@ class AspectRatioFilter(
 ) : DetectionFilter {
     override fun filter(detections: List<Det>, imageWidth: Int, imageHeight: Int): List<Det> {
         return detections.filter {
-            val x1 = it.x1 * imageWidth
-            val y1 = it.y1 * imageHeight
-            val x2 = it.x2 * imageWidth
-            val y2 = it.y2 * imageHeight
+            val x1 = it.x1Pct * imageWidth
+            val y1 = it.y1Pct * imageHeight
+            val x2 = it.x2Pct * imageWidth
+            val y2 = it.y2Pct * imageHeight
 
             val width = x2 - x1
             val height = y2 - y1

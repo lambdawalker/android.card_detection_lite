@@ -24,7 +24,7 @@ class YoloPostProcessor(
         padY: Float
     ): List<Det> {
         val raw = decodeToCropNormalized(output, cropW, cropH, lbScale, padX, padY)
-        val capped = if (raw.size > maxNmsCandidates) raw.sortedByDescending { it.score }.take(maxNmsCandidates) else raw
+        val capped = if (raw.size > maxNmsCandidates) raw.sortedByDescending { it.confidence }.take(maxNmsCandidates) else raw
         return nms(capped)
     }
 
@@ -75,19 +75,19 @@ class YoloPostProcessor(
             val y2C = ((cyI * scaleFactor + (hI * scaleFactor) / 2f) - padY) / lbScale
 
             dets += Det(
-                (x1C / cropW).coerceIn(0f, 1f),
-                (y1C / cropH).coerceIn(0f, 1f),
-                (x2C / cropW).coerceIn(0f, 1f),
-                (y2C / cropH).coerceIn(0f, 1f),
-                maxClassScore,
-                bestCls
+                x1Pct = (x1C / cropW).coerceIn(0f, 1f),
+                y1Pct = (y1C / cropH).coerceIn(0f, 1f),
+                x2Pct = (x2C / cropW).coerceIn(0f, 1f),
+                y2Pct = (y2C / cropH).coerceIn(0f, 1f),
+                confidence = maxClassScore,
+                classId = bestCls
             )
         }
         return dets
     }
 
     private fun nms(dets: List<Det>): List<Det> {
-        val sorted = dets.sortedByDescending { it.score }.toMutableList()
+        val sorted = dets.sortedByDescending { it.confidence }.toMutableList()
         val keep = ArrayList<Det>()
         while (sorted.isNotEmpty()) {
             val best = sorted.removeAt(0)
@@ -96,18 +96,18 @@ class YoloPostProcessor(
 
             while (it.hasNext()) {
                 val d = it.next()
-                if (d.cls == best.cls && iou(best, d) > iouThreshold) it.remove()
+                if (d.classId == best.classId && iou(best, d) > iouThreshold) it.remove()
             }
         }
         return keep
     }
 
     private fun iou(a: Det, b: Det): Float {
-        val interW = max(0f, min(a.x2, b.x2) - max(a.x1, b.x1))
-        val interH = max(0f, min(a.y2, b.y2) - max(a.y1, b.y1))
+        val interW = max(0f, min(a.x2Pct, b.x2Pct) - max(a.x1Pct, b.x1Pct))
+        val interH = max(0f, min(a.y2Pct, b.y2Pct) - max(a.y1Pct, b.y1Pct))
         val inter = interW * interH
-        val areaA = (a.x2 - a.x1) * (a.y2 - a.y1)
-        val areaB = (b.x2 - b.x1) * (b.y2 - b.y1)
+        val areaA = (a.x2Pct - a.x1Pct) * (a.y2Pct - a.y1Pct)
+        val areaB = (b.x2Pct - b.x1Pct) * (b.y2Pct - b.y1Pct)
         return inter / (areaA + areaB - inter + 1e-6f)
     }
 }

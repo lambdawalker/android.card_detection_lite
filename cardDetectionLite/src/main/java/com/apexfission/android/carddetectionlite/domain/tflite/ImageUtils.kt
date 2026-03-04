@@ -119,10 +119,10 @@ fun Rect.intersectedWith(maxW: Int, maxH: Int): Rect {
 
 
 fun detToRectPx(det: Det, cropW: Int, cropH: Int, padPx: Int = 0): Rect {
-    val x1 = (det.x1 * cropW).toInt() - padPx
-    val y1 = (det.y1 * cropH).toInt() - padPx
-    val x2 = (det.x2 * cropW).toInt() + padPx
-    val y2 = (det.y2 * cropH).toInt() + padPx
+    val x1 = (det.x1Pct * cropW).toInt() - padPx
+    val y1 = (det.y1Pct * cropH).toInt() - padPx
+    val x2 = (det.x2Pct * cropW).toInt() + padPx
+    val y2 = (det.y2Pct * cropH).toInt() + padPx
 
     val left = x1.coerceIn(0, cropW - 1)
     val top = y1.coerceIn(0, cropH - 1)

@@ -81,7 +81,7 @@ class YoloLiteDetector(
             lbScale = lb.scale,
             padX = lb.padX,
             padY = lb.padY
-        ).sortedByDescending { it.score }
+        ).sortedByDescending { it.confidence }
 
         val filteredDets = detectionFilters.fold(dets) { filtered, filter ->
             filter.filter(filtered, cropBitmap.width, cropBitmap.height)

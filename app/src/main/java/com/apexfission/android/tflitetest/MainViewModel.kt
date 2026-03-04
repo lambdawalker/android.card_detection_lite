@@ -26,7 +26,7 @@ class MainViewModel : ViewModel() {
 
                     val current = cutout.objectBitmap.generateDHash(16)
 
-                    val isSimilar = isVisuallySimilar(previous, current, 18)
+                    val isSimilar = isVisuallySimilar(previous, current, 15)
 
                     if (isSimilar) {
                         count += 1
