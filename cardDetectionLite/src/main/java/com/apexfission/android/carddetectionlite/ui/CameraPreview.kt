@@ -66,6 +66,7 @@ fun CameraPreview(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setTargetRotation(previewView.display.rotation)
                 .setResolutionSelector(resolutionSelector)
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
 
 
             val analysisUseCase = analysisUseCaseBuilder.build()

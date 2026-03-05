@@ -3,6 +3,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
+
 import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
@@ -21,7 +22,6 @@ class YoloLiteDetector(
 ) : Closeable {
 
     var enabled: Boolean = true
-    private val yuvToRgb = YuvToRgbConverter()
     private var isClosed = false
 
     private val interpreter = TfliteInterpreter(context, modelPath, useGpu, numThreads)
@@ -92,21 +92,15 @@ class YoloLiteDetector(
         }
     }
 
+
+
     private fun prepareCropAndLetterbox(imageProxy: ImageProxy): Pair<Bitmap, LetterboxResult> {
         val rotation = imageProxy.imageInfo.rotationDegrees
-        val bitmap = yuvToRgb.toBitmap(imageProxy)
+        val bitmap = imageProxy.toBitmap()
         val upright = ImageProcessor.rotateIfNeeded(bitmap, rotation)
 
-        val uprightCropRect = rotateRectToUpright(
-            imageProxy.cropRect, imageProxy.width, imageProxy.height, rotation
-        ).intersectedWith(upright.width, upright.height)
-
-        val cropBitmap = Bitmap.createBitmap(
-            upright, uprightCropRect.left, uprightCropRect.top, uprightCropRect.width(), uprightCropRect.height()
-        )
-
-        val lb = ImageProcessor.letterboxToSquareReusable(cropBitmap, interpreter.inputImageWidth)
-        return cropBitmap to lb
+        val lb = ImageProcessor.letterboxToSquareReusable(upright, interpreter.inputImageWidth)
+        return upright to lb
     }
 
 

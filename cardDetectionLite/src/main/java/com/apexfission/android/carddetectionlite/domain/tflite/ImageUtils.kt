@@ -10,60 +10,6 @@ import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import java.io.ByteArrayOutputStream
 
-/* --------------------------- YUV -> RGB --------------------------- */
-/**
- * NOTE: This still uses YUV -> JPEG -> Bitmap which works but is slow.
- * Biggest future win: replace this with a real YUV_420_888 -> RGB converter (no JPEG).
- */
-class YuvToRgbConverter {
-    private val jpegOut = ByteArrayOutputStream(1024 * 256)
-
-    fun toBitmap(image: ImageProxy): Bitmap {
-        val nv21 = imageToNv21(image)
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null)
-
-        jpegOut.reset()
-        yuvImage.compressToJpeg(Rect(0, 0, image.width, image.height), 90, jpegOut)
-        val bytes = jpegOut.toByteArray()
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-    }
-
-    private fun imageToNv21(image: ImageProxy): ByteArray {
-        val yBuffer = image.planes[0].buffer
-        val uBuffer = image.planes[1].buffer
-        val vBuffer = image.planes[2].buffer
-
-        val ySize = yBuffer.remaining()
-        val uSize = uBuffer.remaining()
-        val vSize = vBuffer.remaining()
-
-        val nv21 = ByteArray(ySize + uSize + vSize)
-        yBuffer.get(nv21, 0, ySize)
-
-        val chromaRowStride = image.planes[1].rowStride
-        val chromaPixelStride = image.planes[1].pixelStride
-
-        val u = ByteArray(uSize).also { uBuffer.get(it) }
-        val v = ByteArray(vSize).also { vBuffer.get(it) }
-
-        var offset = ySize
-        val width = image.width
-        val height = image.height
-        val uvHeight = height / 2
-        val uvWidth = width / 2
-
-        for (row in 0 until uvHeight) {
-            for (col in 0 until uvWidth) {
-                val idx = row * chromaRowStride + col * chromaPixelStride
-                nv21[offset++] = v[idx]
-                nv21[offset++] = u[idx]
-            }
-        }
-
-        return nv21
-    }
-}
-
 /* -------------------------- RECT HELPERS -------------------------- */
 
 /**

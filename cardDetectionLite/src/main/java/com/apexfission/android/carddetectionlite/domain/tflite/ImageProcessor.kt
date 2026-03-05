@@ -25,14 +25,19 @@ object ImageProcessor {
 
     fun letterboxToSquareReusable(src: Bitmap, outSize: Int): LetterboxResult {
         val out = lbOut?.takeIf { it.width == outSize } ?: createBitmap(outSize, outSize).also { lbOut = it }
+
         val canvas = lbCanvas ?: Canvas(out).also { lbCanvas = it }
         val scale = min(outSize / src.width.toFloat(), outSize / src.height.toFloat())
+
         val newW = (src.width * scale).toInt()
         val newH = (src.height * scale).toInt()
+
         val padX = (outSize - newW) / 2f
         val padY = (outSize - newH) / 2f
+
         canvas.drawColor(black)
         canvas.drawBitmap(src, null, RectF(padX, padY, padX + newW, padY + newH), lbPaint)
+
         return LetterboxResult(out, scale, padX, padY)
     }
 
