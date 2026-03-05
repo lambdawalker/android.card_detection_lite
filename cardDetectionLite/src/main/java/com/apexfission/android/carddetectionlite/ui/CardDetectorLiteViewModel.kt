@@ -10,7 +10,7 @@ import androidx.camera.core.MeteringPoint
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
+import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.rotateRectToUpright
@@ -30,7 +30,7 @@ class CardDetectorLiteViewModel(
     application: Application, modelPath: String, useGpu: Boolean, scoreThreshold: Float, detectionFilters: List<DetectionFilter>
 ) : AndroidViewModel(application) {
 
-    private val _detections = MutableStateFlow<List<Det>>(emptyList())
+    private val _detections = MutableStateFlow<List<RawDet>>(emptyList())
     val detections = _detections.asStateFlow()
 
     private val _scalingInfo = MutableStateFlow(PreviewScalingInfo())
@@ -95,7 +95,7 @@ class CardDetectorLiteViewModel(
                 )
 
                 val newDetections = detector.detectCutouts(imageProxy)
-                _detections.value = newDetections.map { it.det }
+                _detections.value = newDetections.map { it.rawDet }
                 onDetections(newDetections)
 
             } catch (t: Throwable) {

@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
+import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import kotlin.math.max
 import kotlin.math.min
 
@@ -8,7 +8,7 @@ import kotlin.math.min
  * An interface for filtering a list of detected objects.
  */
 fun interface DetectionFilter {
-    fun filter(detections: List<Det>, imageWidth: Int, imageHeight: Int): List<Det>
+    fun filter(detections: List<RawDet>, imageWidth: Int, imageHeight: Int): List<RawDet>
 }
 
 /**
@@ -17,7 +17,7 @@ fun interface DetectionFilter {
  * @param margin The minimum distance a detection's bounding box must be from any edge.
  */
 class MarginFilter(private val margin: Int = 20) : DetectionFilter {
-    override fun filter(detections: List<Det>, imageWidth: Int, imageHeight: Int): List<Det> {
+    override fun filter(detections: List<RawDet>, imageWidth: Int, imageHeight: Int): List<RawDet> {
         if (margin <= 0) return detections
 
         return detections.filter {
@@ -39,7 +39,7 @@ class AspectRatioFilter(
     private val minAspectRatio: Float = 1.4f,
     private val maxAspectRatio: Float = 1.8f
 ) : DetectionFilter {
-    override fun filter(detections: List<Det>, imageWidth: Int, imageHeight: Int): List<Det> {
+    override fun filter(detections: List<RawDet>, imageWidth: Int, imageHeight: Int): List<RawDet> {
         return detections.filter {
             val x1 = it.x1Pct * imageWidth
             val y1 = it.y1Pct * imageHeight

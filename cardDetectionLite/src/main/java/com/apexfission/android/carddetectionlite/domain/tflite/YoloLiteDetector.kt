@@ -3,7 +3,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
+import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
@@ -36,7 +36,7 @@ class YoloLiteDetector(
         maxNmsCandidates
     )
 
-    fun detect(bitmap: Bitmap): List<Det> {
+    fun detect(bitmap: Bitmap): List<RawDet> {
         if (!enabled || isClosed) return emptyList()
 
         val lb = ImageProcessor.letterboxToSquareReusable(bitmap, interpreter.inputImageWidth)
@@ -52,7 +52,7 @@ class YoloLiteDetector(
         )
     }
 
-    fun detect(imageProxy: ImageProxy): List<Det> {
+    fun detect(imageProxy: ImageProxy): List<RawDet> {
         if (!enabled || isClosed) return emptyList()
 
         val (cropBitmap, lb) = prepareCropAndLetterbox(imageProxy)

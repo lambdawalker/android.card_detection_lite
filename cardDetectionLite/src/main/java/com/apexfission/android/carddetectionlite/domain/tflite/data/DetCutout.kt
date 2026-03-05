@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Rect
 
 data class DetCutout(
-    val det: Det,
+    val rawDet: RawDet,
     val rectPx: Rect,
     val objectBitmap: Bitmap
 )

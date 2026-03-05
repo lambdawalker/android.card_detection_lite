@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite
 
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
+import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import kotlin.math.max
 import kotlin.math.min
 
@@ -22,7 +22,7 @@ class YoloPostProcessor(
         lbScale: Float,
         padX: Float,
         padY: Float
-    ): List<Det> {
+    ): List<RawDet> {
         val raw = decodeToCropNormalized(output, cropW, cropH, lbScale, padX, padY)
         val capped = if (raw.size > maxNmsCandidates) raw.sortedByDescending { it.confidence }.take(maxNmsCandidates) else raw
         return nms(capped)
@@ -35,8 +35,8 @@ class YoloPostProcessor(
         lbScale: Float,
         padX: Float,
         padY: Float
-    ): List<Det> {
-        val dets = ArrayList<Det>(64)
+    ): List<RawDet> {
+        val rawDets = ArrayList<RawDet>(64)
 
         fun idx(attr: Int, box: Int): Int {
             return if (outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES) (attr * outBoxes + box)
@@ -74,7 +74,7 @@ class YoloPostProcessor(
             val x2C = ((cxI * scaleFactor + (wI * scaleFactor) / 2f) - padX) / lbScale
             val y2C = ((cyI * scaleFactor + (hI * scaleFactor) / 2f) - padY) / lbScale
 
-            dets += Det(
+            rawDets += RawDet(
                 x1Pct = (x1C / cropW).coerceIn(0f, 1f),
                 y1Pct = (y1C / cropH).coerceIn(0f, 1f),
                 x2Pct = (x2C / cropW).coerceIn(0f, 1f),
@@ -83,12 +83,12 @@ class YoloPostProcessor(
                 classId = bestCls
             )
         }
-        return dets
+        return rawDets
     }
 
-    private fun nms(dets: List<Det>): List<Det> {
-        val sorted = dets.sortedByDescending { it.confidence }.toMutableList()
-        val keep = ArrayList<Det>()
+    private fun nms(rawDets: List<RawDet>): List<RawDet> {
+        val sorted = rawDets.sortedByDescending { it.confidence }.toMutableList()
+        val keep = ArrayList<RawDet>()
         while (sorted.isNotEmpty()) {
             val best = sorted.removeAt(0)
             keep += best
@@ -102,7 +102,7 @@ class YoloPostProcessor(
         return keep
     }
 
-    private fun iou(a: Det, b: Det): Float {
+    private fun iou(a: RawDet, b: RawDet): Float {
         val interW = max(0f, min(a.x2Pct, b.x2Pct) - max(a.x1Pct, b.x1Pct))
         val interH = max(0f, min(a.y2Pct, b.y2Pct) - max(a.y1Pct, b.y1Pct))
         val inter = interW * interH

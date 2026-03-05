@@ -6,7 +6,7 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Det
+import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import java.io.ByteArrayOutputStream
 
@@ -118,11 +118,11 @@ fun Rect.intersectedWith(maxW: Int, maxH: Int): Rect {
 }
 
 
-fun detToRectPx(det: Det, cropW: Int, cropH: Int, padPx: Int = 0): Rect {
-    val x1 = (det.x1Pct * cropW).toInt() - padPx
-    val y1 = (det.y1Pct * cropH).toInt() - padPx
-    val x2 = (det.x2Pct * cropW).toInt() + padPx
-    val y2 = (det.y2Pct * cropH).toInt() + padPx
+fun detToRectPx(rawDet: RawDet, cropW: Int, cropH: Int, padPx: Int = 0): Rect {
+    val x1 = (rawDet.x1Pct * cropW).toInt() - padPx
+    val y1 = (rawDet.y1Pct * cropH).toInt() - padPx
+    val x2 = (rawDet.x2Pct * cropW).toInt() + padPx
+    val y2 = (rawDet.y2Pct * cropH).toInt() + padPx
 
     val left = x1.coerceIn(0, cropW - 1)
     val top = y1.coerceIn(0, cropH - 1)
@@ -132,9 +132,9 @@ fun detToRectPx(det: Det, cropW: Int, cropH: Int, padPx: Int = 0): Rect {
     return Rect(left, top, right, bottom)
 }
 
-fun cropDet(cropBitmap: Bitmap, det: Det, padPx: Int = 0): DetCutout {
-    val r: Rect = detToRectPx(det, cropBitmap.width, cropBitmap.height, padPx)
+fun cropDet(cropBitmap: Bitmap, rawDet: RawDet, padPx: Int = 0): DetCutout {
+    val r: Rect = detToRectPx(rawDet, cropBitmap.width, cropBitmap.height, padPx)
     val cut = Bitmap.createBitmap(cropBitmap, r.left, r.top, r.width(), r.height())
-    return DetCutout(det = det, rectPx = r, objectBitmap = cut)
+    return DetCutout(rawDet = rawDet, rectPx = r, objectBitmap = cut)
 }
 
