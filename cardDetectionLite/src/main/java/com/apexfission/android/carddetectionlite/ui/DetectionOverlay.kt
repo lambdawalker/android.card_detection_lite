@@ -45,10 +45,10 @@ fun DetectionOverlay(
         // Assuming the crop covers the whole area used by FILL_CENTER:
         detections.forEach { det ->
             // Scale detection relative to the crop dimensions
-            val cropX1 = det.x1 * scalingInfo.cropW
-            val cropY1 = det.y1 * scalingInfo.cropH
-            val cropX2 = det.x2 * scalingInfo.cropW
-            val cropY2 = det.y2 * scalingInfo.cropH
+            val cropX1 = det.x1Pct * scalingInfo.cropW
+            val cropY1 = det.y1Pct * scalingInfo.cropH
+            val cropX2 = det.x2Pct * scalingInfo.cropW
+            val cropY2 = det.y2Pct * scalingInfo.cropH
 
             val x1 = cropX1 * scale + offsetX
             val y1 = cropY1 * scale + offsetY
@@ -63,11 +63,11 @@ fun DetectionOverlay(
             )
 
             if (showClassNames) {
-                val label = classLabels[det.cls] ?: "ID: ${det.cls}"
+                val label = classLabels[det.classId] ?: "ID: ${det.classId}"
 
 
 
-                val displayString = "$label (${(det.score * 100).toInt()}%) [${x1}, ${y1}, ${x2}, ${y2}]"
+                val displayString = "$label (${(det.confidence * 100).toInt()}%) [${x1}, ${y1}, ${x2}, ${y2}]"
                 val textLayout = textMeasurer.measure(displayString, textStyle)
                 val textTop = if (y1 - textLayout.size.height < 0) y1 else y1 - textLayout.size.height
 
