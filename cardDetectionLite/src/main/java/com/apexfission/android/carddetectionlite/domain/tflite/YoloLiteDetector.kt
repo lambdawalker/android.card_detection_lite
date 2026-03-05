@@ -66,7 +66,9 @@ class YoloLiteDetector(
         val detections = rawDetections.take(maxCutouts).map {
             buildDetection(bitmap, it, 0)
         }.filter {
-            detectionFilters.all { filter -> filter.filter(it, bitmap.width, bitmap.height) }
+            detectionFilters.all { filter ->
+                filter.filter(it, bitmap.width, bitmap.height)
+            }
         }
 
         return detections

@@ -75,8 +75,6 @@ fun CameraPreview(
                 try {
                     onFrameState.value(imageProxy)
                 } catch (_: Throwable) {
-                } finally {
-                    imageProxy.close()
                 }
             }
 
