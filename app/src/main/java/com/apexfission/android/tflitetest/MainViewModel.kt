@@ -4,7 +4,7 @@ package com.apexfission.android.tflitetest
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
+import com.apexfission.android.carddetectionlite.domain.tflite.data.Detection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -16,7 +16,7 @@ class MainViewModel : ViewModel() {
     private var previous: ULong = 0u
     private var count = 0
 
-    fun onDetections(newCutouts: List<DetCutout>) {
+    fun onDetections(newCutouts: List<Detection>) {
         if (newCutouts.isNotEmpty() && _isDetectionEnabled.value) {
             _isDetectionEnabled.value = false
 

@@ -11,7 +11,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
-import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
+import com.apexfission.android.carddetectionlite.domain.tflite.data.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.rotateRectToUpright
 import java.util.concurrent.atomic.AtomicLong
@@ -71,7 +71,7 @@ class CardDetectorLiteViewModel(
         cameraControl.startFocusAndMetering(action)
     }
 
-    fun processImage(imageProxy: ImageProxy, onDetections: (List<DetCutout>) -> Unit) {
+    fun processImage(imageProxy: ImageProxy, onDetections: (List<Detection>) -> Unit) {
         viewModelScope.launch {
             try {
                 if (!_detectorEnabled.value) return@launch

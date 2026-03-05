@@ -3,8 +3,9 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
+import com.apexfission.android.carddetectionlite.domain.tflite.data.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.data.buildDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import java.io.Closeable
 
@@ -56,7 +57,7 @@ class YoloLiteDetector(
         return detect(bitmap)
     }
 
-    fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): List<DetCutout> {
+    fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): List<Detection> {
         if (!enabled) return emptyList()
 
         val bitmap = imageProxy.toUprightBitmap()
@@ -71,15 +72,17 @@ class YoloLiteDetector(
             lbScale = lb.scale,
             padX = lb.padX,
             padY = lb.padY
-        ).sortedByDescending { it.confidence }
-
-        val filteredDetections = detectionFilters.fold(rawDetections) { filtered, filter ->
-            filter.filter(filtered, bitmap.width, bitmap.height)
-        }.take(maxCutouts)
-
-        return filteredDetections.map {
-            cropDet(bitmap, it, 0)
+        ).sortedByDescending {
+            it.confidence
         }
+
+        val detections = rawDetections.map {
+            buildDetection(bitmap, it, 0)
+        }.filter {
+            detectionFilters.all { filter -> filter.filter(it, bitmap.width, bitmap.height) }
+        }
+
+        return detections
     }
 
     @Synchronized

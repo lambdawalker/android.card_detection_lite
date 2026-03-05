@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
-import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.data.Detection
 import kotlin.math.max
 import kotlin.math.min
 
@@ -8,7 +8,7 @@ import kotlin.math.min
  * An interface for filtering a list of detected objects.
  */
 fun interface DetectionFilter {
-    fun filter(detections: List<RawDet>, imageWidth: Int, imageHeight: Int): List<RawDet>
+    fun filter(detection: Detection, imageWidth: Int, imageHeight: Int): Boolean
 }
 
 /**
@@ -17,15 +17,14 @@ fun interface DetectionFilter {
  * @param margin The minimum distance a detection's bounding box must be from any edge.
  */
 class MarginFilter(private val margin: Int = 20) : DetectionFilter {
-    override fun filter(detections: List<RawDet>, imageWidth: Int, imageHeight: Int): List<RawDet> {
-        if (margin <= 0) return detections
+    override fun filter(detection: Detection, imageWidth: Int, imageHeight: Int): Boolean {
+        if (margin <= 0) return true
 
-        return detections.filter {
-            it.x1Pct * imageWidth >= margin &&
-                it.y1Pct * imageHeight >= margin &&
-                it.x2Pct * imageWidth <= imageWidth - margin &&
-                it.y2Pct * imageHeight <= imageHeight - margin
-        }
+        return detection.coordinates.top >= margin &&
+            detection.coordinates.left >= margin &&
+            detection.coordinates.right <= imageWidth - margin &&
+            detection.coordinates.bottom <= imageHeight - margin
+
     }
 }
 
@@ -39,23 +38,22 @@ class AspectRatioFilter(
     private val minAspectRatio: Float = 1.4f,
     private val maxAspectRatio: Float = 1.8f
 ) : DetectionFilter {
-    override fun filter(detections: List<RawDet>, imageWidth: Int, imageHeight: Int): List<RawDet> {
-        return detections.filter {
-            val x1 = it.x1Pct * imageWidth
-            val y1 = it.y1Pct * imageHeight
-            val x2 = it.x2Pct * imageWidth
-            val y2 = it.y2Pct * imageHeight
+    override fun filter(detection: Detection, imageWidth: Int, imageHeight: Int): Boolean {
+        val x1 = detection.coordinates.left
+        val y1 = detection.coordinates.top
+        val x2 = detection.coordinates.right
+        val y2 = detection.coordinates.bottom
 
-            val width = x2 - x1
-            val height = y2 - y1
-            val u = min(width, height)
-            val v = max(width, height)
-            if (u > 0) {
-                val aspectRatio = v / u
-                aspectRatio in minAspectRatio..maxAspectRatio
-            } else {
-                false
-            }
+        val width = x2 - x1
+        val height = y2 - y1
+        val u = min(width, height).toFloat()
+        val v = max(width, height).toFloat()
+
+        if (u > 0) {
+            val aspectRatio = v / u
+            return aspectRatio in minAspectRatio..maxAspectRatio
+        } else {
+            return false
         }
     }
 }

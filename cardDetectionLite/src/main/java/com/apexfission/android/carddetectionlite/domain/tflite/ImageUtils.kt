@@ -1,8 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite
 
-import android.graphics.Bitmap
 import android.graphics.Rect
-import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
 import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 
 /* -------------------------- RECT HELPERS -------------------------- */
@@ -51,23 +49,17 @@ fun rotateRectToUpright(rect: Rect, srcW: Int, srcH: Int, rotationDegrees: Int):
 }
 
 
-fun detToRectPx(rawDet: RawDet, cropW: Int, cropH: Int, padPx: Int = 0): Rect {
-    val x1 = (rawDet.x1Pct * cropW).toInt() - padPx
-    val y1 = (rawDet.y1Pct * cropH).toInt() - padPx
-    val x2 = (rawDet.x2Pct * cropW).toInt() + padPx
-    val y2 = (rawDet.y2Pct * cropH).toInt() + padPx
+fun rawDetectionToPixels(rawDet: RawDet, originalWidth: Int, originalHeight: Int, padding: Int = 0): Rect {
+    val x1 = (rawDet.x1Pct * originalWidth).toInt() - padding
+    val y1 = (rawDet.y1Pct * originalHeight).toInt() - padding
+    val x2 = (rawDet.x2Pct * originalWidth).toInt() + padding
+    val y2 = (rawDet.y2Pct * originalHeight).toInt() + padding
 
-    val left = x1.coerceIn(0, cropW - 1)
-    val top = y1.coerceIn(0, cropH - 1)
-    val right = x2.coerceIn(left + 1, cropW)   // ensure width >= 1
-    val bottom = y2.coerceIn(top + 1, cropH)   // ensure height >= 1
+    val left = x1.coerceIn(0, originalWidth - 1)
+    val top = y1.coerceIn(0, originalHeight - 1)
+    val right = x2.coerceIn(left + 1, originalWidth)   // ensure width >= 1
+    val bottom = y2.coerceIn(top + 1, originalHeight)   // ensure height >= 1
 
     return Rect(left, top, right, bottom)
-}
-
-fun cropDet(cropBitmap: Bitmap, rawDet: RawDet, padPx: Int = 0): DetCutout {
-    val r: Rect = detToRectPx(rawDet, cropBitmap.width, cropBitmap.height, padPx)
-    val cut = Bitmap.createBitmap(cropBitmap, r.left, r.top, r.width(), r.height())
-    return DetCutout(rawDet = rawDet, rectPx = r, objectBitmap = cut)
 }
 
