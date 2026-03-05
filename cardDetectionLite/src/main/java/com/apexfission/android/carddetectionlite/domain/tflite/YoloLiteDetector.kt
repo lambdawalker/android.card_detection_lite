@@ -3,9 +3,8 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
-
-import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
+import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import java.io.Closeable
 
@@ -53,19 +52,8 @@ class YoloLiteDetector(
 
     fun detect(imageProxy: ImageProxy): List<RawDet> {
         if (!enabled || isClosed) return emptyList()
-
         val bitmap = imageProxy.toUprightBitmap()
-        val lb = ImageProcessor.letterboxToSquareReusable(bitmap, interpreter.inputImageWidth)
-        val output = interpreter.runInference(lb.bitmap)
-
-        return postProcessor.process(
-            output = output,
-            width = bitmap.width,
-            height = bitmap.height,
-            lbScale = lb.scale,
-            padX = lb.padX,
-            padY = lb.padY
-        )
+        return detect(bitmap)
     }
 
     fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): List<DetCutout> {
@@ -73,7 +61,6 @@ class YoloLiteDetector(
 
         val bitmap = imageProxy.toUprightBitmap()
         val lb = ImageProcessor.letterboxToSquareReusable(bitmap, interpreter.inputImageWidth)
-
 
         val output = interpreter.runInference(lb.bitmap)
 
