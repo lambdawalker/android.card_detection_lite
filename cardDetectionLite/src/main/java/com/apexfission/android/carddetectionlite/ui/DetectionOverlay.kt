@@ -66,7 +66,6 @@ fun DetectionOverlay(
                 val label = classLabels[det.classId] ?: "ID: ${det.classId}"
 
 
-
                 val displayString = "$label (${(det.confidence * 100).toInt()}%) [${x1}, ${y1}, ${x2}, ${y2}]"
                 val textLayout = textMeasurer.measure(displayString, textStyle)
                 val textTop = if (y1 - textLayout.size.height < 0) y1 else y1 - textLayout.size.height

@@ -41,6 +41,7 @@ class TfliteInterpreter(
     private val outZeroPoint: Int
 
     enum class OutputLayout { ATTRS_X_BOXES, BOXES_X_ATTRS }
+
     val outLayout: OutputLayout
     val outAttrs: Int
     val outBoxes: Int

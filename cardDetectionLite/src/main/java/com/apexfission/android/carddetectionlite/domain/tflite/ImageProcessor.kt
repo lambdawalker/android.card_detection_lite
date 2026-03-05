@@ -6,9 +6,9 @@ import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
+import androidx.core.graphics.createBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
 import kotlin.math.min
-import androidx.core.graphics.createBitmap
 
 object ImageProcessor {
 

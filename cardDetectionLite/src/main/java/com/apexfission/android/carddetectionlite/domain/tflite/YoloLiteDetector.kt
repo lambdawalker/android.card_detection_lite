@@ -58,23 +58,10 @@ class YoloLiteDetector(
     }
 
     fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): List<Detection> {
-        if (!enabled) return emptyList()
+        if (!enabled || isClosed) return emptyList()
 
         val bitmap = imageProxy.toUprightBitmap()
-        val lb = ImageProcessor.letterboxToSquareReusable(bitmap, interpreter.inputImageWidth)
-
-        val output = interpreter.runInference(lb.bitmap)
-
-        val rawDetections = postProcessor.process(
-            output = output,
-            width = bitmap.width,
-            height = bitmap.height,
-            lbScale = lb.scale,
-            padX = lb.padX,
-            padY = lb.padY
-        ).sortedByDescending {
-            it.confidence
-        }
+        val rawDetections = detect(bitmap)
 
         val detections = rawDetections.map {
             buildDetection(bitmap, it, 0)
