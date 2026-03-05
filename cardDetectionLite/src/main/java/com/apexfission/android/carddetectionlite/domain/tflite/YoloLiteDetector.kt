@@ -63,7 +63,7 @@ class YoloLiteDetector(
         val bitmap = imageProxy.toUprightBitmap()
         val rawDetections = detect(bitmap)
 
-        val detections = rawDetections.map {
+        val detections = rawDetections.take(maxCutouts).map {
             buildDetection(bitmap, it, 0)
         }.filter {
             detectionFilters.all { filter -> filter.filter(it, bitmap.width, bitmap.height) }
