@@ -17,13 +17,13 @@ class YoloPostProcessor(
 
     fun process(
         output: FloatArray,
-        cropW: Int,
-        cropH: Int,
+        width: Int,
+        height: Int,
         lbScale: Float,
         padX: Float,
         padY: Float
     ): List<RawDet> {
-        val raw = decodeToCropNormalized(output, cropW, cropH, lbScale, padX, padY)
+        val raw = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
         val capped = if (raw.size > maxNmsCandidates) raw.sortedByDescending { it.confidence }.take(maxNmsCandidates) else raw
         return nms(capped)
     }

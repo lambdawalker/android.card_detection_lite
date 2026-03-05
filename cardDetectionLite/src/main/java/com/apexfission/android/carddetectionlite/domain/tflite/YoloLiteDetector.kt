@@ -6,7 +6,6 @@ import androidx.camera.core.ImageProxy
 
 import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
-import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import java.io.Closeable
 
@@ -44,8 +43,8 @@ class YoloLiteDetector(
 
         return postProcessor.process(
             output = output,
-            cropW = bitmap.width,
-            cropH = bitmap.height,
+            width = bitmap.width,
+            height = bitmap.height,
             lbScale = lb.scale,
             padX = lb.padX,
             padY = lb.padY
@@ -55,13 +54,14 @@ class YoloLiteDetector(
     fun detect(imageProxy: ImageProxy): List<RawDet> {
         if (!enabled || isClosed) return emptyList()
 
-        val (cropBitmap, lb) = prepareCropAndLetterbox(imageProxy)
+        val bitmap = imageProxy.toUprightBitmap()
+        val lb = ImageProcessor.letterboxToSquareReusable(bitmap, interpreter.inputImageWidth)
         val output = interpreter.runInference(lb.bitmap)
 
         return postProcessor.process(
             output = output,
-            cropW = cropBitmap.width,
-            cropH = cropBitmap.height,
+            width = bitmap.width,
+            height = bitmap.height,
             lbScale = lb.scale,
             padX = lb.padX,
             padY = lb.padY
@@ -71,38 +71,29 @@ class YoloLiteDetector(
     fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): List<DetCutout> {
         if (!enabled) return emptyList()
 
-        val (cropBitmap, lb) = prepareCropAndLetterbox(imageProxy)
+        val bitmap = imageProxy.toUprightBitmap()
+        val lb = ImageProcessor.letterboxToSquareReusable(bitmap, interpreter.inputImageWidth)
+
+
         val output = interpreter.runInference(lb.bitmap)
 
-        val dets = postProcessor.process(
+        val rawDetections = postProcessor.process(
             output = output,
-            cropW = cropBitmap.width,
-            cropH = cropBitmap.height,
+            width = bitmap.width,
+            height = bitmap.height,
             lbScale = lb.scale,
             padX = lb.padX,
             padY = lb.padY
         ).sortedByDescending { it.confidence }
 
-        val filteredDets = detectionFilters.fold(dets) { filtered, filter ->
-            filter.filter(filtered, cropBitmap.width, cropBitmap.height)
+        val filteredDetections = detectionFilters.fold(rawDetections) { filtered, filter ->
+            filter.filter(filtered, bitmap.width, bitmap.height)
         }.take(maxCutouts)
 
-        return filteredDets.map {
-            cropDet(cropBitmap, it, 0)
+        return filteredDetections.map {
+            cropDet(bitmap, it, 0)
         }
     }
-
-
-
-    private fun prepareCropAndLetterbox(imageProxy: ImageProxy): Pair<Bitmap, LetterboxResult> {
-        val rotation = imageProxy.imageInfo.rotationDegrees
-        val bitmap = imageProxy.toBitmap()
-        val upright = ImageProcessor.rotateIfNeeded(bitmap, rotation)
-
-        val lb = ImageProcessor.letterboxToSquareReusable(upright, interpreter.inputImageWidth)
-        return upright to lb
-    }
-
 
     @Synchronized
     override fun close() {

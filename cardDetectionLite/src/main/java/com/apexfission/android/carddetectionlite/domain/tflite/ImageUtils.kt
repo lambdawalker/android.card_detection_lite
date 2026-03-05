@@ -55,14 +55,6 @@ fun rotateRectToUpright(rect: Rect, srcW: Int, srcH: Int, rotationDegrees: Int):
     }
 }
 
-fun Rect.intersectedWith(maxW: Int, maxH: Int): Rect {
-    val l = left.coerceIn(0, maxW)
-    val t = top.coerceIn(0, maxH)
-    val r = right.coerceIn(0, maxW)
-    val b = bottom.coerceIn(0, maxH)
-    return Rect(l, t, r, b)
-}
-
 
 fun detToRectPx(rawDet: RawDet, cropW: Int, cropH: Int, padPx: Int = 0): Rect {
     val x1 = (rawDet.x1Pct * cropW).toInt() - padPx
