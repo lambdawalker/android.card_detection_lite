@@ -1,14 +1,9 @@
 package com.apexfission.android.carddetectionlite.domain.tflite
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
 import android.graphics.Rect
-import android.graphics.YuvImage
-import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 import com.apexfission.android.carddetectionlite.domain.tflite.data.DetCutout
-import java.io.ByteArrayOutputStream
+import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
 
 /* -------------------------- RECT HELPERS -------------------------- */
 
