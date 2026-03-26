@@ -9,9 +9,6 @@ plugins {
 }
 
 extensions.configure<LibraryExtension>  {
-    androidResources {
-        noCompress += listOf("tflite")
-    }
     namespace = "com.apexfission.android.carddetectionlite"
     compileSdk = 36
 

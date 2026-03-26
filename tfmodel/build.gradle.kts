@@ -9,9 +9,7 @@ plugins {
 
 extensions.configure<LibraryExtension> {
     namespace = "com.apexfission.android.carddetectionlite.tfmodel"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -26,6 +24,7 @@ extensions.configure<LibraryExtension> {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -56,8 +55,8 @@ mavenPublishing {
 mavenPublishing {
     coordinates(
         "com.apexfission.android.carddetectionlite",
-        "tfmodel",
-        "0.0.1-A0"
+        "tfmodel-Y11-640-F16",
+        "0.0.1-A1"
     )
 
     pom {

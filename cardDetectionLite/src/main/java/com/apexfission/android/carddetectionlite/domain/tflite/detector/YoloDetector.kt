@@ -4,38 +4,36 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
 import androidx.compose.ui.unit.IntSize
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
-import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDet
-import com.apexfission.android.carddetectionlite.domain.tflite.model.buildDetection
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.image.LetterboxBuilder
 import com.apexfission.android.carddetectionlite.domain.tflite.image.centerCropSquare
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropToAspectRatio
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detections
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetections
+import com.apexfission.android.carddetectionlite.domain.tflite.model.buildDetection
 import java.io.Closeable
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class YoloLiteDetector(
+interface Detector : Closeable {
+    var enabled: Boolean
+
+    fun detect(bitmap: Bitmap): RawDetections
+    fun detect(imageProxy: ImageProxy): RawDetections
+    fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): Detections
+}
+
+class YoloDetector(
     context: Context,
     modelPath: String,
     scoreThreshold: Float,
     iouThreshold: Float,
     useGpu: Boolean,
-    private val detectionFilters: List<DetectionFilter> = emptyList(),
     maxNmsCandidates: Int = 300,
     numThreads: Int? = null,
     private val canvasSize: MutableStateFlow<IntSize>,
     private val imageMode: InputShape,
-) : Closeable {
-
-    enum class InputShape {
-        FullImage,
-        SquareCrop,
-        VisibleImage,
-        VisibleImageSquareCrop
-    }
-
-    var enabled: Boolean = true
+) : Detector {
+    override var enabled: Boolean = true
     private var isClosed = false
 
     private val interpreter = TfliteInterpreter(context, modelPath, useGpu, numThreads)
@@ -51,8 +49,9 @@ class YoloLiteDetector(
         maxNmsCandidates
     )
 
-    fun detect(bitmap: Bitmap): List<RawDet> {
-        if (!enabled || isClosed) return emptyList()
+    override fun detect(bitmap: Bitmap): RawDetections {
+        if (!enabled || isClosed) return RawDetections(emptyList(), bitmap.width, bitmap.height)
+
 
         val croppedBitmap = when (imageMode) {
             InputShape.FullImage -> bitmap
@@ -64,7 +63,7 @@ class YoloLiteDetector(
         val letterboxResult = LetterboxBuilder.build(croppedBitmap, interpreter.inputImageWidth)
         val output: FloatArray = interpreter.runInference(letterboxResult.bitmap)
 
-        return postProcessor.process(
+        val rawDetections = postProcessor.process(
             output = output,
             width = croppedBitmap.width,
             height = croppedBitmap.height,
@@ -74,29 +73,31 @@ class YoloLiteDetector(
             padX = letterboxResult.padX,
             padY = letterboxResult.padY
         )
+
+        return RawDetections(
+            rawDetections,
+            croppedBitmap.width,
+            croppedBitmap.height
+        )
     }
 
-    fun detect(imageProxy: ImageProxy): List<RawDet> {
-        if (!enabled || isClosed) return emptyList()
+    override fun detect(imageProxy: ImageProxy): RawDetections {
+        if (!enabled || isClosed) return RawDetections(emptyList(), imageProxy.width, imageProxy.height)
         val bitmap = imageProxy.toUprightBitmap()
         return detect(bitmap)
     }
 
-    fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): List<Detection> {
-        if (!enabled || isClosed) return emptyList()
+    override fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int): Detections {
+        if (!enabled || isClosed) return Detections(emptyList(), imageProxy.width, imageProxy.height)
 
         val bitmap = imageProxy.toUprightBitmap()
         val rawDetections = detect(bitmap)
 
-        val detections = rawDetections.take(maxCutouts).map {
+        val detections = rawDetections.rawDetections.take(maxCutouts).map {
             buildDetection(bitmap, it, 0)
-        }.filter {
-            detectionFilters.all { filter ->
-                filter.filter(it, bitmap.width, bitmap.height)
-            }
         }
 
-        return detections
+        return Detections(detections, rawDetections.imageWidth, rawDetections.imageHeight)
     }
 
     @Synchronized

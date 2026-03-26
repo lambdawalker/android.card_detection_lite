@@ -13,13 +13,13 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetection
 
 import kotlin.math.max
 
 @Composable
 fun DetectionOverlay(
-    detections: List<RawDet>,
+    detections: List<RawDetection>,
     scalingInfo: PreviewScalingInfo,
     showClassNames: Boolean,
     classLabels: Map<Int, String>

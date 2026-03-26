@@ -10,11 +10,13 @@ import androidx.camera.core.MeteringPoint
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloLiteDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloCardDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.image.rotateRectToUpright
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
-import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetection
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,14 +32,15 @@ data class PreviewScalingInfo(
 class CardDetectorLiteViewModel(
     application: Application,
     modelPath: String,
+    cardClasses: List<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,
     detectionFilters: List<DetectionFilter>,
     canvasSize: MutableStateFlow<IntSize>,
-    imageMode: YoloLiteDetector.InputShape
+    imageMode: InputShape
 ) : AndroidViewModel(application) {
 
-    private val _detections = MutableStateFlow<List<RawDet>>(emptyList())
+    private val _detections = MutableStateFlow<List<RawDetection>>(emptyList())
     val detections = _detections.asStateFlow()
 
     private val _scalingInfo = MutableStateFlow(PreviewScalingInfo())
@@ -49,15 +52,18 @@ class CardDetectorLiteViewModel(
     private val _flashlightEnabled = MutableStateFlow(false)
     val flashlightEnabled = _flashlightEnabled.asStateFlow()
 
-    private val detector = YoloLiteDetector(
-        context = application.applicationContext,
-        modelPath = modelPath,
-        scoreThreshold = scoreThreshold,
-        iouThreshold = 0.45f,
-        useGpu = useGpu,
-        detectionFilters = detectionFilters,
-        canvasSize = canvasSize,
-        imageMode = imageMode
+    private val detector = YoloCardDetector(
+        YoloDetector(
+            context = application.applicationContext,
+            modelPath = modelPath,
+            scoreThreshold = scoreThreshold,
+            iouThreshold = 0.45f,
+            useGpu = useGpu,
+            canvasSize = canvasSize,
+            imageMode = imageMode
+        ),
+        detectionFilters,
+        cardClasses
     )
 
     private val lastInferMs = AtomicLong(0L)
@@ -103,8 +109,8 @@ class CardDetectorLiteViewModel(
                     cropW = uprightCrop.width().toFloat(), cropH = uprightCrop.height().toFloat(), fullW = fullW, fullH = fullH
                 )
 
-                val newDetections = detector.detectCutouts(imageProxy)
-                _detections.value = newDetections.map { it.rawDet }
+                val newDetections: List<Detection> = detector.detect(imageProxy)
+                _detections.value = newDetections.map { it.rawDetection }
                 onDetections(newDetections)
 
             } catch (t: Throwable) {

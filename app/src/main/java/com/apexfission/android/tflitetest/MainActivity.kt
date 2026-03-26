@@ -12,10 +12,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloLiteDetector
-
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
+import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
+
 import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.CardDetectorLite
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
                                 .padding(innerPadding),
                             modelPath = ModelCatalog.TfLite.modelPath,
                             classLabels = ModelCatalog.TfLite.classes,
+                            cardClasses = ModelCatalog.TfLite.cardClasses,
                             useGpu = true,
                             scoreThreshold = 0.50f,
                             showBoundingBoxes = true,
@@ -56,11 +58,11 @@ class MainActivity : ComponentActivity() {
                             onDetections = {
                                 mainViewModel.onDetections(it)
                             },
-                            detectionFilters = listOf(
+                            cardDetectionFilters = listOf(
                                 MarginFilter(),
                                 AspectRatioFilter()
                             ),
-                            imageMode = YoloLiteDetector.InputShape.VisibleImageSquareCrop
+                            imageMode = InputShape.SquareCrop
                         )
                     }
                 }

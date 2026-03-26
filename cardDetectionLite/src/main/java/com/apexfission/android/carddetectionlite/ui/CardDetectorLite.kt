@@ -23,7 +23,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloLiteDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
@@ -38,12 +38,13 @@ class CardDetectorLiteViewModelFactory(
     private val scoreThreshold: Float,
     private val detectionFilters: List<DetectionFilter>,
     private val canvasSize: MutableStateFlow<IntSize>,
-    private val imageMode: YoloLiteDetector.InputShape
+    private val imageMode: InputShape,
+    private val cardClasses: List<Int>
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST") return CardDetectorLiteViewModel(
-                application, modelPath, useGpu, scoreThreshold, detectionFilters, canvasSize, imageMode
+                application, modelPath, cardClasses, useGpu, scoreThreshold, detectionFilters, canvasSize, imageMode
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
@@ -54,6 +55,7 @@ class CardDetectorLiteViewModelFactory(
 fun CardDetectorLite(
     modelPath: String,
     classLabels: Map<Int, String>,
+    cardClasses: List<Int>,
     isDetectionEnabled: Boolean,
     modifier: Modifier = Modifier,
     useGpu: Boolean = true,
@@ -62,11 +64,11 @@ fun CardDetectorLite(
     showFlashlightSwitch: Boolean = true,
     scoreThreshold: Float = 0.70f,
     analysisTargetResolution: Size = Size(1920, 1080),
-    detectionFilters: List<DetectionFilter> = listOf(
+    cardDetectionFilters: List<DetectionFilter> = listOf(
         MarginFilter(), AspectRatioFilter()
     ),
     onDetections: (List<Detection>) -> Unit,
-    imageMode: YoloLiteDetector.InputShape = YoloLiteDetector.InputShape.SquareCrop
+    imageMode: InputShape = InputShape.SquareCrop
 ) {
     val context = LocalContext.current
 
@@ -77,9 +79,10 @@ fun CardDetectorLite(
         factory = CardDetectorLiteViewModelFactory(
             application = context.applicationContext as Application,
             modelPath = modelPath,
+            cardClasses = cardClasses,
             useGpu = useGpu,
             scoreThreshold = scoreThreshold,
-            detectionFilters = detectionFilters,
+            detectionFilters = cardDetectionFilters,
             canvasSize = sizeInPixels,
             imageMode = imageMode
         )

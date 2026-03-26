@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
-import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetection
 import kotlin.math.max
 import kotlin.math.min
 
@@ -17,8 +17,8 @@ class YoloPostProcessor(
 
     fun process(
         output: FloatArray, width: Int, height: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
-    ): List<RawDet> {
-        val raw: List<RawDet> = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
+    ): List<RawDetection> {
+        val raw: List<RawDetection> = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
         val remapped = mapFromCropCoordinatesToTheOriginalImageSpace(raw, width, height, originalWidth, originalHeight)
         val capped = if (remapped.size > maxNmsCandidates) remapped.sortedByDescending { it.confidence }.take(maxNmsCandidates) else remapped
         return nms(capped)
@@ -29,8 +29,8 @@ class YoloPostProcessor(
      * This function translate the coordinates of the detection to the original image size.
      */
     private fun mapFromCropCoordinatesToTheOriginalImageSpace(
-        rawDetections: List<RawDet>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
-    ): List<RawDet> {
+        rawDetections: List<RawDetection>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
+    ): List<RawDetection> {
         if (width == originalWidth && height == originalHeight) return rawDetections
 
         val xMarginInPixels: Float = (originalWidth - width) / 2.toFloat()
@@ -42,7 +42,7 @@ class YoloPostProcessor(
         val yTranslationFactor = height / originalHeight.toFloat()
 
         val remapped = rawDetections.map {
-            RawDet(
+            RawDetection(
                 confidence = it.confidence,
                 x1Pct = it.x1Pct * xTranslationFactor + xPercentageMargin,
                 y1Pct = it.y1Pct * yTranslationFactor + yPercentageMargin,
@@ -57,8 +57,8 @@ class YoloPostProcessor(
 
     private fun decodeToCropNormalized(
         output: FloatArray, cropW: Int, cropH: Int, lbScale: Float, padX: Float, padY: Float
-    ): List<RawDet> {
-        val rawDets = ArrayList<RawDet>(64)
+    ): List<RawDetection> {
+        val rawDetections = ArrayList<RawDetection>(64)
 
         fun idx(attr: Int, box: Int): Int {
             return if (outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES) (attr * outBoxes + box)
@@ -96,7 +96,7 @@ class YoloPostProcessor(
             val x2C = ((cxI * scaleFactor + (wI * scaleFactor) / 2f) - padX) / lbScale
             val y2C = ((cyI * scaleFactor + (hI * scaleFactor) / 2f) - padY) / lbScale
 
-            rawDets += RawDet(
+            rawDetections += RawDetection(
                 x1Pct = (x1C / cropW).coerceIn(0f, 1f),
                 y1Pct = (y1C / cropH).coerceIn(0f, 1f),
                 x2Pct = (x2C / cropW).coerceIn(0f, 1f),
@@ -105,12 +105,12 @@ class YoloPostProcessor(
                 classId = bestCls
             )
         }
-        return rawDets
+        return rawDetections
     }
 
-    private fun nms(rawDets: List<RawDet>): List<RawDet> {
-        val sorted = rawDets.sortedByDescending { it.confidence }.toMutableList()
-        val keep = ArrayList<RawDet>()
+    private fun nms(rawDetections: List<RawDetection>): List<RawDetection> {
+        val sorted = rawDetections.sortedByDescending { it.confidence }.toMutableList()
+        val keep = ArrayList<RawDetection>()
         while (sorted.isNotEmpty()) {
             val best = sorted.removeAt(0)
             keep += best
@@ -124,7 +124,7 @@ class YoloPostProcessor(
         return keep
     }
 
-    private fun iou(a: RawDet, b: RawDet): Float {
+    private fun iou(a: RawDetection, b: RawDetection): Float {
         val interW = max(0f, min(a.x2Pct, b.x2Pct) - max(a.x1Pct, b.x1Pct))
         val interH = max(0f, min(a.y2Pct, b.y2Pct) - max(a.y1Pct, b.y1Pct))
         val inter = interW * interH
