@@ -3,27 +3,20 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
 import androidx.core.graphics.createBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
 import kotlin.math.min
 
-object ImageProcessor {
+object LetterboxBuilder {
 
     private var lbOut: Bitmap? = null
     private var lbCanvas: Canvas? = null
     private val lbPaint = Paint(Paint.FILTER_BITMAP_FLAG)
     private val black = Color.BLACK
 
-    fun rotateIfNeeded(bm: Bitmap, deg: Int): Bitmap {
-        if (deg == 0) return bm
-        val m = Matrix().apply { postRotate(deg.toFloat()) }
-        return Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, m, true)
-    }
-
-    fun letterboxToSquareReusable(src: Bitmap, outSize: Int): LetterboxResult {
+    fun build(src: Bitmap, outSize: Int): LetterboxResult {
         val out = lbOut?.takeIf { it.width == outSize } ?: createBitmap(outSize, outSize).also { lbOut = it }
 
         val canvas = lbCanvas ?: Canvas(out).also { lbCanvas = it }

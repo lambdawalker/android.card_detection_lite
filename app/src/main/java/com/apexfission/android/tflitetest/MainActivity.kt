@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
+import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
 import com.apexfission.android.carddetectionlite.tfmodel.classes
@@ -55,10 +56,10 @@ class MainActivity : ComponentActivity() {
                                 mainViewModel.onDetections(it)
                             },
                             detectionFilters = listOf(
-                                MarginFilter(),
-                                AspectRatioFilter()
-
-                            )
+//                                MarginFilter(),
+//                                AspectRatioFilter()
+                            ),
+                            imageMode = YoloLiteDetector.InputShape.VisibleImageSquareCrop
                         )
                     }
                 }

@@ -21,10 +21,32 @@ class YoloPostProcessor(
         height: Int,
         lbScale: Float,
         padX: Float,
-        padY: Float
+        padY: Float,
+        originalWidth: Int,
+        originalHeight: Int
     ): List<RawDet> {
-        val raw = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
-        val capped = if (raw.size > maxNmsCandidates) raw.sortedByDescending { it.confidence }.take(maxNmsCandidates) else raw
+        val raw: List<RawDet> = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
+
+        val xMarginInPixels: Float = (originalWidth - width) / 2.toFloat()
+        val xPercentageMargin: Float = xMarginInPixels / originalWidth.toFloat()
+        val xTranslationFactor: Float = width / originalWidth.toFloat()
+
+        val yMarginInPixels = (originalHeight - height) / 2.toFloat()
+        val yPercentageMargin = yMarginInPixels / originalHeight.toFloat()
+        val yTranslationFactor = height / originalHeight.toFloat()
+
+        val remapped = raw.map {
+            RawDet(
+                confidence = it.confidence,
+                x1Pct = it.x1Pct * xTranslationFactor + xPercentageMargin,
+                y1Pct = it.y1Pct * yTranslationFactor + yPercentageMargin,
+                x2Pct = it.x2Pct * xTranslationFactor + xPercentageMargin,
+                y2Pct = it.y2Pct * yTranslationFactor + yPercentageMargin,
+                classId = it.classId
+            )
+        }
+
+        val capped = if (remapped.size > maxNmsCandidates) remapped.sortedByDescending { it.confidence }.take(maxNmsCandidates) else remapped
         return nms(capped)
     }
 

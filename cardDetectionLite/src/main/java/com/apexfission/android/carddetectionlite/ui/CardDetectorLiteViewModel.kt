@@ -7,6 +7,7 @@ import androidx.camera.core.CameraControl
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.MeteringPoint
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
@@ -27,7 +28,13 @@ data class PreviewScalingInfo(
 )
 
 class CardDetectorLiteViewModel(
-    application: Application, modelPath: String, useGpu: Boolean, scoreThreshold: Float, detectionFilters: List<DetectionFilter>
+    application: Application,
+    modelPath: String,
+    useGpu: Boolean,
+    scoreThreshold: Float,
+    detectionFilters: List<DetectionFilter>,
+    canvasSize: MutableStateFlow<IntSize>,
+    imageMode: YoloLiteDetector.InputShape
 ) : AndroidViewModel(application) {
 
     private val _detections = MutableStateFlow<List<RawDet>>(emptyList())
@@ -48,7 +55,9 @@ class CardDetectorLiteViewModel(
         scoreThreshold = scoreThreshold,
         iouThreshold = 0.45f,
         useGpu = useGpu,
-        detectionFilters = detectionFilters
+        detectionFilters = detectionFilters,
+        canvasSize = canvasSize,
+        imageMode = imageMode
     )
 
     private val lastInferMs = AtomicLong(0L)

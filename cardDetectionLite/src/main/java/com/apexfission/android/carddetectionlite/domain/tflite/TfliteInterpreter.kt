@@ -3,6 +3,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.SystemClock
+import android.util.Log
 import java.io.Closeable
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -20,7 +21,9 @@ class TfliteInterpreter(
     useGpu: Boolean,
     numThreads: Int?
 ) : Closeable {
-
+    companion object{
+        val tag = "TfliteInterpreter"
+    }
     private var interpreter: Interpreter
     private var gpuDelegate: GpuDelegate? = null
     private var isClosed = false
@@ -70,7 +73,16 @@ class TfliteInterpreter(
         outAttrs = if (outLayout == OutputLayout.ATTRS_X_BOXES) dim1 else dim2
         outBoxes = if (outLayout == OutputLayout.ATTRS_X_BOXES) dim2 else dim1
         numClasses = outAttrs - 4
+
         temp.close()
+
+        Log.i(tag, "Classes $numClasses")
+        Log.i(tag, "Boxes $outBoxes")
+        Log.i(tag, "Attrs $outAttrs")
+        Log.i(tag, "Layout $outLayout")
+        Log.i(tag, "Int8 $isInt8")
+        Log.i(tag, "Input width $inputImageWidth")
+
 
         pixelBuffer = IntArray(inputImageWidth * inputImageWidth)
 
@@ -88,7 +100,7 @@ class TfliteInterpreter(
                     gpuDelegate = GpuDelegate()
                     options.addDelegate(gpuDelegate)
                 }
-            } catch (t: Throwable) {
+            } catch (_: Throwable) {
                 gpuDelegate = null
             }
         }
