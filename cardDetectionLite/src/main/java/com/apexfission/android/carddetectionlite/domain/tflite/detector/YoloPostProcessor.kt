@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
-import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import kotlin.math.max
 import kotlin.math.min
 
@@ -17,8 +17,8 @@ class YoloPostProcessor(
 
     fun process(
         output: FloatArray, width: Int, height: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
-    ): List<RawDetection> {
-        val raw: List<RawDetection> = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
+    ): List<Detection> {
+        val raw: List<Detection> = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
         val remapped = mapFromCropCoordinatesToTheOriginalImageSpace(raw, width, height, originalWidth, originalHeight)
         val capped = if (remapped.size > maxNmsCandidates) remapped.sortedByDescending { it.confidence }.take(maxNmsCandidates) else remapped
         return nms(capped)
@@ -29,9 +29,9 @@ class YoloPostProcessor(
      * This function translate the coordinates of the detection to the original image size.
      */
     private fun mapFromCropCoordinatesToTheOriginalImageSpace(
-        rawDetections: List<RawDetection>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
-    ): List<RawDetection> {
-        if (width == originalWidth && height == originalHeight) return rawDetections
+        detections: List<Detection>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
+    ): List<Detection> {
+        if (width == originalWidth && height == originalHeight) return detections
 
         val xMarginInPixels: Float = (originalWidth - width) / 2.toFloat()
         val xPercentageMargin: Float = xMarginInPixels / originalWidth.toFloat()
@@ -41,8 +41,8 @@ class YoloPostProcessor(
         val yPercentageMargin = yMarginInPixels / originalHeight.toFloat()
         val yTranslationFactor = height / originalHeight.toFloat()
 
-        val remapped = rawDetections.map {
-            RawDetection(
+        val remapped = detections.map {
+            Detection(
                 confidence = it.confidence,
                 x1Pct = it.x1Pct * xTranslationFactor + xPercentageMargin,
                 y1Pct = it.y1Pct * yTranslationFactor + yPercentageMargin,
@@ -57,8 +57,8 @@ class YoloPostProcessor(
 
     private fun decodeToCropNormalized(
         output: FloatArray, cropW: Int, cropH: Int, lbScale: Float, padX: Float, padY: Float
-    ): List<RawDetection> {
-        val rawDetections = ArrayList<RawDetection>(64)
+    ): List<Detection> {
+        val detections = ArrayList<Detection>(64)
 
         fun idx(attr: Int, box: Int): Int {
             return if (outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES) (attr * outBoxes + box)
@@ -96,7 +96,7 @@ class YoloPostProcessor(
             val x2C = ((cxI * scaleFactor + (wI * scaleFactor) / 2f) - padX) / lbScale
             val y2C = ((cyI * scaleFactor + (hI * scaleFactor) / 2f) - padY) / lbScale
 
-            rawDetections += RawDetection(
+            detections += Detection(
                 x1Pct = (x1C / cropW).coerceIn(0f, 1f),
                 y1Pct = (y1C / cropH).coerceIn(0f, 1f),
                 x2Pct = (x2C / cropW).coerceIn(0f, 1f),
@@ -105,12 +105,12 @@ class YoloPostProcessor(
                 classId = bestCls
             )
         }
-        return rawDetections
+        return detections
     }
 
-    private fun nms(rawDetections: List<RawDetection>): List<RawDetection> {
-        val sorted = rawDetections.sortedByDescending { it.confidence }.toMutableList()
-        val keep = ArrayList<RawDetection>()
+    private fun nms(detections: List<Detection>): List<Detection> {
+        val sorted = detections.sortedByDescending { it.confidence }.toMutableList()
+        val keep = ArrayList<Detection>()
         while (sorted.isNotEmpty()) {
             val best = sorted.removeAt(0)
             keep += best
@@ -124,7 +124,7 @@ class YoloPostProcessor(
         return keep
     }
 
-    private fun iou(a: RawDetection, b: RawDetection): Float {
+    private fun iou(a: Detection, b: Detection): Float {
         val interW = max(0f, min(a.x2Pct, b.x2Pct) - max(a.x1Pct, b.x1Pct))
         val interH = max(0f, min(a.y2Pct, b.y2Pct) - max(a.y1Pct, b.y1Pct))
         val inter = interW * interH

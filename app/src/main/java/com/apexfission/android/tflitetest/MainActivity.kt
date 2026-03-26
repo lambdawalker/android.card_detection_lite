@@ -13,8 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.CenterProximityValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
 
 import com.apexfission.android.carddetectionlite.tfmodel.classes
@@ -55,12 +56,13 @@ class MainActivity : ComponentActivity() {
                             showClassNames = true,
                             showFlashlightSwitch = true,
                             isDetectionEnabled = isDetectionEnabled,
-                            onDetections = {
+                            onDetection = {
                                 mainViewModel.onDetections(it)
                             },
-                            cardDetectionFilters = listOf(
-                                MarginFilter(),
-                                AspectRatioFilter()
+                            cardCardFilters = listOf(
+                                MarginValidator(),
+                                AspectRatioValidator(),
+                                CenterProximityValidator()
                             ),
                             imageMode = InputShape.SquareCrop
                         )

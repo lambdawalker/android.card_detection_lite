@@ -25,10 +25,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class CardDetectorLiteViewModelFactory(
@@ -36,7 +36,7 @@ class CardDetectorLiteViewModelFactory(
     private val modelPath: String,
     private val useGpu: Boolean,
     private val scoreThreshold: Float,
-    private val detectionFilters: List<DetectionFilter>,
+    private val cardFilters: List<CardValidator>,
     private val canvasSize: MutableStateFlow<IntSize>,
     private val imageMode: InputShape,
     private val cardClasses: List<Int>
@@ -44,7 +44,7 @@ class CardDetectorLiteViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST") return CardDetectorLiteViewModel(
-                application, modelPath, cardClasses, useGpu, scoreThreshold, detectionFilters, canvasSize, imageMode
+                application, modelPath, cardClasses, useGpu, scoreThreshold, cardFilters, canvasSize, imageMode
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
@@ -64,10 +64,10 @@ fun CardDetectorLite(
     showFlashlightSwitch: Boolean = true,
     scoreThreshold: Float = 0.70f,
     analysisTargetResolution: Size = Size(1920, 1080),
-    cardDetectionFilters: List<DetectionFilter> = listOf(
-        MarginFilter(), AspectRatioFilter()
+    cardCardFilters: List<CardValidator> = listOf(
+        MarginValidator(), AspectRatioValidator()
     ),
-    onDetections: (List<Detection>) -> Unit,
+    onDetection: (CardDetection) -> Unit,
     imageMode: InputShape = InputShape.SquareCrop
 ) {
     val context = LocalContext.current
@@ -82,7 +82,7 @@ fun CardDetectorLite(
             cardClasses = cardClasses,
             useGpu = useGpu,
             scoreThreshold = scoreThreshold,
-            detectionFilters = cardDetectionFilters,
+            cardFilters = cardCardFilters,
             canvasSize = sizeInPixels,
             imageMode = imageMode
         )
@@ -105,7 +105,7 @@ fun CardDetectorLite(
             }) {
         CameraPreview(
             lifecycleOwner = LocalLifecycleOwner.current, onFrame = { imageProxy ->
-                viewModel.processImage(imageProxy, onDetections)
+                viewModel.processImage(imageProxy, onDetection)
             }, onFocusEvent = { cameraControl, meteringPoint ->
                 viewModel.onFocusEvent(
                     cameraControl, meteringPoint

@@ -1,4 +1,4 @@
-package com.apexfission.android.tflitetest
+package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
 
 import android.graphics.Bitmap

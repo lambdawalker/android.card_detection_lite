@@ -8,8 +8,8 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.LetterboxBu
 import com.apexfission.android.carddetectionlite.domain.tflite.image.centerCropSquare
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropToAspectRatio
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
+import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeatures
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detections
-import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetections
 import com.apexfission.android.carddetectionlite.domain.tflite.model.buildDetection
 import java.io.Closeable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,9 +17,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 interface Detector : Closeable {
     var enabled: Boolean
 
-    fun detect(bitmap: Bitmap): RawDetections
-    fun detect(imageProxy: ImageProxy): RawDetections
-    fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int = 5): Detections
+    fun detect(bitmap: Bitmap): Detections
+    fun detect(imageProxy: ImageProxy): Detections
+    fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int = 5): ExtractedFeatures
 }
 
 class YoloDetector(
@@ -49,8 +49,8 @@ class YoloDetector(
         maxNmsCandidates
     )
 
-    override fun detect(bitmap: Bitmap): RawDetections {
-        if (!enabled || isClosed) return RawDetections(emptyList(), bitmap.width, bitmap.height)
+    override fun detect(bitmap: Bitmap): Detections {
+        if (!enabled || isClosed) return Detections(emptyList(), bitmap.width, bitmap.height)
 
 
         val croppedBitmap = when (imageMode) {
@@ -74,30 +74,30 @@ class YoloDetector(
             padY = letterboxResult.padY
         )
 
-        return RawDetections(
+        return Detections(
             rawDetections,
             croppedBitmap.width,
             croppedBitmap.height
         )
     }
 
-    override fun detect(imageProxy: ImageProxy): RawDetections {
-        if (!enabled || isClosed) return RawDetections(emptyList(), imageProxy.width, imageProxy.height)
+    override fun detect(imageProxy: ImageProxy): Detections {
+        if (!enabled || isClosed) return Detections(emptyList(), imageProxy.width, imageProxy.height)
         val bitmap = imageProxy.toUprightBitmap()
         return detect(bitmap)
     }
 
-    override fun detectCutouts(imageProxy: ImageProxy, maxCutouts: Int): Detections {
-        if (!enabled || isClosed) return Detections(emptyList(), imageProxy.width, imageProxy.height)
+    override fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int): ExtractedFeatures {
+        if (!enabled || isClosed) return ExtractedFeatures(emptyList(), imageProxy.width, imageProxy.height)
 
         val bitmap = imageProxy.toUprightBitmap()
         val rawDetections = detect(bitmap)
 
-        val detections = rawDetections.rawDetections.take(maxCutouts).map {
+        val detections = rawDetections.detections.take(maxCutouts).map {
             buildDetection(bitmap, it, 0)
         }
 
-        return Detections(detections, rawDetections.imageWidth, rawDetections.imageHeight)
+        return ExtractedFeatures(detections, rawDetections.imageWidth, rawDetections.imageHeight)
     }
 
     @Synchronized

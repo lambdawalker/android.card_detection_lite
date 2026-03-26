@@ -13,10 +13,10 @@ import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloCardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.rotateRectToUpright
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
-import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetection
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,12 +35,11 @@ class CardDetectorLiteViewModel(
     cardClasses: List<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,
-    detectionFilters: List<DetectionFilter>,
+    cardFilters: List<CardValidator>,
     canvasSize: MutableStateFlow<IntSize>,
     imageMode: InputShape
 ) : AndroidViewModel(application) {
-
-    private val _detections = MutableStateFlow<List<RawDetection>>(emptyList())
+    private val _detections = MutableStateFlow<List<Detection>>(emptyList())
     val detections = _detections.asStateFlow()
 
     private val _scalingInfo = MutableStateFlow(PreviewScalingInfo())
@@ -62,7 +61,7 @@ class CardDetectorLiteViewModel(
             canvasSize = canvasSize,
             imageMode = imageMode
         ),
-        detectionFilters,
+        cardFilters,
         cardClasses
     )
 
@@ -72,6 +71,7 @@ class CardDetectorLiteViewModel(
     fun setDetectionEnabled(enabled: Boolean) {
         _detectorEnabled.value = enabled
         detector.enabled = enabled
+
         if (!enabled) {
             _detections.value = emptyList()
         }
@@ -86,7 +86,7 @@ class CardDetectorLiteViewModel(
         cameraControl.startFocusAndMetering(action)
     }
 
-    fun processImage(imageProxy: ImageProxy, onDetections: (List<Detection>) -> Unit) {
+    fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection) -> Unit) {
         viewModelScope.launch {
             try {
                 if (!_detectorEnabled.value) return@launch
@@ -109,10 +109,15 @@ class CardDetectorLiteViewModel(
                     cropW = uprightCrop.width().toFloat(), cropH = uprightCrop.height().toFloat(), fullW = fullW, fullH = fullH
                 )
 
-                val newDetections: List<Detection> = detector.detect(imageProxy)
-                _detections.value = newDetections.map { it.rawDetection }
-                onDetections(newDetections)
+                val card = detector.extractCard(imageProxy)
 
+                if (card == null) {
+                    _detections.value = emptyList()
+                    return@launch
+                }
+
+                _detections.value = listOf(card.card.detection) + card.features.map { it.detection }
+                onDetection(card)
             } catch (t: Throwable) {
                 Log.e("YOLO", "Inference failed", t)
             } finally {
