@@ -4,7 +4,8 @@ package com.apexfission.android.tflitetest
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Detection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch

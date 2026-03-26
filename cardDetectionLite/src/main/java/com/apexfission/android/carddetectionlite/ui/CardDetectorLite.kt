@@ -23,11 +23,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Detection
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloLiteDetector
+
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginFilter
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class CardDetectorLiteViewModelFactory(

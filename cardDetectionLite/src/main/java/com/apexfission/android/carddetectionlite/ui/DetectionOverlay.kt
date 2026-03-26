@@ -13,7 +13,8 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDet
+
 import kotlin.math.max
 
 @Composable

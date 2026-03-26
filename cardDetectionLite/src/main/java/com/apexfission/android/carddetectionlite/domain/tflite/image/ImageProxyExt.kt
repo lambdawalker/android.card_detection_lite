@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.domain.tflite
+package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy

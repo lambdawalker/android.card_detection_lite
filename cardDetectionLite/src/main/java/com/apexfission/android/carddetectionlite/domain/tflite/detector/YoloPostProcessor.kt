@@ -1,6 +1,6 @@
-package com.apexfission.android.carddetectionlite.domain.tflite
+package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
-import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDet
 import kotlin.math.max
 import kotlin.math.min
 
@@ -16,16 +16,22 @@ class YoloPostProcessor(
 ) {
 
     fun process(
-        output: FloatArray,
-        width: Int,
-        height: Int,
-        lbScale: Float,
-        padX: Float,
-        padY: Float,
-        originalWidth: Int,
-        originalHeight: Int
+        output: FloatArray, width: Int, height: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
     ): List<RawDet> {
         val raw: List<RawDet> = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
+        val remapped = mapFromCropCoordinatesToTheOriginalImageSpace(raw, width, height, originalWidth, originalHeight)
+        val capped = if (remapped.size > maxNmsCandidates) remapped.sortedByDescending { it.confidence }.take(maxNmsCandidates) else remapped
+        return nms(capped)
+    }
+
+    /**
+     * The input image could be a cropped version of the full image.
+     * This function translate the coordinates of the detection to the original image size.
+     */
+    private fun mapFromCropCoordinatesToTheOriginalImageSpace(
+        rawDetections: List<RawDet>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
+    ): List<RawDet> {
+        if (width == originalWidth && height == originalHeight) return rawDetections
 
         val xMarginInPixels: Float = (originalWidth - width) / 2.toFloat()
         val xPercentageMargin: Float = xMarginInPixels / originalWidth.toFloat()
@@ -35,7 +41,7 @@ class YoloPostProcessor(
         val yPercentageMargin = yMarginInPixels / originalHeight.toFloat()
         val yTranslationFactor = height / originalHeight.toFloat()
 
-        val remapped = raw.map {
+        val remapped = rawDetections.map {
             RawDet(
                 confidence = it.confidence,
                 x1Pct = it.x1Pct * xTranslationFactor + xPercentageMargin,
@@ -45,18 +51,12 @@ class YoloPostProcessor(
                 classId = it.classId
             )
         }
-
-        val capped = if (remapped.size > maxNmsCandidates) remapped.sortedByDescending { it.confidence }.take(maxNmsCandidates) else remapped
-        return nms(capped)
+        return remapped
     }
 
+
     private fun decodeToCropNormalized(
-        output: FloatArray,
-        cropW: Int,
-        cropH: Int,
-        lbScale: Float,
-        padX: Float,
-        padY: Float
+        output: FloatArray, cropW: Int, cropH: Int, lbScale: Float, padX: Float, padY: Float
     ): List<RawDet> {
         val rawDets = ArrayList<RawDet>(64)
 

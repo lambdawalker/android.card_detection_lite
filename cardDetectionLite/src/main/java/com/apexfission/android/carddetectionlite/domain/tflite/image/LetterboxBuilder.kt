@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.domain.tflite
+package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -6,7 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import androidx.core.graphics.createBitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.data.LetterboxResult
+import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
 import kotlin.math.min
 
 object LetterboxBuilder {

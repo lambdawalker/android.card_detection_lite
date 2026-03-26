@@ -10,11 +10,11 @@ import androidx.camera.core.MeteringPoint
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.YoloLiteDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Detection
-import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloLiteDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
-import com.apexfission.android.carddetectionlite.domain.tflite.rotateRectToUpright
+import com.apexfission.android.carddetectionlite.domain.tflite.image.rotateRectToUpright
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDet
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

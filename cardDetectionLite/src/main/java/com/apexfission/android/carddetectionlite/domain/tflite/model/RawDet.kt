@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.data
+package com.apexfission.android.carddetectionlite.domain.tflite.model
 
 data class RawDet(
     val x1Pct: Float,

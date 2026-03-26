@@ -1,13 +1,17 @@
-package com.apexfission.android.carddetectionlite.domain.tflite
+package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
 import androidx.compose.ui.unit.IntSize
-import com.apexfission.android.carddetectionlite.domain.tflite.data.Detection
-import com.apexfission.android.carddetectionlite.domain.tflite.data.RawDet
-import com.apexfission.android.carddetectionlite.domain.tflite.data.buildDetection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDet
+import com.apexfission.android.carddetectionlite.domain.tflite.model.buildDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.DetectionFilter
+import com.apexfission.android.carddetectionlite.domain.tflite.image.LetterboxBuilder
+import com.apexfission.android.carddetectionlite.domain.tflite.image.centerCropSquare
+import com.apexfission.android.carddetectionlite.domain.tflite.image.cropToAspectRatio
+import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
 import java.io.Closeable
 import kotlinx.coroutines.flow.MutableStateFlow
 
