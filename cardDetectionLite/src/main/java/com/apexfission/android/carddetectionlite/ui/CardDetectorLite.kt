@@ -13,43 +13,25 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
-
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.emptyOnLockOnProgress
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.onLockOnProgressCallBack
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlinx.coroutines.flow.MutableStateFlow
-
-class CardDetectorLiteViewModelFactory(
-    private val application: Application,
-    private val modelPath: String,
-    private val useGpu: Boolean,
-    private val scoreThreshold: Float,
-    private val cardFilters: List<CardValidator>,
-    private val canvasSize: MutableStateFlow<IntSize>,
-    private val imageMode: InputShape,
-    private val cardClasses: List<Int>
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST") return CardDetectorLiteViewModel(
-                application, modelPath, cardClasses, useGpu, scoreThreshold, cardFilters, canvasSize, imageMode
-            ) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
 
 @Composable
 fun CardDetectorLite(
@@ -59,21 +41,28 @@ fun CardDetectorLite(
     isDetectionEnabled: Boolean,
     modifier: Modifier = Modifier,
     useGpu: Boolean = true,
-    showBoundingBoxes: Boolean = true,
-    showClassNames: Boolean = true,
+    showBoundingBoxes: Boolean = false,
+    showClassNames: Boolean = false,
     showFlashlightSwitch: Boolean = true,
+    showLockOnProgress: Boolean = true,
     scoreThreshold: Float = 0.70f,
     analysisTargetResolution: Size = Size(1920, 1080),
     cardCardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onDetection: (CardDetection) -> Unit,
+    onCardDetection: (CardDetection) -> Unit,
+    onLockOnProgress: onLockOnProgressCallBack = emptyOnLockOnProgress,
     imageMode: InputShape = InputShape.SquareCrop
 ) {
     val context = LocalContext.current
-
-
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
+
+    var lockOnProgress by remember { mutableFloatStateOf(0f) }
+
+    val wrappedLockOnProgress: onLockOnProgressCallBack = { progress, candidate ->
+        lockOnProgress = progress
+        onLockOnProgress(progress, candidate)
+    }
 
     val viewModel: CardDetectorLiteViewModel = viewModel(
         factory = CardDetectorLiteViewModelFactory(
@@ -84,7 +73,8 @@ fun CardDetectorLite(
             scoreThreshold = scoreThreshold,
             cardFilters = cardCardFilters,
             canvasSize = sizeInPixels,
-            imageMode = imageMode
+            imageMode = imageMode,
+            onLockOnProgress = wrappedLockOnProgress
         )
     )
 
@@ -93,7 +83,7 @@ fun CardDetectorLite(
     }
 
     val flashlightEnabled by viewModel.flashlightEnabled.collectAsStateWithLifecycle()
-    val detections by viewModel.detections.collectAsStateWithLifecycle()
+    val cardDetection by viewModel.cardDetection.collectAsStateWithLifecycle()
     val scalingInfo by viewModel.scalingInfo.collectAsStateWithLifecycle()
 
     Box(
@@ -105,7 +95,7 @@ fun CardDetectorLite(
             }) {
         CameraPreview(
             lifecycleOwner = LocalLifecycleOwner.current, onFrame = { imageProxy ->
-                viewModel.processImage(imageProxy, onDetection)
+                viewModel.processImage(imageProxy, onCardDetection)
             }, onFocusEvent = { cameraControl, meteringPoint ->
                 viewModel.onFocusEvent(
                     cameraControl, meteringPoint
@@ -115,7 +105,13 @@ fun CardDetectorLite(
 
         if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
             DetectionOverlay(
-                detections = detections, scalingInfo = scalingInfo, showClassNames = showClassNames, classLabels = classLabels
+                cardDetection = cardDetection, scalingInfo = scalingInfo, showClassNames = showClassNames, classLabels = classLabels
+            )
+        }
+
+        if (isDetectionEnabled && showLockOnProgress && scalingInfo.fullW > 0) {
+            CardLockOnOverlay(
+                lockOnProgress = lockOnProgress, activeDetection = cardDetection, scalingInfo = scalingInfo
             )
         }
 

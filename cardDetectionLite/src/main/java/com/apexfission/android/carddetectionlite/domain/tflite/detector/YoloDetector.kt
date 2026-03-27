@@ -8,8 +8,8 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.LetterboxBu
 import com.apexfission.android.carddetectionlite.domain.tflite.image.centerCropSquare
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropToAspectRatio
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeatures
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detections
+import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeatures
 import com.apexfission.android.carddetectionlite.domain.tflite.model.buildDetection
 import java.io.Closeable
 import kotlinx.coroutines.flow.MutableStateFlow

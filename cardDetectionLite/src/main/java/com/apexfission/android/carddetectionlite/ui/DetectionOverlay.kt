@@ -13,13 +13,13 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 
 import kotlin.math.max
 
 @Composable
 fun DetectionOverlay(
-    detections: List<Detection>,
+    cardDetection: CardDetection?,
     scalingInfo: PreviewScalingInfo,
     showClassNames: Boolean,
     classLabels: Map<Int, String>
@@ -40,11 +40,16 @@ fun DetectionOverlay(
         val offsetX = (screenW - scalingInfo.fullW * scale) / 2f
         val offsetY = (screenH - scalingInfo.fullH * scale) / 2f
 
+        val features = if (cardDetection != null) {
+            cardDetection.features + listOf(cardDetection.card)
+        } else emptyList()
+
         // The detector results are [0..1] relative to the CROP rectangle.
         // First we map to crop pixels, then we offset by the crop's position in the full buffer.
         // However, since rotateRectToUpright centers the crop, we need to be careful.
         // Assuming the crop covers the whole area used by FILL_CENTER:
-        detections.forEach { det ->
+        features.forEach { feature ->
+            val det = feature.detection
             // Scale detection relative to the crop dimensions
             val cropX1 = det.x1Pct * scalingInfo.cropW
             val cropY1 = det.y1Pct * scalingInfo.cropH

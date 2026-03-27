@@ -17,7 +17,6 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRat
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CenterProximityValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
-
 import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.CardDetectorLite
@@ -52,11 +51,11 @@ class MainActivity : ComponentActivity() {
                             cardClasses = ModelCatalog.TfLite.cardClasses,
                             useGpu = true,
                             scoreThreshold = 0.50f,
-                            showBoundingBoxes = true,
-                            showClassNames = true,
+                            showBoundingBoxes = false,
+                            showClassNames = false,
                             showFlashlightSwitch = true,
                             isDetectionEnabled = isDetectionEnabled,
-                            onDetection = {
+                            onCardDetection = {
                                 mainViewModel.onDetections(it)
                             },
                             cardCardFilters = listOf(
@@ -64,7 +63,8 @@ class MainActivity : ComponentActivity() {
                                 AspectRatioValidator(),
                                 CenterProximityValidator()
                             ),
-                            imageMode = InputShape.SquareCrop
+                            imageMode = InputShape.SquareCrop,
+                            onLockOnProgress = { _, _ -> }
                         )
                     }
                 }

@@ -21,9 +21,10 @@ class TfliteInterpreter(
     useGpu: Boolean,
     numThreads: Int?
 ) : Closeable {
-    companion object{
+    companion object {
         val tag = "TfliteInterpreter"
     }
+
     private var interpreter: Interpreter
     private var gpuDelegate: GpuDelegate? = null
     private var isClosed = false

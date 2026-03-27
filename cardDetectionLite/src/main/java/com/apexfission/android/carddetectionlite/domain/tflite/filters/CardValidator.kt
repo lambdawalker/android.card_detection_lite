@@ -64,7 +64,7 @@ class AspectRatioValidator(
  *
  * @param maxDistancePx The maximum allowed distance in pixels.
  */
-class CenterProximityValidator(private val maxDistancePx: Float = 100f) : CardValidator {
+class CenterProximityValidator(private val maxDistancePx: Float = 500f) : CardValidator {
 
     override fun isValid(extractedFeature: ExtractedFeature, imageWidth: Int, imageHeight: Int): Boolean {
         // 1. Find the center of the image
