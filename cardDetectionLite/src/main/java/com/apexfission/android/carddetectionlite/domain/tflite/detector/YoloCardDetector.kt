@@ -1,7 +1,9 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
+import android.graphics.Rect
 import android.os.SystemClock
 import androidx.camera.core.ImageProxy
+
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.io.Closeable
@@ -72,9 +74,10 @@ class YoloCardDetector(
         }
 
         val cardDetection = CardDetection(
-            cardId,
-            card,
-            otherElements
+            id = cardId,
+            card = card,
+            features = otherElements,
+            contextSize = Rect(0, 0, result.imageWidth, result.imageHeight)
         )
 
         onLockOnProgress(progress, cardDetection)

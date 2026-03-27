@@ -33,6 +33,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginVal
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlinx.coroutines.flow.MutableStateFlow
 
+
 @Composable
 fun CardDetectorLite(
     modelPath: String,
@@ -93,14 +94,20 @@ fun CardDetectorLite(
                 // size.width and size.height are in pixels
                 sizeInPixels.value = size
             }) {
+
         CameraPreview(
-            lifecycleOwner = LocalLifecycleOwner.current, onFrame = { imageProxy ->
+            lifecycleOwner = LocalLifecycleOwner.current,
+            onFrame = { imageProxy ->
                 viewModel.processImage(imageProxy, onCardDetection)
-            }, onFocusEvent = { cameraControl, meteringPoint ->
+            },
+            onFocusEvent = { cameraControl, meteringPoint ->
                 viewModel.onFocusEvent(
                     cameraControl, meteringPoint
                 )
-            }, flashlightEnabled = flashlightEnabled, analysisTargetResolution = analysisTargetResolution
+            },
+            flashlightEnabled = flashlightEnabled,
+            analysisTargetResolution = analysisTargetResolution,
+            focusOn = cardDetection
         )
 
         if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
