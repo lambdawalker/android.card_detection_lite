@@ -37,15 +37,11 @@ class MainActivity : ComponentActivity() {
                     HandleCameraPermission(
                         modifier = Modifier
                             .padding(innerPadding)
-                            .fillMaxSize(),
-                        onBack = { finish() },
-                        onNotNow = { finish() }
-                    ) {
+                            .fillMaxSize(), onBack = { finish() }, onNotNow = { finish() }) {
                         val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
 
                         CardDetectorLite(
-                            modifier = Modifier
-                                .padding(innerPadding),
+                            modifier = Modifier.padding(innerPadding),
                             modelPath = ModelCatalog.TfLite.modelPath,
                             classLabels = ModelCatalog.TfLite.classes,
                             cardClasses = ModelCatalog.TfLite.cardClasses,
@@ -59,15 +55,13 @@ class MainActivity : ComponentActivity() {
                                 mainViewModel.onDetections(it)
                             },
                             cardCardFilters = listOf(
-                                MarginValidator(),
-                                AspectRatioValidator(),
-                                CenterProximityValidator()
+                                MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
                             ),
                             imageMode = InputShape.SquareCrop,
-                            onLockOnProgress = { _, _ -> }
-                        )
+                            onLockOnProgress = { _, _ -> })
                     }
                 }
+
             }
         }
     }
