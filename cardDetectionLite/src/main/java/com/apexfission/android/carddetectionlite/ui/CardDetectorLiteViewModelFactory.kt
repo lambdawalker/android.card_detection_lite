@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @property canvasSize A `StateFlow` that communicates the UI's size to the ViewModel.
  * @property imageMode The chosen [InputShape] for image preprocessing.
  * @property cardClasses The list of class IDs to be treated as primary card targets.
+ * @property inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
  */
 class CardDetectorLiteViewModelFactory(
     private val application: Application,
@@ -34,6 +35,7 @@ class CardDetectorLiteViewModelFactory(
     private val canvasSize: MutableStateFlow<IntSize>,
     private val imageMode: InputShape,
     private val cardClasses: List<Int>,
+    private val inferenceIntervalMs: Long,
 ) : ViewModelProvider.Factory {
 
     /**
@@ -48,7 +50,7 @@ class CardDetectorLiteViewModelFactory(
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return CardDetectorLiteViewModel(
-                application, modelPath, cardClasses, useGpu, scoreThreshold, cardFilters, canvasSize, imageMode
+                application, modelPath, cardClasses, useGpu, scoreThreshold, cardFilters, canvasSize, imageMode, inferenceIntervalMs
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

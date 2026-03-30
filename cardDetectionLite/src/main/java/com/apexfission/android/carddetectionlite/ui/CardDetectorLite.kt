@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  *                        validated [CardDetection] object.
  * @param imageMode The [InputShape] that dictates how the camera image is preprocessed (e.g., cropped)
  *                  before being sent to the model.
+ * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
  */
 @Composable
 fun CardDetectorLite(
@@ -84,7 +85,8 @@ fun CardDetectorLite(
         MarginValidator(), AspectRatioValidator()
     ),
     onCardDetection: (CardDetection) -> Unit,
-    imageMode: InputShape = InputShape.SquareCrop
+    imageMode: InputShape = InputShape.SquareCrop,
+    inferenceIntervalMs: Long = 33L
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
@@ -100,6 +102,7 @@ fun CardDetectorLite(
             cardFilters = cardCardFilters,
             canvasSize = sizeInPixels,
             imageMode = imageMode,
+            inferenceIntervalMs = inferenceIntervalMs,
         )
     )
 

@@ -59,11 +59,12 @@ data class PreviewScalingInfo(
  * @param canvasSize A `StateFlow` from the UI that provides the current size of the composable,
  *                   used for aspect-ratio calculations.
  * @param imageMode The [InputShape] configuration for image preprocessing.
+ * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
  */
 class CardDetectorLiteViewModel(
     application: Application, modelPath: String, cardClasses: List<Int>, useGpu: Boolean,
     scoreThreshold: Float, cardFilters: List<CardValidator>, canvasSize: MutableStateFlow<IntSize>,
-    imageMode: InputShape,
+    imageMode: InputShape, private val inferenceIntervalMs: Long,
 ) : AndroidViewModel(application) {
 
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
@@ -84,8 +85,7 @@ class CardDetectorLiteViewModel(
         cardClasses
     )
 
-    private val lastInferMs = AtomicLong(0L)
-    private val inferIntervalMs = 80L // ~12.5 FPS
+    private val lastInferenceMs = AtomicLong(0L)
 
     /** Toggles the detection process on or off. When disabled, the ViewModel will ignore incoming frames. */
     fun setDetectionEnabled(enabled: Boolean) {
@@ -123,9 +123,10 @@ class CardDetectorLiteViewModel(
 
         viewModelScope.launch(Dispatchers.Default) {
             try {
+                // Caps the detection frame rate
                 val now = SystemClock.uptimeMillis()
-                if (now - lastInferMs.get() < inferIntervalMs) return@launch
-                lastInferMs.set(now)
+                if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
+                lastInferenceMs.set(now)
 
                 val rotation = imageProxy.imageInfo.rotationDegrees
                 val uprightCrop = rotateRectToUpright(
