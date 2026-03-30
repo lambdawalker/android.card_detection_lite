@@ -36,7 +36,7 @@ import androidx.core.graphics.scale
  * @throws IllegalArgumentException if `hashSize` is not between 2 and 16.
  */
 fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
-    require(hashSize in 2..16) { "hashSize must be between 2 and 16" }
+    require(hashSize in 2..8) { "hashSize must be between 2 and 8" }
 
     // Resize to (hashSize + 1) x hashSize
     val targetW = hashSize + 1

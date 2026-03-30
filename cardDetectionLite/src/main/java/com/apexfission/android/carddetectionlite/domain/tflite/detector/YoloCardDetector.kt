@@ -2,9 +2,11 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
 import android.graphics.Rect
 import android.os.SystemClock
+import android.util.Log
 import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHash
+import com.apexfission.android.carddetectionlite.domain.tflite.image.hammingDistanceTo
 import com.apexfission.android.carddetectionlite.domain.tflite.image.isVisuallySimilar
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.io.Closeable
@@ -76,9 +78,11 @@ class YoloCardDetector(
 
         lastDetectionTime = currentTime
 
-        val currentHash = card.objectBitmap.generateDHash(16)
+        val currentHash = card.objectBitmap.generateDHash(8)
 
-        val isSimilar = isVisuallySimilar(previousHash, currentHash, 15)
+        val isSimilar = isVisuallySimilar(previousHash, currentHash, 20)
+
+        Log.d("HDLOG", "$isSimilar $previousHash $currentHash ${previousHash.hammingDistanceTo(currentHash)}")
 
         if (!isSimilar) {
             resetTrackingState()
