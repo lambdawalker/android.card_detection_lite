@@ -20,12 +20,28 @@ class MarginValidator(private val margin: Int = 20) : CardValidator {
      * @param contextHeight The height of the source image.
      * @return `true` if the feature's bounding box is entirely within the defined margins, `false` otherwise.
      */
-    override fun isValid(extractedFeature: ExtractedFeature, contextWidth: Int, contextHeight: Int, originalWidth: Int, originalHeight: Int): Boolean {
+    override fun isValid(
+        extractedFeature: ExtractedFeature,
+        contextWidth: Int,
+        contextHeight: Int,
+        originalWidth: Int,
+        originalHeight: Int
+    ): Boolean {
         if (margin <= 0) return true
 
-        return extractedFeature.coordinates.top >= margin &&
-            extractedFeature.coordinates.left >= margin &&
-            extractedFeature.coordinates.right <= contextWidth - margin &&
-            extractedFeature.coordinates.bottom <= contextHeight - margin
+        // Use the dimensions that match the feature's coordinate space.
+        // Assuming coordinates are scaled to contextWidth/Height here.
+        val w = contextWidth
+        val h = contextHeight
+
+        // Defensive check: Ensure margin doesn't exceed image dimensions
+        if (margin * 2 >= w || margin * 2 >= h) return false
+
+        val coordinates = extractedFeature.contextCoordinates
+
+        return coordinates.top >= margin &&
+            coordinates.left >= margin &&
+            coordinates.right <= (w - margin) &&
+            coordinates.bottom <= (h - margin)
     }
 }

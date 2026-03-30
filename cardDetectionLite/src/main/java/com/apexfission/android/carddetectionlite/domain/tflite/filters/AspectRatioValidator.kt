@@ -27,20 +27,15 @@ class AspectRatioValidator(
      * @return `true` if the feature's aspect ratio is between [minAspectRatio] and [maxAspectRatio], `false` otherwise.
      */
     override fun isValid(extractedFeature: ExtractedFeature, contextWidth: Int, contextHeight: Int, originalWidth: Int, originalHeight: Int): Boolean {
-        val x1 = extractedFeature.coordinates.left
-        val y1 = extractedFeature.coordinates.top
-        val x2 = extractedFeature.coordinates.right
-        val y2 = extractedFeature.coordinates.bottom
-
-        val width = x2 - x1
-        val height = y2 - y1
+        val width = extractedFeature.coordinates.width().toDouble()
+        val height = extractedFeature.coordinates.height().toDouble()
 
         if (width <= 0 || height <= 0) {
             return false
         }
 
-        val u = min(width, height).toFloat()
-        val v = max(width, height).toFloat()
+        val u = min(width, height)
+        val v = max(width, height)
 
         val aspectRatio = v / u
         return aspectRatio in minAspectRatio..maxAspectRatio

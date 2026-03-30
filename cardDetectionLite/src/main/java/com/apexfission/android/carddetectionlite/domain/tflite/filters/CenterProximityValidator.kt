@@ -29,22 +29,35 @@ class CenterProximityValidator(private val maxDistancePercentage: Float = .2f) :
      * @return `true` if the distance from the feature's center to the image's center is
      *         within the allowed range, `false` otherwise.
      */
-    override fun isValid(extractedFeature: ExtractedFeature, contextWidth: Int, contextHeight: Int, originalWidth: Int, originalHeight: Int): Boolean {
-        val maxDistance = sqrt(contextWidth.toDouble() * contextHeight) * maxDistancePercentage
+    override fun isValid(
+        extractedFeature: ExtractedFeature,
+        contextWidth: Int,
+        contextHeight: Int,
+        originalWidth: Int,
+        originalHeight: Int
+    ): Boolean {
+        // Use originalWidth/Height if that's what the feature coordinates are mapped to
+        val targetWidth = originalWidth.toDouble()
+        val targetHeight = originalHeight.toDouble()
 
-        // 1. Find the center of the image
-        val imageCenterX = originalWidth / 2f
-        val imageCenterY = originalHeight / 2f
+        // 1. Calculate true diagonal and max allowed distance squared
+        val diagonalSquared = (targetWidth * targetWidth) + (targetHeight * targetHeight)
+        val maxDistanceAllowed = sqrt(diagonalSquared) * maxDistancePercentage
+        val maxDistanceAllowedSq = maxDistanceAllowed * maxDistanceAllowed
 
-        // 2. Find the center of the detection box
-        val detCenterX = (extractedFeature.coordinates.left + extractedFeature.coordinates.right) / 2f
-        val detCenterY = (extractedFeature.coordinates.top + extractedFeature.coordinates.bottom) / 2f
+        // 2. Find centers
+        val imageCenterX = targetWidth / 2.0
+        val imageCenterY = targetHeight / 2.0
 
-        // 3. Calculate Euclidean distance
+        val coords = extractedFeature.coordinates
+        val detCenterX = (coords.left + coords.right) / 2.0
+        val detCenterY = (coords.top + coords.bottom) / 2.0
+
+        // 3. Calculate squared Euclidean distance
         val dx = detCenterX - imageCenterX
         val dy = detCenterY - imageCenterY
-        val distance = sqrt(dx * dx + dy * dy)
+        val distanceSq = (dx * dx) + (dy * dy)
 
-        return distance <= maxDistance
+        return distanceSq <= maxDistanceAllowedSq
     }
 }

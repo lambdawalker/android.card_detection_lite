@@ -1,6 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetection
 import kotlin.math.max
 import kotlin.math.min
 
@@ -35,6 +36,7 @@ class YoloPostProcessor(
     enum class OutputScalingMode {
         /** Assumes model outputs raw pixels (e.g., 0..640). Coordinates will be divided by 1.0. */
         NONE,
+
         /** Assumes model outputs normalized values (0..1). Coordinates will be multiplied by [inputImageWidth]. */
         NORMALIZED
     }
@@ -43,19 +45,25 @@ class YoloPostProcessor(
      * Processes raw TFLite output into a refined list of [Detection] objects.
      */
     fun process(
-        output: FloatArray,
-        contextWidth: Int,
-        contextHeight: Int,
-        lbScale: Float,
-        padX: Float,
-        padY: Float,
-        originalWidth: Int,
-        originalHeight: Int
+        output: FloatArray, contextWidth: Int, contextHeight: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
     ): List<Detection> {
         val raw = decodeToCropNormalized(output, contextWidth, contextHeight, lbScale, padX, padY)
 
         val processed = if (contextWidth == originalWidth && contextHeight == originalHeight) {
-            raw
+            raw.map {
+                Detection(
+                    x1Pct = it.x1Pct,
+                    y1Pct = it.y1Pct,
+                    x2Pct = it.x2Pct,
+                    y2Pct = it.y2Pct,
+                    contextX1Pct = it.x1Pct,
+                    contextY1Pct = it.y1Pct,
+                    contextX2Pct = it.x2Pct,
+                    contextY2Pct = it.y2Pct,
+                    confidence = it.confidence,
+                    classId = it.classId
+                )
+            }
         } else {
             mapFromCropToOriginal(raw, contextWidth, contextHeight, originalWidth, originalHeight)
         }
@@ -63,14 +71,11 @@ class YoloPostProcessor(
         return nms(processed)
     }
 
-    /**
-     * PERFORMANCE: Optimized "Hot Path"
-     * Uses stride-based indexing and minimal allocations.
-     */
+
     private fun decodeToCropNormalized(
         output: FloatArray, cropW: Int, cropH: Int, lbScale: Float, padX: Float, padY: Float
-    ): List<Detection> {
-        val detections = ArrayList<Detection>(128)
+    ): List<RawDetection> {
+        val detections = ArrayList<RawDetection>(128)
         val isBoxesFirst = outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES
         val strideBox = if (isBoxesFirst) 1 else outAttrs
         val strideAttr = if (isBoxesFirst) outBoxes else 1
@@ -94,7 +99,7 @@ class YoloPostProcessor(
 
             if (maxClassScore < scoreThreshold) continue
 
-            val cxI = output[bIdx + 0 * strideAttr]
+            val cxI = output[bIdx + 0]
             val cyI = output[bIdx + 1 * strideAttr]
             val wI = output[bIdx + 2 * strideAttr]
             val hI = output[bIdx + 3 * strideAttr]
@@ -108,7 +113,7 @@ class YoloPostProcessor(
             val x2C = ((cxI * scale + halfW) - padX) / lbScale
             val y2C = ((cyI * scale + halfH) - padY) / lbScale
 
-            detections += Detection(
+            detections += RawDetection(
                 x1Pct = (x1C / cropW).coerceIn(0f, 1f),
                 y1Pct = (y1C / cropH).coerceIn(0f, 1f),
                 x2Pct = (x2C / cropW).coerceIn(0f, 1f),
@@ -125,7 +130,7 @@ class YoloPostProcessor(
      * Translates coordinates from a centered ROI back to full image space.
      */
     private fun mapFromCropToOriginal(
-        detections: List<Detection>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
+        detections: List<RawDetection>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
     ): List<Detection> {
         val xFactor = width.toFloat() / originalWidth
         val yFactor = height.toFloat() / originalHeight
@@ -133,11 +138,17 @@ class YoloPostProcessor(
         val yOffset = (1f - yFactor) / 2f
 
         return detections.map {
-            it.copy(
+            Detection(
                 x1Pct = it.x1Pct * xFactor + xOffset,
                 y1Pct = it.y1Pct * yFactor + yOffset,
                 x2Pct = it.x2Pct * xFactor + xOffset,
-                y2Pct = it.y2Pct * yFactor + yOffset
+                y2Pct = it.y2Pct * yFactor + yOffset,
+                contextX1Pct = it.x1Pct,
+                contextY1Pct = it.y1Pct,
+                contextX2Pct = it.x2Pct,
+                contextY2Pct = it.y2Pct,
+                confidence = it.confidence,
+                classId = it.classId
             )
         }
     }
