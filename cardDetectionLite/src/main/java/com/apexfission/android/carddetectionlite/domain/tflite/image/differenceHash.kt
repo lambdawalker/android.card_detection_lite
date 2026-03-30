@@ -5,65 +5,65 @@ import android.graphics.Bitmap
 import androidx.core.graphics.scale
 
 /**
- * Implements the Difference Hash (dHash) algorithm for perceptual image comparison.
+ * Implements the Difference Hash (dHash) algorithm for fast, perceptual image comparison.
  *
- * dHash is a simple and fast algorithm to generate a "fingerprint" of an image based on
- * gradients between adjacent pixels. It is resilient to minor changes such as scaling,
- * compression artifacts, and small adjustments in brightness or contrast.
+ * dHash creates a "fingerprint" of an image based on the relative brightness of adjacent pixels.
+ * This makes it remarkably resilient to changes that don't alter the core structure of the image,
+ * such as scaling, minor brightness/contrast adjustments, and compression artifacts. It is ideal
+ * for determining if two images are "the same" from a human perspective.
  *
- * ### Typical usage:
+ * ### Typical Usage:
  * ```kotlin
- * val h1 = bitmap1.generateDHash()
- * val h2 = bitmap2.generateDHash()
- * val distance = h1.hammingDistanceTo(h2)
- * val areSimilar = distance <= 10
+ * val hash1 = bitmap1.generateDHash()
+ * val hash2 = bitmap2.generateDHash()
+ *
+ * val distance = hash1.hammingDistanceTo(hash2)
+ *
+ * if (distance < 10) {
+ *     // Images are considered very similar
+ * }
  * ```
  */
 
 /**
  * Generates a perceptual hash (dHash) for this [Bitmap].
  *
- * The algorithm works as follows:
- * 1.  Resizes the image to a small, fixed size: `(hashSize + 1) x hashSize`.
- * 2.  Converts the image to grayscale luminance.
- * 3.  Iterates through each row, comparing adjacent pixels.
- * 4.  For each pair, it outputs a `1` if the left pixel is brighter than the right, and `0` otherwise.
- * 5.  The resulting bits are combined to form the final hash.
+ * The algorithm performs the following steps:
+ * 1.  **Resize**: The image is downscaled to a small, fixed size (`(hashSize + 1) x hashSize`).
+ *     This step removes high-frequency details and normalizes the image dimensions.
+ * 2.  **Grayscale**: The color information is discarded by converting pixels to luminance values.
+ * 3.  **Compare**: It iterates through each row, comparing the brightness of each pixel to its
+ *     immediate right neighbor.
+ * 4.  **Hash**: If a pixel is brighter than its neighbor, a `1` bit is recorded; otherwise, a `0` is recorded.
+ *     These bits are concatenated to form the final hash.
  *
- * @param hashSize The dimension of the hash. The resulting hash will have `hashSize * hashSize` bits.
- *                 For example, the default `hashSize` of 8 produces a 64-bit hash.
- * @return A [ULong] representing the calculated dHash.
- * @throws IllegalArgumentException if `hashSize` is not between 2 and 8.
+ * @param hashSize The dimension for the hash calculation. The final hash will have `hashSize * hashSize` bits.
+ *                 The value must be between 2 and 8, as the resulting hash is stored in a 64-bit [ULong].
+ *                 The default of 8 results in a 64-bit hash.
+ * @return A [ULong] representing the calculated dHash of the image.
+ * @throws IllegalArgumentException if `hashSize` is outside the supported range of [2, 8].
  */
 fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
     require(hashSize in 2..8) { "hashSize must be between 2 and 8" }
 
-    // Resize to (hashSize + 1) x hashSize
     val targetW = hashSize + 1
     val targetH = hashSize
 
-    // Use FILTER=true for better downscaling quality
-    val scaled = if (this.width == targetW && this.height == targetH) {
-        this
-    } else {
-        this.scale(targetW, targetH)
-    }
-
-    // Read pixels
+    val scaled = if (this.width == targetW && this.height == targetH) this else this.scale(targetW, targetH)
     val pixels = IntArray(targetW * targetH)
     scaled.getPixels(pixels, 0, targetW, 0, 0, targetW, targetH)
-
     if (scaled !== this) scaled.recycle()
+
     var hash = 0uL
     var bitIndex = 0
 
     for (y in 0 until targetH) {
         val rowOffset = y * targetW
         for (x in 0 until hashSize) {
-            // Inline Luminance: (0.299R + 0.587G + 0.114B)
             val pLeft = pixels[rowOffset + x]
             val pRight = pixels[rowOffset + x + 1]
 
+            // Fast inline luminance calculation: (0.299*R + 0.587*G + 0.114*B) using integer math.
             val lumLeft = (30 * ((pLeft shr 16) and 0xFF) + 59 * ((pLeft shr 8) and 0xFF) + 11 * (pLeft and 0xFF))
             val lumRight = (30 * ((pRight shr 16) and 0xFF) + 59 * ((pRight shr 8) and 0xFF) + 11 * (pRight and 0xFF))
 
@@ -73,29 +73,30 @@ fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
             bitIndex++
         }
     }
-
     return hash
 }
 
 /**
  * Calculates the Hamming distance between two dHashes.
  *
- * The Hamming distance is the number of bit positions at which the two hashes differ.
- * A smaller distance indicates greater similarity between the images.
+ * The Hamming distance is simply the count of bit positions at which two hashes differ.
+ * This value is a direct, numerical measure of how visually different the two source images are.
+ * A distance of `0` means the hashes are identical.
  *
- * @param other The other [ULong] hash to compare against.
- * @return The Hamming distance (an `Int`) between the two hashes.
+ * @param other The other [ULong] hash to compare against this one.
+ * @return An `Int` representing the number of differing bits.
  */
 fun ULong.hammingDistanceTo(other: ULong): Int {
+    // This is a highly optimized bit-counting method.
     return java.lang.Long.bitCount((this xor other).toLong())
 }
 
 /**
- * A convenience function to calculate the dHash distance between two [Bitmap]s directly.
+ * A convenience function to compute the dHash distance between two [Bitmap]s in one step.
  *
  * @param a The first bitmap.
  * @param b The second bitmap.
- * @param hashSize The size of the dHash to generate.
+ * @param hashSize The size of the dHash to generate (e.g., 8 for a 64-bit hash).
  * @return The Hamming distance between the dHashes of the two bitmaps.
  */
 fun dhashDistance(a: Bitmap, b: Bitmap, hashSize: Int = 8): Int {
@@ -105,34 +106,35 @@ fun dhashDistance(a: Bitmap, b: Bitmap, hashSize: Int = 8): Int {
 }
 
 /**
- * Determines if two [Bitmap]s are visually similar based on a dHash distance threshold.
+ * Determines if two [Bitmap]s are visually similar by comparing their dHash distance
+ * against a given tolerance.
  *
- * ### Rule-of-thumb thresholds for an 8x8 dHash:
- * - **0-5**: Near-identical images.
- * - **6-10**: Very similar images (e.g., same image with different compression).
- * - **11-20**: Somewhat similar (e.g., same scene with minor changes).
- * - **21+**: Likely different images.
+ * ### Practical Thresholds (for an 8x8 dHash):
+ * - **0-5**:   The images are nearly identical.
+ * - **6-10**:  The images are very similar (e.g., the same photo with different watermarks or compression levels).
+ * - **11-20**: The images are somewhat similar (e.g., a photo of the same scene from a slightly different angle).
+ * - **21+**:   The images are likely different.
  *
- * Note: These are general guidelines. Optimal thresholds may vary depending on the specific
- * use case, image content, and environmental factors like lighting.
- *
- * @param a The first bitmap.
- * @param b The second bitmap.
- * @param maxDistance The maximum Hamming distance to be considered "similar".
- * @param hashSize The size of the dHash to generate for the comparison.
- * @return `true` if the dHash distance is less than or equal to `maxDistance`, `false` otherwise.
+ * @param a The first bitmap to compare.
+ * @param b The second bitmap to compare.
+ * @param maxDistance The maximum Hamming distance that is still considered "similar".
+ *                    This parameter acts as the tolerance for the comparison.
+ * @param hashSize The size of the dHash to use for the comparison.
+ * @return `true` if the calculated Hamming distance is less than or equal to `maxDistance`.
  */
 fun isVisuallySimilar(a: Bitmap, b: Bitmap, maxDistance: Int = 18, hashSize: Int = 8): Boolean {
     return dhashDistance(a, b, hashSize) <= maxDistance
 }
 
 /**
- * Determines if two dHashes are similar based on a distance threshold.
+ * Determines if two pre-calculated dHashes are similar based on a distance threshold.
+ *
+ * This is a more performant version of the comparison if you have already computed the hashes.
  *
  * @param a The first dHash.
  * @param b The second dHash.
  * @param maxDistance The maximum Hamming distance to be considered "similar".
- * @return `true` if the distance is less than or equal to `maxDistance`, `false` otherwise.
+ * @return `true` if the distance is less than or equal to `maxDistance`.
  */
 fun isVisuallySimilar(a: ULong, b: ULong, maxDistance: Int = 18): Boolean {
     return a.hammingDistanceTo(b) <= maxDistance
