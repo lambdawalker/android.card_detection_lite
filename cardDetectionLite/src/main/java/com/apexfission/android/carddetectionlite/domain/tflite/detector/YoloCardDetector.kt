@@ -53,14 +53,6 @@ class YoloCardDetector(
      *
      * @param imageProxy The ImageProxy to extract the card from.
      * @return A [CardDetection] object if a stable card is found, otherwise null.
-     *         The `CardDetection` object contains:
-     *         - `id`: A unique identifier for the detected card instance.
-     *         - `card`: The primary detected card feature.
-     *         - `features`: A list of other detected objects located within the bounding box of the card.
-     *         - `contextSize`: The dimensions of the image in which the detection occurred.
-     *         - `lockOnProgress`: A float value between 0.0 and 1.0 indicating the detection's stability.
-     *           A value of 1.0 means the card has been consistently detected across enough frames to be considered "locked on."
-     *           This is useful for providing user feedback, such as filling a progress bar.
      */
     fun extractCard(imageProxy: ImageProxy): CardDetection? {
         val result = yoloDetector.extractFeatures(imageProxy)
