@@ -62,11 +62,13 @@ data class PreviewScalingInfo(
  * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
  * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
  *                        similar before it is considered "locked on."
+ * @param numThreads The number of threads to use for inference on the CPU.
  */
 class CardDetectorLiteViewModel(
     application: Application, modelPath: String, cardClasses: List<Int>, useGpu: Boolean,
     scoreThreshold: Float, cardFilters: List<CardValidator>, canvasSize: MutableStateFlow<IntSize>,
     imageMode: InputShape, private val inferenceIntervalMs: Long, lockOnThreshold: Int,
+    numThreads: Int?,
 ) : AndroidViewModel(application) {
 
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
@@ -80,7 +82,16 @@ class CardDetectorLiteViewModel(
     val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
 
     private val detector = YoloCardDetector(
-        yoloDetector = YoloDetector(application, modelPath, scoreThreshold, 0.45f, useGpu, canvasSize = canvasSize, imageMode = imageMode),
+        yoloDetector = YoloDetector(
+            context = application,
+            modelPath = modelPath,
+            scoreThreshold = scoreThreshold,
+            iouThreshold = 0.45f,
+            useGpu = useGpu,
+            canvasSize = canvasSize,
+            imageMode = imageMode,
+            numThreads = numThreads
+        ),
         cardValidators = cardFilters,
         cardClasses = cardClasses,
         lockOnThreshold = lockOnThreshold

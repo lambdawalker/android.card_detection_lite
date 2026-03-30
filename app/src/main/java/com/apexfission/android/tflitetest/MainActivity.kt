@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                             classLabels = ModelCatalog.TfLite.classes,
                             cardClasses = ModelCatalog.TfLite.cardClasses,
                             useGpu = true,
-                            scoreThreshold = 0.50f,
+                            scoreThreshold = 0.6f,
                             showBoundingBoxes = false,
                             showClassNames = false,
                             showFlashlightSwitch = true,
@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
                             inferenceIntervalMs = 33L,
                             tapToFocusEnabled = true,
                             focusOnCardEnabled = true,
-                            lockOnThreshold = 3
+                            lockOnThreshold = 4
                         )
                     }
                 }

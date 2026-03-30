@@ -70,6 +70,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
  * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
  *                        similar before it is considered "locked on."
+ * @param numThreads The number of threads to use for inference on the CPU. If null, a default is chosen.
  */
 @Composable
 fun CardDetectorLite(
@@ -83,8 +84,8 @@ fun CardDetectorLite(
     showClassNames: Boolean = false,
     showFlashlightSwitch: Boolean = true,
     showLockOnProgress: Boolean = true,
-    scoreThreshold: Float = 0.70f,
-    analysisTargetResolution: Size = Size(1920, 1080),
+    scoreThreshold: Float = 0.65f,
+    analysisTargetResolution: Size = Size(2048, 1080),
     cardCardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
@@ -93,7 +94,8 @@ fun CardDetectorLite(
     inferenceIntervalMs: Long = 33L,
     tapToFocusEnabled: Boolean = true,
     focusOnCardEnabled: Boolean = true,
-    lockOnThreshold: Int = 5,
+    lockOnThreshold: Int = 4,
+    numThreads: Int? = null,
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
@@ -111,6 +113,7 @@ fun CardDetectorLite(
             imageMode = imageMode,
             inferenceIntervalMs = inferenceIntervalMs,
             lockOnThreshold = lockOnThreshold,
+            numThreads = numThreads,
         )
     )
 

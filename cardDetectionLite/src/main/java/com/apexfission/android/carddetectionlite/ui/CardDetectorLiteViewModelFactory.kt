@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @property inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
  * @property lockOnThreshold The number of consecutive frames a card must be detected and visually
  *                         similar before it is considered "locked on."
+ * @property numThreads The number of threads to use for inference on the CPU.
  */
 class CardDetectorLiteViewModelFactory(
     private val application: Application,
@@ -39,6 +40,7 @@ class CardDetectorLiteViewModelFactory(
     private val cardClasses: List<Int>,
     private val inferenceIntervalMs: Long,
     private val lockOnThreshold: Int,
+    private val numThreads: Int?,
 ) : ViewModelProvider.Factory {
 
     /**
@@ -53,7 +55,17 @@ class CardDetectorLiteViewModelFactory(
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return CardDetectorLiteViewModel(
-                application, modelPath, cardClasses, useGpu, scoreThreshold, cardFilters, canvasSize, imageMode, inferenceIntervalMs, lockOnThreshold
+                application,
+                modelPath,
+                cardClasses,
+                useGpu,
+                scoreThreshold,
+                cardFilters,
+                canvasSize,
+                imageMode,
+                inferenceIntervalMs,
+                lockOnThreshold,
+                numThreads
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
