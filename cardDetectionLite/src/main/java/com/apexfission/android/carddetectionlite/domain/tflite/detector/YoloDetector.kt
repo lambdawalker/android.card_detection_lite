@@ -15,46 +15,68 @@ import java.io.Closeable
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * Interface for a detector that can detect objects in images.
+ * Defines the contract for a generic object detector that is lifecycle-aware.
  */
 interface Detector : Closeable {
     /**
-     * Whether the detector is enabled.
+     * Controls the active state of the detector. When `false`, detection calls should
+     * return empty results immediately.
      */
     var enabled: Boolean
 
     /**
-     * Detects objects in a bitmap.
-     * @param bitmap The bitmap to detect objects in.
-     * @return The detections.
+     * Performs object detection on a provided [Bitmap].
+     * @param bitmap The input image for detection.
+     * @return A [Detections] object containing the list of found objects and image metadata.
      */
     fun detect(bitmap: Bitmap): Detections
+
     /**
-     * Detects objects in an ImageProxy.
-     * @param imageProxy The ImageProxy to detect objects in.
-     * @return The detections.
+     * Performs object detection on a frame from the camera, encapsulated in an [ImageProxy].
+     * @param imageProxy The camera frame to process.
+     * @return A [Detections] object.
      */
     fun detect(imageProxy: ImageProxy): Detections
+
     /**
-     * Extracts features from an ImageProxy.
-     * @param imageProxy The ImageProxy to extract features from.
-     * @param maxCutouts The maximum number of cutouts to extract. 30 is a limit flexible enough to include cards, and smaller features (photos, qr, barcodes, etc.).
-     * @return The extracted features.
+     * Detects objects and then extracts a cropped bitmap for each one.
+     *
+     * @param imageProxy The camera frame to process.
+     * @param maxCutouts Limits the number of features to extract. This is useful for performance
+     *                   and for focusing only on the most confident detections. A limit of 30 is
+     *                   generally sufficient to capture a primary card and its smaller sub-features
+     *                   (like photos, QR codes, etc.).
+     * @return An [ExtractedFeatures] object containing a list of `ExtractedFeature`s,
+     *         each with a cropped bitmap of the detected object.
      */
     fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int = 30): ExtractedFeatures
 }
 
 /**
- * A detector that uses a YOLO model to detect objects.
- * @param context The context.
- * @param modelPath The path to the model.
- * @param scoreThreshold The score threshold for detections.
- * @param iouThreshold The IOU threshold for non-max suppression.
- * @param useGpu Whether to use the GPU.
- * @param maxNmsCandidates The maximum number of candidates for non-max suppression.
- * @param numThreads The number of threads to use.
- * @param canvasSize The size of the canvas.
- * @param imageMode The image mode.
+ * An implementation of [Detector] that uses a YOLO (You Only Look Once) model with TensorFlow Lite.
+ *
+ * This class orchestrates the entire detection pipeline:
+ * 1.  Image Preprocessing: Applies cropping and letterboxing based on the specified [InputShape].
+ * 2.  Inference: Runs the TFLite model via [TfliteInterpreter].
+ * 3.  Post-processing: Decodes the model's output, applies non-max suppression, and returns the results
+ *     via [YoloPostProcessor].
+ *
+ * @param context The application context, used for loading the model from assets.
+ * @param modelPath The path to the TFLite model file within the `assets` directory.
+ * @param scoreThreshold The minimum confidence level for a detection to be considered.
+ *                       Values range from 0.0 to 1.0. A higher value reduces false positives
+ *                       but may miss less certain detections.
+ * @param iouThreshold The threshold for Intersection over Union (IoU) used in Non-Max Suppression.
+ *                     It determines how much overlap two bounding boxes can have before one is
+ *                     discarded. A value of 0.45 is a common starting point.
+ * @param useGpu If `true`, attempts to use the GPU delegate for faster inference.
+ * @param maxNmsCandidates The maximum number of detections to consider before running Non-Max Suppression.
+ *                         Reducing this can improve performance but may discard valid objects pre-emptively.
+ * @param numThreads The number of threads to use for inference on the CPU. If null, a default is chosen.
+ * @param canvasSize A `StateFlow` that provides the current dimensions of the UI canvas. This is crucial
+ *                   for `VisibleImage` modes to calculate the correct aspect ratio for cropping.
+ * @param imageMode Defines how the input image is preprocessed (e.g., cropped, letterboxed) before
+ *                  being sent to the model.
  */
 class YoloDetector(
     context: Context,
@@ -83,16 +105,10 @@ class YoloDetector(
         maxNmsCandidates
     )
 
-    /**
-     * Detects objects in a bitmap.
-     * @param bitmap The bitmap to detect objects in.
-     * @return The detections.
-     */
     override fun detect(bitmap: Bitmap): Detections {
         if (!enabled || isClosed) return Detections(
             emptyList(), 0, 0, 0, 0
         )
-
 
         val croppedBitmap = when (imageMode) {
             InputShape.FullImage -> bitmap
@@ -124,11 +140,6 @@ class YoloDetector(
         )
     }
 
-    /**
-     * Detects objects in an ImageProxy.
-     * @param imageProxy The ImageProxy to detect objects in.
-     * @return The detections.
-     */
     override fun detect(imageProxy: ImageProxy): Detections {
         if (!enabled || isClosed) return Detections(
             emptyList(), 0, 0, 0, 0
@@ -137,12 +148,6 @@ class YoloDetector(
         return detect(bitmap)
     }
 
-    /**
-     * Extracts features from an ImageProxy.
-     * @param imageProxy The ImageProxy to extract features from.
-     * @param maxCutouts The maximum number of cutouts to extract.
-     * @return The extracted features.
-     */
     override fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int): ExtractedFeatures {
         if (!enabled || isClosed) return ExtractedFeatures(emptyList(), 0, 0, 0, 0)
 
@@ -163,7 +168,8 @@ class YoloDetector(
     }
 
     /**
-     * Closes the detector.
+     * Releases the TFLite interpreter and other resources. This should be called
+     * when the detector is no longer needed to prevent memory leaks.
      */
     @Synchronized
     override fun close() {
