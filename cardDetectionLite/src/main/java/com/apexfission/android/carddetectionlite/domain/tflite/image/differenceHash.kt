@@ -33,7 +33,7 @@ import androidx.core.graphics.scale
  * @param hashSize The dimension of the hash. The resulting hash will have `hashSize * hashSize` bits.
  *                 For example, the default `hashSize` of 8 produces a 64-bit hash.
  * @return A [ULong] representing the calculated dHash.
- * @throws IllegalArgumentException if `hashSize` is not between 2 and 16.
+ * @throws IllegalArgumentException if `hashSize` is not between 2 and 8.
  */
 fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
     require(hashSize in 2..8) { "hashSize must be between 2 and 8" }
@@ -53,36 +53,26 @@ fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
     val pixels = IntArray(targetW * targetH)
     scaled.getPixels(pixels, 0, targetW, 0, 0, targetW, targetH)
 
-    // Convert to luminance (0..255)
-    val lum = IntArray(pixels.size)
-    for (i in pixels.indices) {
-        val c = pixels[i]
-        val r = (c shr 16) and 0xFF
-        val g = (c shr 8) and 0xFF
-        val b = (c) and 0xFF
-        // Rec. 601 luma approximation, integer math
-        lum[i] = (299 * r + 587 * g + 114 * b + 500) / 1000
-    }
-
-    // Build hash: 1 bit per comparison (hashSize * hashSize bits)
-    // We pack into a ULong (up to 64 bits for hashSize=8)
+    if (scaled !== this) scaled.recycle()
     var hash = 0uL
     var bitIndex = 0
 
     for (y in 0 until targetH) {
         val rowOffset = y * targetW
         for (x in 0 until hashSize) {
-            val left = lum[rowOffset + x]
-            val right = lum[rowOffset + x + 1]
-            val bit = if (left > right) 1uL else 0uL
-            // Place LSB-first (bit 0 is first comparison). Any consistent order works.
-            hash = hash or (bit shl bitIndex)
+            // Inline Luminance: (0.299R + 0.587G + 0.114B)
+            val pLeft = pixels[rowOffset + x]
+            val pRight = pixels[rowOffset + x + 1]
+
+            val lumLeft = (30 * ((pLeft shr 16) and 0xFF) + 59 * ((pLeft shr 8) and 0xFF) + 11 * (pLeft and 0xFF))
+            val lumRight = (30 * ((pRight shr 16) and 0xFF) + 59 * ((pRight shr 8) and 0xFF) + 11 * (pRight and 0xFF))
+
+            if (lumLeft > lumRight) {
+                hash = hash or (1uL shl bitIndex)
+            }
             bitIndex++
         }
     }
-
-    // If we created a temporary bitmap, recycle it
-    if (scaled !== this) scaled.recycle()
 
     return hash
 }
@@ -97,13 +87,7 @@ fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
  * @return The Hamming distance (an `Int`) between the two hashes.
  */
 fun ULong.hammingDistanceTo(other: ULong): Int {
-    var x = this xor other
-    var count = 0
-    while (x != 0uL) {
-        x = x and (x - 1uL)
-        count++
-    }
-    return count
+    return java.lang.Long.bitCount((this xor other).toLong())
 }
 
 /**
