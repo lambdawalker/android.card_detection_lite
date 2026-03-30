@@ -19,7 +19,7 @@ class MainViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                Log.d("CardDetection", "Card detected ${card.id}")
+                Log.d("CardDetection", "Card detected ${card.id} ${card.isNewDetection} ${card.lockOnProgress}")
             } finally {
                 _isDetectionEnabled.value = true
             }
