@@ -35,12 +35,12 @@ import kotlin.math.min
 
 @Composable
 fun CardLockOnOverlay(
-    lockOnProgress: Float,
     activeDetection: CardDetection?,
     scalingInfo: PreviewScalingInfo
 ) {
     val card = activeDetection?.card ?: return
     val det = card.detection
+    val lockOnProgress = activeDetection.lockOnProgress
 
     val coordSpring = spring<Float>(
         stiffness = Spring.StiffnessMediumLow,

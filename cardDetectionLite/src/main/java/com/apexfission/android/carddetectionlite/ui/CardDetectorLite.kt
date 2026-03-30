@@ -13,9 +13,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -25,8 +22,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.emptyOnLockOnProgress
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.onLockOnProgressCallBack
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
@@ -52,18 +47,10 @@ fun CardDetectorLite(
         MarginValidator(), AspectRatioValidator()
     ),
     onCardDetection: (CardDetection) -> Unit,
-    onLockOnProgress: onLockOnProgressCallBack = emptyOnLockOnProgress,
     imageMode: InputShape = InputShape.SquareCrop
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
-
-    var lockOnProgress by remember { mutableFloatStateOf(0f) }
-
-    val wrappedLockOnProgress: onLockOnProgressCallBack = { progress, candidate ->
-        lockOnProgress = progress
-        onLockOnProgress(progress, candidate)
-    }
 
     val viewModel: CardDetectorLiteViewModel = viewModel(
         factory = CardDetectorLiteViewModelFactory(
@@ -75,7 +62,6 @@ fun CardDetectorLite(
             cardFilters = cardCardFilters,
             canvasSize = sizeInPixels,
             imageMode = imageMode,
-            onLockOnProgress = wrappedLockOnProgress
         )
     )
 
@@ -96,18 +82,13 @@ fun CardDetectorLite(
             }) {
 
         CameraPreview(
-            lifecycleOwner = LocalLifecycleOwner.current,
-            onFrame = { imageProxy ->
-                viewModel.processImage(imageProxy, onCardDetection)
-            },
-            onFocusEvent = { cameraControl, meteringPoint ->
-                viewModel.onFocusEvent(
-                    cameraControl, meteringPoint
-                )
-            },
-            flashlightEnabled = flashlightEnabled,
-            analysisTargetResolution = analysisTargetResolution,
-            focusOn = cardDetection
+            lifecycleOwner = LocalLifecycleOwner.current, onFrame = { imageProxy ->
+            viewModel.processImage(imageProxy, onCardDetection)
+        }, onFocusEvent = { cameraControl, meteringPoint ->
+            viewModel.onFocusEvent(
+                cameraControl, meteringPoint
+            )
+        }, flashlightEnabled = flashlightEnabled, analysisTargetResolution = analysisTargetResolution, focusOn = cardDetection
         )
 
         if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
@@ -118,7 +99,7 @@ fun CardDetectorLite(
 
         if (isDetectionEnabled && showLockOnProgress && scalingInfo.fullW > 0) {
             CardLockOnOverlay(
-                lockOnProgress = lockOnProgress, activeDetection = cardDetection, scalingInfo = scalingInfo
+                activeDetection = cardDetection, scalingInfo = scalingInfo
             )
         }
 

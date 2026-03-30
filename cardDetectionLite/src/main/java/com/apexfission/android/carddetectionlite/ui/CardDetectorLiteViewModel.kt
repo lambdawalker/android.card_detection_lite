@@ -13,8 +13,6 @@ import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloCardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.emptyOnLockOnProgress
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.onLockOnProgressCallBack
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.rotateRectToUpright
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
@@ -40,7 +38,6 @@ class CardDetectorLiteViewModel(
     cardFilters: List<CardValidator>,
     canvasSize: MutableStateFlow<IntSize>,
     imageMode: InputShape,
-    onLockOnProgress: onLockOnProgressCallBack = emptyOnLockOnProgress
 ) : AndroidViewModel(application) {
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection = _cardDetection.asStateFlow()
@@ -65,8 +62,7 @@ class CardDetectorLiteViewModel(
             imageMode = imageMode,
         ),
         cardFilters,
-        cardClasses,
-        onLockOnProgress = onLockOnProgress
+        cardClasses
     )
 
     private val lastInferMs = AtomicLong(0L)

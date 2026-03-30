@@ -8,15 +8,11 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValid
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.io.Closeable
 
-typealias onLockOnProgressCallBack = (progress: Float, candidate: CardDetection?) -> Unit
-
-val emptyOnLockOnProgress: onLockOnProgressCallBack = { _, _ -> }
 
 class YoloCardDetector(
     private val yoloDetector: YoloDetector,
     private val cardValidators: List<CardValidator>,
     private val cardClasses: List<Int>,
-    private val onLockOnProgress: onLockOnProgressCallBack = emptyOnLockOnProgress
 ) : Closeable {
     private var previousHash: ULong = 0u
     private var similarityCount = 0
@@ -40,7 +36,6 @@ class YoloCardDetector(
         }
 
         if (card == null) {
-            onLockOnProgress(0f, null)
             return null
         }
 
@@ -77,10 +72,10 @@ class YoloCardDetector(
             id = cardId,
             card = card,
             features = otherElements,
-            contextSize = Rect(0, 0, result.imageWidth, result.imageHeight)
+            contextSize = Rect(0, 0, result.imageWidth, result.imageHeight),
+            lockOnProgress = progress
         )
 
-        onLockOnProgress(progress, cardDetection)
         return cardDetection
     }
 

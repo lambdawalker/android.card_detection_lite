@@ -57,8 +57,8 @@ class MainActivity : ComponentActivity() {
                             cardCardFilters = listOf(
                                 MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
                             ),
-                            imageMode = InputShape.SquareCrop,
-                            onLockOnProgress = { _, _ -> })
+                            imageMode = InputShape.SquareCrop
+                        )
                     }
                 }
 
