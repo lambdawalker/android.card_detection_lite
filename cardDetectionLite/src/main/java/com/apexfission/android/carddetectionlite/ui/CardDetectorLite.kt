@@ -66,6 +66,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param imageMode The [InputShape] that dictates how the camera image is preprocessed (e.g., cropped)
  *                  before being sent to the model.
  * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
+ * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
  */
 @Composable
 fun CardDetectorLite(
@@ -86,7 +87,8 @@ fun CardDetectorLite(
     ),
     onCardDetection: (CardDetection) -> Unit,
     imageMode: InputShape = InputShape.SquareCrop,
-    inferenceIntervalMs: Long = 33L
+    inferenceIntervalMs: Long = 33L,
+    tapToFocusEnabled: Boolean = true,
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
@@ -130,7 +132,8 @@ fun CardDetectorLite(
             onFocusEvent = viewModel::onFocusEvent,
             flashlightEnabled = flashlightEnabled,
             analysisTargetResolution = analysisTargetResolution,
-            focusOn = cardDetection
+            focusOn = cardDetection,
+            tapToFocusEnabled = tapToFocusEnabled
         )
 
         // Conditionally display overlays based on configuration and state.

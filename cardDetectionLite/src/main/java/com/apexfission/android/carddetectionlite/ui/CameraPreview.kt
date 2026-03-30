@@ -62,6 +62,7 @@ import kotlin.math.abs
  *                smart auto-focus and auto-exposure routine. The routine uses heuristics
  *                (size, position, cooldown) to avoid excessive focus hunting and intelligently
  *                adjusts the camera to keep the detected card sharp and well-exposed.
+ * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
  */
 @Composable
 @Suppress("DEPRECATION")
@@ -71,7 +72,8 @@ fun CameraPreview(
     lifecycleOwner: LifecycleOwner,
     flashlightEnabled: Boolean,
     analysisTargetResolution: Size = Size(2048, 1080), // 2k
-    focusOn: CardDetection?
+    focusOn: CardDetection?,
+    tapToFocusEnabled: Boolean = true,
 ) {
     val context = LocalContext.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
@@ -84,7 +86,7 @@ fun CameraPreview(
     AndroidView(modifier = Modifier.fillMaxSize(), factory = { previewView })
 
     // DisposableEffect manages the camera's setup and teardown, binding it to the lifecycle.
-    DisposableEffect(lifecycleOwner, flashlightEnabled) {
+    DisposableEffect(lifecycleOwner, flashlightEnabled, tapToFocusEnabled) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
@@ -120,12 +122,14 @@ fun CameraPreview(
                 )
                 cameraControl = camera.cameraControl
                 camera.cameraControl.enableTorch(flashlightEnabled)
-                previewView.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
-                    onFocusEvent(
-                        camera.cameraControl, previewView.meteringPointFactory.createPoint(event.x, event.y)
-                    )
-                    return true
-                })
+                if(tapToFocusEnabled) {
+                    previewView.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
+                        onFocusEvent(
+                            camera.cameraControl, previewView.meteringPointFactory.createPoint(event.x, event.y)
+                        )
+                        return true
+                    })
+                }
 
 
             } catch (e: Exception) {
