@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui
 
 import android.graphics.BlurMaskFilter
-import android.util.Log
+
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -33,23 +33,33 @@ import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * A highly stylized and animated overlay that provides visual feedback for the card detection "lock-on" process.
+ *
+ * This Composable draws a futuristic, glowing frame around the detected card. The frame's appearance
+ * and animations change dynamically based on the `lockOnProgress` of the detection, creating a rich
+ * user experience that communicates the state of the detection process.
+ *
+ * @param activeDetection The current [CardDetection] from the ViewModel. The overlay uses this object's
+ *                        `lockOnProgress` to drive its animations and its card's coordinates to position
+ *                        the frame. If this is `null`, the overlay will not be drawn.
+ * @param scalingInfo The [PreviewScalingInfo] necessary to map the detection's normalized coordinates
+ *                    to the absolute pixel coordinates of the screen.
+ */
 @Composable
 fun CardLockOnOverlay(
-    activeDetection: CardDetection?,
-    scalingInfo: PreviewScalingInfo
+    activeDetection: CardDetection?, scalingInfo: PreviewScalingInfo
 ) {
     val card = activeDetection?.card ?: return
     val det = card.detection
     val lockOnProgress = activeDetection.lockOnProgress
 
     val coordSpring = spring<Float>(
-        stiffness = Spring.StiffnessMediumLow,
-        dampingRatio = Spring.DampingRatioNoBouncy
+        stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy
     )
 
     val progressSpring = spring<Float>(
-        stiffness = Spring.StiffnessLow,
-        dampingRatio = Spring.DampingRatioNoBouncy
+        stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy
     )
 
     val smoothX1 by animateFloatAsState(det.x1Pct, coordSpring, label = "x1")
@@ -57,31 +67,21 @@ fun CardLockOnOverlay(
     val smoothX2 by animateFloatAsState(det.x2Pct, coordSpring, label = "x2")
     val smoothY2 by animateFloatAsState(det.y2Pct, coordSpring, label = "y2")
     val smoothProgress by animateFloatAsState(
-        targetValue = lockOnProgress.coerceIn(0f, 1f),
-        animationSpec = progressSpring,
-        label = "progress"
+        targetValue = lockOnProgress.coerceIn(0f, 1f), animationSpec = progressSpring, label = "progress"
     )
 
     val infinite = rememberInfiniteTransition(label = "lock_on_overlay")
 
     val breathe by infinite.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.04f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "breathe"
+        initialValue = 0.96f, targetValue = 1.04f, animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse
+        ), label = "breathe"
     )
 
     val sweepPhase by infinite.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sweep"
+        initialValue = 0f, targetValue = 1f, animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing), repeatMode = RepeatMode.Restart
+        ), label = "sweep"
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
@@ -135,91 +135,44 @@ fun CardLockOnOverlay(
         val frameSegments = listOf(
             RoundedSegment(
                 points = listOf(
-                    left to (top + inset + cornerLen),
-                    left to (top + inset),
-                    (left + inset) to top,
-                    (left + inset + cornerLen) to top
-                ),
-                rounded = true,
-                isCorner = true
-            ),
-            RoundedSegment(
+                    left to (top + inset + cornerLen), left to (top + inset), (left + inset) to top, (left + inset + cornerLen) to top
+                ), rounded = true, isCorner = true
+            ), RoundedSegment(
                 points = listOf(
-                    (left + inset + cornerLen) to top,
-                    (right - inset - cornerLen) to top
-                ),
-                rounded = false,
-                isCorner = false
-            ),
-            RoundedSegment(
+                    (left + inset + cornerLen) to top, (right - inset - cornerLen) to top
+                ), rounded = false, isCorner = false
+            ), RoundedSegment(
                 points = listOf(
-                    (right - inset - cornerLen) to top,
-                    (right - inset) to top,
-                    right to (top + inset),
-                    right to (top + inset + cornerLen)
-                ),
-                rounded = true,
-                isCorner = true
-            ),
-            RoundedSegment(
+                    (right - inset - cornerLen) to top, (right - inset) to top, right to (top + inset), right to (top + inset + cornerLen)
+                ), rounded = true, isCorner = true
+            ), RoundedSegment(
                 points = listOf(
-                    right to (top + inset + cornerLen),
-                    right to (midY - tickLen)
-                ),
-                rounded = false,
-                isCorner = false
-            ),
-            RoundedSegment(
+                    right to (top + inset + cornerLen), right to (midY - tickLen)
+                ), rounded = false, isCorner = false
+            ), RoundedSegment(
                 points = listOf(
-                    right to (midY + tickLen),
-                    right to (bottom - inset - cornerLen)
-                ),
-                rounded = false,
-                isCorner = false
-            ),
-            RoundedSegment(
+                    right to (midY + tickLen), right to (bottom - inset - cornerLen)
+                ), rounded = false, isCorner = false
+            ), RoundedSegment(
                 points = listOf(
-                    right to (bottom - inset - cornerLen),
-                    right to (bottom - inset),
-                    (right - inset) to bottom,
-                    (right - inset - cornerLen) to bottom
-                ),
-                rounded = true,
-                isCorner = true
-            ),
-            RoundedSegment(
+                    right to (bottom - inset - cornerLen), right to (bottom - inset), (right - inset) to bottom, (right - inset - cornerLen) to bottom
+                ), rounded = true, isCorner = true
+            ), RoundedSegment(
                 points = listOf(
-                    (right - inset - cornerLen) to bottom,
-                    (left + inset + cornerLen) to bottom
-                ),
-                rounded = false,
-                isCorner = false
-            ),
-            RoundedSegment(
+                    (right - inset - cornerLen) to bottom, (left + inset + cornerLen) to bottom
+                ), rounded = false, isCorner = false
+            ), RoundedSegment(
                 points = listOf(
-                    (left + inset + cornerLen) to bottom,
-                    (left + inset) to bottom,
-                    left to (bottom - inset),
-                    left to (bottom - inset - cornerLen)
-                ),
-                rounded = true,
-                isCorner = true
-            ),
-            RoundedSegment(
+                    (left + inset + cornerLen) to bottom, (left + inset) to bottom, left to (bottom - inset), left to (bottom - inset - cornerLen)
+                ), rounded = true, isCorner = true
+            ), RoundedSegment(
                 points = listOf(
-                    left to (bottom - inset - cornerLen),
-                    left to (midY + tickLen)
-                ),
-                rounded = false,
-                isCorner = false
-            ),
-            RoundedSegment(
+                    left to (bottom - inset - cornerLen), left to (midY + tickLen)
+                ), rounded = false, isCorner = false
+            ), RoundedSegment(
                 points = listOf(
-                    left to (midY - tickLen),
-                    left to (top + inset + cornerLen)
-                ),
-                rounded = false,
-                isCorner = false
+                    left to (midY - tickLen), left to (top + inset + cornerLen)
+                ), rounded = false, isCorner = false
             )
         )
 
@@ -244,22 +197,14 @@ fun CardLockOnOverlay(
 
             drawGlowPath(
                 points = listOf(
-                    (left - tickInset) to (midY - tickLen / 2f),
-                    (left - tickInset) to (midY + tickLen / 2f)
-                ),
-                blurRadius = blurRadius * 0.85f,
-                color = tickColor,
-                strokeWidth = tickStroke
+                    (left - tickInset) to (midY - tickLen / 2f), (left - tickInset) to (midY + tickLen / 2f)
+                ), blurRadius = blurRadius * 0.85f, color = tickColor, strokeWidth = tickStroke
             )
 
             drawGlowPath(
                 points = listOf(
-                    (right + tickInset) to (midY - tickLen / 2f),
-                    (right + tickInset) to (midY + tickLen / 2f)
-                ),
-                blurRadius = blurRadius * 0.85f,
-                color = tickColor,
-                strokeWidth = tickStroke
+                    (right + tickInset) to (midY - tickLen / 2f), (right + tickInset) to (midY + tickLen / 2f)
+                ), blurRadius = blurRadius * 0.85f, color = tickColor, strokeWidth = tickStroke
             )
         }
 
@@ -283,9 +228,7 @@ fun CardLockOnOverlay(
 }
 
 private data class RoundedSegment(
-    val points: List<Pair<Float, Float>>,
-    val rounded: Boolean,
-    val isCorner: Boolean
+    val points: List<Pair<Float, Float>>, val rounded: Boolean, val isCorner: Boolean
 )
 
 fun DrawScope.drawBlurredPath(
@@ -340,12 +283,7 @@ fun DrawScope.drawGlowPath(
     cornerRadius: Float = 0f,
 ) {
     drawBlurredPath(
-        points = points,
-        blurRadius = blurRadius,
-        color = color,
-        strokeWidth = strokeWidth,
-        rounded = rounded,
-        cornerRadius = cornerRadius
+        points = points, blurRadius = blurRadius, color = color, strokeWidth = strokeWidth, rounded = rounded, cornerRadius = cornerRadius
     )
 
     drawBlurredPath(
@@ -358,18 +296,12 @@ fun DrawScope.drawGlowPath(
     )
 
     drawBlurredPath(
-        points = points,
-        blurRadius = 0f,
-        color = color,
-        strokeWidth = strokeWidth,
-        rounded = rounded,
-        cornerRadius = cornerRadius
+        points = points, blurRadius = 0f, color = color, strokeWidth = strokeWidth, rounded = rounded, cornerRadius = cornerRadius
     )
 }
 
 private fun buildRoundedPolylinePath(
-    points: List<Pair<Float, Float>>,
-    radius: Float
+    points: List<Pair<Float, Float>>, radius: Float
 ): Path {
     val result = Path()
     if (points.size < 2) return result

@@ -29,6 +29,43 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetecti
 import kotlinx.coroutines.flow.MutableStateFlow
 
 
+/**
+ * All-in-one Composable that provides a configurable in camera feed card detection solution,
+ * segmentation step before OCR.
+ *
+ * This component seamlessly integrates the `CameraPreview`, `DetectionOverlay`, and `CardLockOnOverlay`
+ * with the underlying `CardDetectorLiteViewModel`. It serves as the primary entry point for using
+ * the card detection feature in an application.
+ *
+ * @param modelPath The path to the `.tflite` model file within the application's `assets` directory.
+ * @param classLabels A map where keys are the integer class IDs from the model and values are the
+ *                    corresponding human-readable string labels (e.g., `0 to "credit_card"`).
+ * @param cardClasses A specific list of class IDs from the model that should be treated as the primary
+ *                    target for detection and lock-on.
+ * @param isDetectionEnabled A boolean flag to dynamically start or stop the detection process. When `false`,
+ *                           the camera preview remains active, but no model inference is performed.
+ * @param modifier A [Modifier] applied to the root `Box` of this component.
+ * @param useGpu If `true`, the underlying TFLite interpreter will attempt to use the GPU delegate
+ *               for potentially faster inference.
+ * @param showBoundingBoxes When `true`, a [DetectionOverlay] is displayed, drawing boxes around all
+ *                          detected objects (both the card and its sub-features).
+ * @param showClassNames If `true` (and `showBoundingBoxes` is also true), labels with the class name
+ *                       and confidence score will be drawn above each bounding box.
+ * @param showFlashlightSwitch If `true`, a UI button is provided to allow the user to toggle the
+ *                             camera's flashlight.
+ * @param showLockOnProgress If `true`, the [CardLockOnOverlay] is displayed, providing visual
+ *                           feedback as the detector locks onto a card.
+ * @param scoreThreshold The minimum confidence score (0.0 to 1.0) a detection must have to be considered.
+ *                       Lowering this may increase recall but can also lead to more false positives.
+ * @param analysisTargetResolution The target resolution for the image analysis stream passed to `CameraPreview`.
+ * @param cardCardFilters A list of [CardValidator] instances used to apply additional heuristic
+ *                        checks on potential card detections (e.g., ensuring a plausible aspect ratio).
+ * @param onCardDetection A callback lambda that is invoked only when the detector achieves a stable
+ *                        "lock-on" on a card (`lockOnProgress >= 1.0`). It provides the final,
+ *                        validated [CardDetection] object.
+ * @param imageMode The [InputShape] that dictates how the camera image is preprocessed (e.g., cropped)
+ *                  before being sent to the model.
+ */
 @Composable
 fun CardDetectorLite(
     modelPath: String,
@@ -52,6 +89,7 @@ fun CardDetectorLite(
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
 
+    // Instantiate the ViewModel using the factory to pass in all necessary parameters.
     val viewModel: CardDetectorLiteViewModel = viewModel(
         factory = CardDetectorLiteViewModelFactory(
             application = context.applicationContext as Application,
@@ -65,10 +103,12 @@ fun CardDetectorLite(
         )
     )
 
+    // Control the ViewModel's detection state.
     LaunchedEffect(isDetectionEnabled) {
         viewModel.setDetectionEnabled(isDetectionEnabled)
     }
 
+    // Collect state from the ViewModel to drive the UI.
     val flashlightEnabled by viewModel.flashlightEnabled.collectAsStateWithLifecycle()
     val cardDetection by viewModel.cardDetection.collectAsStateWithLifecycle()
     val scalingInfo by viewModel.scalingInfo.collectAsStateWithLifecycle()
@@ -77,20 +117,20 @@ fun CardDetectorLite(
         modifier
             .fillMaxSize()
             .onSizeChanged { size ->
-                // size.width and size.height are in pixels
+                // Keep the ViewModel aware of the Composable's size for aspect ratio calculations.
                 sizeInPixels.value = size
             }) {
 
         CameraPreview(
-            lifecycleOwner = LocalLifecycleOwner.current, onFrame = { imageProxy ->
-            viewModel.processImage(imageProxy, onCardDetection)
-        }, onFocusEvent = { cameraControl, meteringPoint ->
-            viewModel.onFocusEvent(
-                cameraControl, meteringPoint
-            )
-        }, flashlightEnabled = flashlightEnabled, analysisTargetResolution = analysisTargetResolution, focusOn = cardDetection
+            lifecycleOwner = LocalLifecycleOwner.current,
+            onFrame = { imageProxy -> viewModel.processImage(imageProxy, onCardDetection) },
+            onFocusEvent = viewModel::onFocusEvent,
+            flashlightEnabled = flashlightEnabled,
+            analysisTargetResolution = analysisTargetResolution,
+            focusOn = cardDetection
         )
 
+        // Conditionally display overlays based on configuration and state.
         if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
             DetectionOverlay(
                 cardDetection = cardDetection, scalingInfo = scalingInfo, showClassNames = showClassNames, classLabels = classLabels
@@ -105,10 +145,12 @@ fun CardDetectorLite(
 
         if (showFlashlightSwitch) {
             IconButton(
-                onClick = { viewModel.toggleFlashlight() }, modifier = Modifier.padding(16.dp)
+                onClick = viewModel::toggleFlashlight,
+                modifier = Modifier.padding(16.dp)
             ) {
                 Icon(
-                    imageVector = if (flashlightEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff, contentDescription = "Toggle Flashlight"
+                    imageVector = if (flashlightEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
+                    contentDescription = "Toggle Flashlight"
                 )
             }
         }

@@ -16,58 +16,78 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDete
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.rotateRectToUpright
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Metadata to help the UI map detection coordinates to screen space.
+ * Holds critical metadata for mapping coordinates from the model's analysis space to the UI's
+ * screen space.
+ *
+ * @property cropW The width, in pixels, of the image that was actually analyzed by the model
+ *                 (after any initial cropping but before letterboxing).
+ * @property cropH The height, in pixels, of the analyzed image.
+ * @property fullW The width, in pixels, of the entire camera buffer after being rotated to an
+ *                 upright orientation.
+ * @property fullH The height, in pixels, of the upright camera buffer.
  */
 data class PreviewScalingInfo(
     val cropW: Float = 0f, val cropH: Float = 0f, val fullW: Float = 0f, val fullH: Float = 0f
 )
 
+/**
+ * The central ViewModel for the [CardDetectorLite] screen, orchestrating the entire detection process.
+ *
+ * This class serves as the bridge between the UI Composables and the underlying detection engine.
+ * Its responsibilities include:
+ * - Initializing and owning the `YoloCardDetector`.
+ * - Receiving image frames from the `CameraPreview`.
+ * - Throttling inference to maintain a stable frame rate.
+ * - Launching the detection logic on a background thread.
+ * - Exposing the results and other UI-related state via `StateFlow`s.
+ * - Handling user interactions like tap-to-focus and toggling the flashlight.
+ *
+ * @param application The application instance, required by `AndroidViewModel`.
+ * @param modelPath The asset path for the TFLite model.
+ * @param cardClasses A list of class IDs that the detector should specifically treat as cards.
+ * @param useGpu A flag to enable or disable the GPU delegate for TFLite.
+ * @param scoreThreshold The minimum confidence for a raw detection to be considered.
+ * @param cardFilters A list of [CardValidator]s to apply to potential card detections.
+ * @param canvasSize A `StateFlow` from the UI that provides the current size of the composable,
+ *                   used for aspect-ratio calculations.
+ * @param imageMode The [InputShape] configuration for image preprocessing.
+ */
 class CardDetectorLiteViewModel(
-    application: Application,
-    modelPath: String,
-    cardClasses: List<Int>,
-    useGpu: Boolean,
-    scoreThreshold: Float,
-    cardFilters: List<CardValidator>,
-    canvasSize: MutableStateFlow<IntSize>,
+    application: Application, modelPath: String, cardClasses: List<Int>, useGpu: Boolean,
+    scoreThreshold: Float, cardFilters: List<CardValidator>, canvasSize: MutableStateFlow<IntSize>,
     imageMode: InputShape,
 ) : AndroidViewModel(application) {
+
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
-    val cardDetection = _cardDetection.asStateFlow()
+    val cardDetection: StateFlow<CardDetection?> = _cardDetection.asStateFlow()
 
     private val _scalingInfo = MutableStateFlow(PreviewScalingInfo())
-    val scalingInfo = _scalingInfo.asStateFlow()
+    val scalingInfo: StateFlow<PreviewScalingInfo> = _scalingInfo.asStateFlow()
 
     private val _detectorEnabled = MutableStateFlow(true)
-    val detectorEnabled = _detectorEnabled.asStateFlow()
+    val detectorEnabled: StateFlow<Boolean> = _detectorEnabled.asStateFlow()
 
     private val _flashlightEnabled = MutableStateFlow(false)
-    val flashlightEnabled = _flashlightEnabled.asStateFlow()
+    val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
 
     private val detector = YoloCardDetector(
-        YoloDetector(
-            context = application.applicationContext,
-            modelPath = modelPath,
-            scoreThreshold = scoreThreshold,
-            iouThreshold = 0.45f,
-            useGpu = useGpu,
-            canvasSize = canvasSize,
-            imageMode = imageMode,
-        ),
+        YoloDetector(application, modelPath, scoreThreshold, 0.45f, useGpu, canvasSize = canvasSize, imageMode = imageMode),
         cardFilters,
         cardClasses
     )
 
     private val lastInferMs = AtomicLong(0L)
-    private val inferIntervalMs = 80L
+    private val inferIntervalMs = 80L // ~12.5 FPS
 
+    /** Toggles the detection process on or off. When disabled, the ViewModel will ignore incoming frames. */
     fun setDetectionEnabled(enabled: Boolean) {
         _detectorEnabled.value = enabled
         detector.enabled = enabled
@@ -77,20 +97,32 @@ class CardDetectorLiteViewModel(
         }
     }
 
+    /** Toggles the state of the camera flashlight. */
     fun toggleFlashlight() {
         _flashlightEnabled.value = !_flashlightEnabled.value
     }
 
+    /** Initiates a tap-to-focus action on the camera. */
     fun onFocusEvent(cameraControl: CameraControl, meteringPoint: MeteringPoint) {
-        val action = FocusMeteringAction.Builder(meteringPoint).build()
-        cameraControl.startFocusAndMetering(action)
+        cameraControl.startFocusAndMetering(FocusMeteringAction.Builder(meteringPoint).build())
     }
 
+    /**
+     * The main entry point for processing a camera frame.
+     *
+     * This function is designed to be called rapidly from the `CameraPreview`. It contains logic
+     * to throttle the rate of inference, preventing the system from being overloaded. It then
+     * calculates the necessary coordinate scaling information, dispatches the detection work to a
+     * background thread, and updates the public state flows with the results.
+     *
+     * @param imageProxy The frame from the camera to be processed.
+     * @param onDetection A callback that will be invoked on a stable card detection.
+     */
     fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection) -> Unit) {
+        if (!_detectorEnabled.value) return
+
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                if (!_detectorEnabled.value) return@launch
-
                 val now = SystemClock.uptimeMillis()
                 if (now - lastInferMs.get() < inferIntervalMs) return@launch
                 lastInferMs.set(now)
