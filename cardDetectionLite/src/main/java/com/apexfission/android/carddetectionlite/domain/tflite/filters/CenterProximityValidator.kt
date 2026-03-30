@@ -4,29 +4,34 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFe
 import kotlin.math.sqrt
 
 /**
- * A [CardValidator] that checks if the center of a detection is within a specified
- * distance from the center of the image.
+ * A [CardValidator] that ensures the detected object is reasonably centered in the image.
  *
- * This is useful for ensuring that the detected object is near the middle of the frame,
- * which can help filter out irrelevant objects in the periphery.
+ * This filter is useful for guiding the user to position the target object in the middle
+ * of the camera preview. It helps prevent accidental detections of objects in the periphery.
+ * The proximity is determined by calculating the distance from the center of the detection's
+ * bounding box to the center of the image.
  *
- * @property maxDistancePercentage The maximum allowed distance from the image center,
- *                         expressed as a percentage of the image's diagonal length.
- *                         A detection is considered invalid if the Euclidean distance between
- *                         its center and the image's center exceeds this value.
+ * @property maxDistancePercentage The maximum permitted distance from the center, expressed as a
+ *                         percentage of the image's diagonal length. For example, a value of `0.2`
+ *                         means the detection's center must be within a radius that is 20% of the
+ *                         image diagonal. A smaller value creates a stricter centering requirement.
  */
 class CenterProximityValidator(private val maxDistancePercentage: Float = .2f) : CardValidator {
 
     /**
-     * Validates that the center of the [ExtractedFeature] is close to the image center.
+     * Validates that the center of the [ExtractedFeature] is within the allowed proximity
+     * to the center of the original image.
      *
-     * The maximum allowed distance is calculated based on the [maxDistancePercentage] of the image's diagonal.
+     * This implementation uses squared distances for performance, avoiding a `sqrt` operation
+     * on every check.
      *
-     * @param extractedFeature The feature to validate.
-     * @param contextWidth The width of the source image.
-     * @param contextHeight The height of the source image.
-     * @return `true` if the distance from the feature's center to the image's center is
-     *         within the allowed range, `false` otherwise.
+     * @param extractedFeature The feature whose center position will be evaluated.
+     * @param contextWidth (Not used by this validator).
+     * @param contextHeight (Not used by this validator).
+     * @param originalWidth The width of the full source image, used to find the image center.
+     * @param originalHeight The height of the full source image, used to find the image center.
+     * @return `true` if the detection is centered within the tolerance specified by
+     *         [maxDistancePercentage], `false` otherwise.
      */
     override fun isValid(
         extractedFeature: ExtractedFeature,
@@ -35,28 +40,30 @@ class CenterProximityValidator(private val maxDistancePercentage: Float = .2f) :
         originalWidth: Int,
         originalHeight: Int
     ): Boolean {
-        // Use originalWidth/Height if that's what the feature coordinates are mapped to
         val targetWidth = originalWidth.toDouble()
         val targetHeight = originalHeight.toDouble()
 
-        // 1. Calculate true diagonal and max allowed distance squared
-        val diagonalSquared = (targetWidth * targetWidth) + (targetHeight * targetHeight)
-        val maxDistanceAllowed = sqrt(diagonalSquared) * maxDistancePercentage
+        // 1. Calculate the image's diagonal and the maximum allowed distance in pixels.
+        val imageDiagonal = sqrt((targetWidth * targetWidth) + (targetHeight * targetHeight))
+        val maxDistanceAllowed = imageDiagonal * maxDistancePercentage
+        // Use squared distance to avoid a sqrt in the distance calculation.
         val maxDistanceAllowedSq = maxDistanceAllowed * maxDistanceAllowed
 
-        // 2. Find centers
+        // 2. Find the center of the image.
         val imageCenterX = targetWidth / 2.0
         val imageCenterY = targetHeight / 2.0
 
+        // 3. Find the center of the detection's bounding box.
         val coords = extractedFeature.coordinates
-        val detCenterX = (coords.left + coords.right) / 2.0
-        val detCenterY = (coords.top + coords.bottom) / 2.0
+        val detCenterX = coords.centerX().toDouble()
+        val detCenterY = coords.centerY().toDouble()
 
-        // 3. Calculate squared Euclidean distance
+        // 4. Calculate the squared Euclidean distance between the two centers.
         val dx = detCenterX - imageCenterX
         val dy = detCenterY - imageCenterY
         val distanceSq = (dx * dx) + (dy * dy)
 
+        // 5. Compare squared distances.
         return distanceSq <= maxDistanceAllowedSq
     }
 }
