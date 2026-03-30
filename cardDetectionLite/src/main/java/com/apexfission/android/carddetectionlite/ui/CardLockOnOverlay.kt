@@ -137,39 +137,53 @@ fun CardLockOnOverlay(
                 points = listOf(
                     left to (top + inset + cornerLen), left to (top + inset), (left + inset) to top, (left + inset + cornerLen) to top
                 ), rounded = true, isCorner = true
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
                 points = listOf(
-                    (left + inset + cornerLen) to top, (right - inset - cornerLen) to top
+                    (left + inset + cornerLen) to top + strokeWidth, (right - inset - cornerLen) to top + strokeWidth
                 ), rounded = false, isCorner = false
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
+                points = listOf(
+                    (left + inset + cornerLen) to top - strokeWidth, (right - inset - cornerLen) to top - strokeWidth
+                ), rounded = false, isCorner = false
+            ),
+            RoundedSegment(
                 points = listOf(
                     (right - inset - cornerLen) to top, (right - inset) to top, right to (top + inset), right to (top + inset + cornerLen)
                 ), rounded = true, isCorner = true
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
                 points = listOf(
                     right to (top + inset + cornerLen), right to (midY - tickLen)
                 ), rounded = false, isCorner = false
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
                 points = listOf(
                     right to (midY + tickLen), right to (bottom - inset - cornerLen)
                 ), rounded = false, isCorner = false
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
                 points = listOf(
                     right to (bottom - inset - cornerLen), right to (bottom - inset), (right - inset) to bottom, (right - inset - cornerLen) to bottom
                 ), rounded = true, isCorner = true
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
                 points = listOf(
                     (right - inset - cornerLen) to bottom, (left + inset + cornerLen) to bottom
                 ), rounded = false, isCorner = false
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
                 points = listOf(
                     (left + inset + cornerLen) to bottom, (left + inset) to bottom, left to (bottom - inset), left to (bottom - inset - cornerLen)
                 ), rounded = true, isCorner = true
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
                 points = listOf(
                     left to (bottom - inset - cornerLen), left to (midY + tickLen)
                 ), rounded = false, isCorner = false
-            ), RoundedSegment(
+            ),
+            RoundedSegment(
                 points = listOf(
                     left to (midY - tickLen), left to (top + inset + cornerLen)
                 ), rounded = false, isCorner = false
@@ -177,7 +191,7 @@ fun CardLockOnOverlay(
         )
 
         frameSegments.forEach { segment ->
-            val segmentStroke = if (segment.isCorner) strokeWidth * 4f else strokeWidth
+            val segmentStroke = if (segment.isCorner) strokeWidth * 6f else strokeWidth
             val cornerRadiusPx = min(segmentStroke * 1.6f, 10.dp.toPx())
 
             drawGlowPath(
@@ -190,27 +204,9 @@ fun CardLockOnOverlay(
             )
         }
 
-        if (smoothProgress > 0.18f) {
-            val tickAlpha = ((smoothProgress - 0.18f) / 0.82f).coerceIn(0f, 1f)
-            val tickColor = frameColor.copy(alpha = 0.9f * tickAlpha)
-            val tickStroke = strokeWidth * 1.5f
-
-            drawGlowPath(
-                points = listOf(
-                    (left - tickInset) to (midY - tickLen / 2f), (left - tickInset) to (midY + tickLen / 2f)
-                ), blurRadius = blurRadius * 0.85f, color = tickColor, strokeWidth = tickStroke
-            )
-
-            drawGlowPath(
-                points = listOf(
-                    (right + tickInset) to (midY - tickLen / 2f), (right + tickInset) to (midY + tickLen / 2f)
-                ), blurRadius = blurRadius * 0.85f, color = tickColor, strokeWidth = tickStroke
-            )
-        }
-
         if (smoothProgress > 0.72f) {
             val sweepAlpha = ((smoothProgress - 0.72f) / 0.28f).coerceIn(0f, 1f)
-            val sweepWidth = frameWidth * 0.01f
+            val sweepWidth = frameWidth * 0.005f
             val sweepX = left + (frameWidth + sweepWidth) * sweepPhase - sweepWidth
             val startX = sweepX.coerceAtLeast(left + inset + cornerLen)
             val endX = (sweepX + sweepWidth).coerceAtMost(right - inset - cornerLen)
@@ -218,9 +214,23 @@ fun CardLockOnOverlay(
             if (endX > startX) {
                 drawGlowPath(
                     points = listOf(startX to top, endX to top),
-                    blurRadius = blurRadius * 0.7f,
+                    blurRadius = blurRadius,
                     color = Color.White.copy(alpha = 0.85f * sweepAlpha),
-                    strokeWidth = strokeWidth * 3f
+                    strokeWidth = strokeWidth * 2f
+                )
+
+                drawGlowPath(
+                    points = listOf(startX to top, endX to top),
+                    blurRadius = blurRadius,
+                    color = Color.White.copy(alpha = 0.85f * sweepAlpha),
+                    strokeWidth = strokeWidth * 2f
+                )
+
+                drawGlowPath(
+                    points = listOf(startX to top, endX to top),
+                    blurRadius = blurRadius,
+                    color = Color.White.copy(alpha = 0.85f * sweepAlpha),
+                    strokeWidth = strokeWidth * 4f
                 )
             }
         }

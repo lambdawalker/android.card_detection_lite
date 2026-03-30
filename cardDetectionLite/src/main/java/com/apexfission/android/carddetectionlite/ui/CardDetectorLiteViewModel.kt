@@ -75,8 +75,6 @@ class CardDetectorLiteViewModel(
     private val _scalingInfo = MutableStateFlow(PreviewScalingInfo())
     val scalingInfo: StateFlow<PreviewScalingInfo> = _scalingInfo.asStateFlow()
 
-    private val _detectorEnabled = MutableStateFlow(true)
-    val detectorEnabled: StateFlow<Boolean> = _detectorEnabled.asStateFlow()
 
     private val _flashlightEnabled = MutableStateFlow(false)
     val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
@@ -92,7 +90,6 @@ class CardDetectorLiteViewModel(
 
     /** Toggles the detection process on or off. When disabled, the ViewModel will ignore incoming frames. */
     fun setDetectionEnabled(enabled: Boolean) {
-        _detectorEnabled.value = enabled
         detector.enabled = enabled
 
         if (!enabled) {
@@ -122,7 +119,7 @@ class CardDetectorLiteViewModel(
      * @param onDetection A callback that will be invoked on a stable card detection.
      */
     fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection) -> Unit) {
-        if (!_detectorEnabled.value) return
+        if (!detector.enabled) return
 
         viewModelScope.launch(Dispatchers.Default) {
             try {
