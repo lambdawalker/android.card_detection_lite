@@ -5,16 +5,17 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Post-processor for YOLO models.
+ * Post-processor for YOLO models optimized for mobile real-time performance.
  *
- * @param outLayout The layout of the output tensor.
- * @param outBoxes The number of boxes in the output.
- * @param outAttrs The number of attributes in the output.
- * @param numClasses The number of classes.
- * @param inputImageWidth The width of the input image.
- * @param scoreThreshold The score threshold for detections.
- * @param iouThreshold The IOU threshold for non-max suppression.
- * @param maxNmsCandidates The maximum number of candidates for non-max suppression.
+ * @param outLayout The memory layout of the output tensor (Boxes-first or Attrs-first).
+ * @param outBoxes Total number of candidate boxes produced by the model.
+ * @param outAttrs Number of attributes per box (usually 4 coords + numClasses).
+ * @param numClasses Number of object categories the model can detect.
+ * @param inputImageWidth The width used for the model's input (e.g., 640).
+ * @param scoreThreshold Minimum confidence to consider a detection valid.
+ * @param iouThreshold Intersection-over-Union limit for suppressing duplicates.
+ * @param maxNmsCandidates Maximum number of detections to return after NMS.
+ * @param outputScalingMode Strategy for interpreting raw tensor coordinates. Defaults to [OutputScalingMode.NORMALIZED].
  */
 class YoloPostProcessor(
     private val outLayout: TfliteInterpreter.OutputLayout,
@@ -25,101 +26,87 @@ class YoloPostProcessor(
     private val scoreThreshold: Float,
     private val iouThreshold: Float,
     private val maxNmsCandidates: Int,
+    private val outputScalingMode: OutputScalingMode = OutputScalingMode.NORMALIZED
 ) {
 
     /**
-     * Processes the output of a YOLO model.
-     *
-     * @param output The output of the model.
-     * @param width The width of the image.
-     * @param height The height of the image.
-     * @param lbScale The letterbox scale.
-     * @param padX The letterbox padding in the x direction.
-     * @param padY The letterbox padding in the y direction.
-     * @param originalWidth The original width of the image.
-     * @param originalHeight The original height of the image.
-     * @return A list of detections.
+     * Defines how raw tensor coordinates are interpreted.
      */
-    fun process(
-        output: FloatArray, contextWidth: Int, contextHeight: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
-    ): List<Detection> {
-        val raw: List<Detection> = decodeToCropNormalized(output, contextWidth, contextHeight, lbScale, padX, padY)
-        val remapped = mapFromCropCoordinatesToTheOriginalImageSpace(raw, contextWidth, contextHeight, originalWidth, originalHeight)
-        val capped = if (remapped.size > maxNmsCandidates) remapped.sortedByDescending { it.confidence }.take(maxNmsCandidates) else remapped
-        return nms(capped)
+    enum class OutputScalingMode {
+        /** Assumes model outputs raw pixels (e.g., 0..640). Coordinates will be divided by 1.0. */
+        NONE,
+        /** Assumes model outputs normalized values (0..1). Coordinates will be multiplied by [inputImageWidth]. */
+        NORMALIZED
     }
 
     /**
-     * The input image could be a cropped version of the full image.
-     * This function translate the coordinates of the detection to the original image size.
+     * Processes raw TFLite output into a refined list of [Detection] objects.
      */
-    private fun mapFromCropCoordinatesToTheOriginalImageSpace(
-        detections: List<Detection>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
+    fun process(
+        output: FloatArray,
+        contextWidth: Int,
+        contextHeight: Int,
+        lbScale: Float,
+        padX: Float,
+        padY: Float,
+        originalWidth: Int,
+        originalHeight: Int
     ): List<Detection> {
-        if (width == originalWidth && height == originalHeight) return detections
+        val raw = decodeToCropNormalized(output, contextWidth, contextHeight, lbScale, padX, padY)
 
-        val xMarginInPixels: Float = (originalWidth - width) / 2.toFloat()
-        val xPercentageMargin: Float = xMarginInPixels / originalWidth.toFloat()
-        val xTranslationFactor: Float = width / originalWidth.toFloat()
-
-        val yMarginInPixels = (originalHeight - height) / 2.toFloat()
-        val yPercentageMargin = yMarginInPixels / originalHeight.toFloat()
-        val yTranslationFactor = height / originalHeight.toFloat()
-
-        val remapped = detections.map {
-            Detection(
-                confidence = it.confidence,
-                x1Pct = it.x1Pct * xTranslationFactor + xPercentageMargin,
-                y1Pct = it.y1Pct * yTranslationFactor + yPercentageMargin,
-                x2Pct = it.x2Pct * xTranslationFactor + xPercentageMargin,
-                y2Pct = it.y2Pct * yTranslationFactor + yPercentageMargin,
-                classId = it.classId
-            )
+        val processed = if (contextWidth == originalWidth && contextHeight == originalHeight) {
+            raw
+        } else {
+            mapFromCropToOriginal(raw, contextWidth, contextHeight, originalWidth, originalHeight)
         }
-        return remapped
+
+        return nms(processed)
     }
 
-
+    /**
+     * PERFORMANCE: Optimized "Hot Path"
+     * Uses stride-based indexing and minimal allocations.
+     */
     private fun decodeToCropNormalized(
         output: FloatArray, cropW: Int, cropH: Int, lbScale: Float, padX: Float, padY: Float
     ): List<Detection> {
-        val detections = ArrayList<Detection>(64)
+        val detections = ArrayList<Detection>(128)
+        val isBoxesFirst = outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES
+        val strideBox = if (isBoxesFirst) 1 else outAttrs
+        val strideAttr = if (isBoxesFirst) outBoxes else 1
 
-        fun idx(attr: Int, box: Int): Int {
-            return if (outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES) (attr * outBoxes + box)
-            else (box * outAttrs + attr)
-        }
+        val scale = if (outputScalingMode == OutputScalingMode.NONE) 1f else inputImageWidth.toFloat()
 
         for (i in 0 until outBoxes) {
-            // Find best class
+            val bIdx = i * strideBox
+
             var maxClassScore = 0f
             var bestCls = -1
 
+            // Hot Loop: Class identification
             for (c in 0 until numClasses) {
-                val s = output[idx(4 + c, i)]
-                if (s > maxClassScore) {
-                    maxClassScore = s
+                val score = output[bIdx + (4 + c) * strideAttr]
+                if (score > maxClassScore) {
+                    maxClassScore = score
                     bestCls = c
                 }
             }
 
             if (maxClassScore < scoreThreshold) continue
 
-            // Box coordinates
-            val cxI = output[idx(0, i)]
-            val cyI = output[idx(1, i)]
-            val wI = output[idx(2, i)]
-            val hI = output[idx(3, i)]
+            val cxI = output[bIdx + 0 * strideAttr]
+            val cyI = output[bIdx + 1 * strideAttr]
+            val wI = output[bIdx + 2 * strideAttr]
+            val hI = output[bIdx + 3 * strideAttr]
 
-            // YOLOv11 TFLite usually outputs in pixel coordinates (0..640)
-            // If the values are very small (0..1), we assume they are already normalized
-            val needsScaling = maxOf(cxI, cyI, wI, hI) > 2f
-            val scaleFactor = if (needsScaling) 1f else inputImageWidth.toFloat()
+            val halfW = (wI * scale) / 2f
+            val halfH = (hI * scale) / 2f
 
-            val x1C = ((cxI * scaleFactor - (wI * scaleFactor) / 2f) - padX) / lbScale
-            val y1C = ((cyI * scaleFactor - (hI * scaleFactor) / 2f) - padY) / lbScale
-            val x2C = ((cxI * scaleFactor + (wI * scaleFactor) / 2f) - padX) / lbScale
-            val y2C = ((cyI * scaleFactor + (hI * scaleFactor) / 2f) - padY) / lbScale
+            // Map from Letterbox/Input space to Crop space
+            val x1C = ((cxI * scale - halfW) - padX) / lbScale
+            val y1C = ((cyI * scale - halfH) - padY) / lbScale
+            val x2C = ((cxI * scale + halfW) - padX) / lbScale
+            val y2C = ((cyI * scale + halfH) - padY) / lbScale
 
             detections += Detection(
                 x1Pct = (x1C / cropW).coerceIn(0f, 1f),
@@ -133,28 +120,76 @@ class YoloPostProcessor(
         return detections
     }
 
-    private fun nms(detections: List<Detection>): List<Detection> {
-        val sorted = detections.sortedByDescending { it.confidence }.toMutableList()
-        val keep = ArrayList<Detection>()
-        while (sorted.isNotEmpty()) {
-            val best = sorted.removeAt(0)
-            keep += best
-            val it = sorted.iterator()
+    /**
+     * MATH: Coordinate Transformation
+     * Translates coordinates from a centered ROI back to full image space.
+     */
+    private fun mapFromCropToOriginal(
+        detections: List<Detection>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
+    ): List<Detection> {
+        val xFactor = width.toFloat() / originalWidth
+        val yFactor = height.toFloat() / originalHeight
+        val xOffset = (1f - xFactor) / 2f
+        val yOffset = (1f - yFactor) / 2f
 
-            while (it.hasNext()) {
-                val d = it.next()
-                if (d.classId == best.classId && iou(best, d) > iouThreshold) it.remove()
+        return detections.map {
+            it.copy(
+                x1Pct = it.x1Pct * xFactor + xOffset,
+                y1Pct = it.y1Pct * yFactor + yOffset,
+                x2Pct = it.x2Pct * xFactor + xOffset,
+                y2Pct = it.y2Pct * yFactor + yOffset
+            )
+        }
+    }
+
+    /**
+     * ALGORITHM: Optimized NMS
+     * Uses Boolean suppression and area caching to achieve better performance than O(N^2) list mutation.
+     */
+    private fun nms(detections: List<Detection>): List<Detection> {
+        if (detections.isEmpty()) return emptyList()
+
+        val sorted = detections.sortedByDescending { it.confidence }
+        val size = sorted.size
+
+        val areas = FloatArray(size) { i ->
+            (sorted[i].x2Pct - sorted[i].x1Pct) * (sorted[i].y2Pct - sorted[i].y1Pct)
+        }
+
+        val suppressed = BooleanArray(size)
+        val keep = ArrayList<Detection>(min(size, maxNmsCandidates))
+
+        for (i in 0 until size) {
+            if (suppressed[i]) continue
+
+            val best = sorted[i]
+            keep.add(best)
+            if (keep.size >= maxNmsCandidates) break
+
+            for (j in i + 1 until size) {
+                if (suppressed[j]) continue
+
+                val next = sorted[j]
+                if (next.classId == best.classId) {
+                    if (calculateIoU(best, areas[i], next, areas[j]) > iouThreshold) {
+                        suppressed[j] = true
+                    }
+                }
             }
         }
         return keep
     }
 
-    private fun iou(a: Detection, b: Detection): Float {
+    private fun calculateIoU(a: Detection, areaA: Float, b: Detection, areaB: Float): Float {
+        // Fast-path: Check for separation
+        if (a.x1Pct > b.x2Pct || a.x2Pct < b.x1Pct || a.y1Pct > b.y2Pct || a.y2Pct < b.y1Pct) {
+            return 0f
+        }
+
         val interW = max(0f, min(a.x2Pct, b.x2Pct) - max(a.x1Pct, b.x1Pct))
         val interH = max(0f, min(a.y2Pct, b.y2Pct) - max(a.y1Pct, b.y1Pct))
         val inter = interW * interH
-        val areaA = (a.x2Pct - a.x1Pct) * (a.y2Pct - a.y1Pct)
-        val areaB = (b.x2Pct - b.x1Pct) * (b.y2Pct - b.y1Pct)
+
         return inter / (areaA + areaB - inter + 1e-6f)
     }
 }
