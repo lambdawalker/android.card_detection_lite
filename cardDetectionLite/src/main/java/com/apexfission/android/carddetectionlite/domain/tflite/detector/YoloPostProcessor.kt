@@ -16,10 +16,10 @@ class YoloPostProcessor(
 ) {
 
     fun process(
-        output: FloatArray, width: Int, height: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
+        output: FloatArray, contextWidth: Int, contextHeight: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
     ): List<Detection> {
-        val raw: List<Detection> = decodeToCropNormalized(output, width, height, lbScale, padX, padY)
-        val remapped = mapFromCropCoordinatesToTheOriginalImageSpace(raw, width, height, originalWidth, originalHeight)
+        val raw: List<Detection> = decodeToCropNormalized(output, contextWidth, contextHeight, lbScale, padX, padY)
+        val remapped = mapFromCropCoordinatesToTheOriginalImageSpace(raw, contextWidth, contextHeight, originalWidth, originalHeight)
         val capped = if (remapped.size > maxNmsCandidates) remapped.sortedByDescending { it.confidence }.take(maxNmsCandidates) else remapped
         return nms(capped)
     }

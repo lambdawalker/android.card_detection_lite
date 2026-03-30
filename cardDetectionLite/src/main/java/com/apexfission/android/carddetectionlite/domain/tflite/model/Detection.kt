@@ -5,5 +5,9 @@ data class Detection(
 )
 
 data class Detections(
-    val detections: List<Detection>, val imageWidth: Int, val imageHeight: Int
+    val detections: List<Detection>,
+    val contextWidth: Int,
+    val contextHeight: Int,
+    val originalWidth: Int,
+    val originalHeight: Int
 )

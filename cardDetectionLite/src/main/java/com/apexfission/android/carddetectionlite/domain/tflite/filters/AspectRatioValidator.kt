@@ -22,11 +22,11 @@ class AspectRatioValidator(
      * Validates that the aspect ratio of the [ExtractedFeature] is within the specified range.
      *
      * @param extractedFeature The feature to validate.
-     * @param imageWidth The width of the source image (not used by this validator).
-     * @param imageHeight The height of the source image (not used by this validator).
+     * @param contextWidth The width of the source image (not used by this validator).
+     * @param contextHeight The height of the source image (not used by this validator).
      * @return `true` if the feature's aspect ratio is between [minAspectRatio] and [maxAspectRatio], `false` otherwise.
      */
-    override fun isValid(extractedFeature: ExtractedFeature, imageWidth: Int, imageHeight: Int): Boolean {
+    override fun isValid(extractedFeature: ExtractedFeature, contextWidth: Int, contextHeight: Int, originalWidth: Int, originalHeight: Int): Boolean {
         val x1 = extractedFeature.coordinates.left
         val y1 = extractedFeature.coordinates.top
         val x2 = extractedFeature.coordinates.right

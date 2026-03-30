@@ -19,7 +19,8 @@ interface Detector : Closeable {
 
     fun detect(bitmap: Bitmap): Detections
     fun detect(imageProxy: ImageProxy): Detections
-    fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int = 5): ExtractedFeatures
+    // This limit is flexible enough to include cards, and smaller features (photos, qr, barcodes, etc.)
+    fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int = 15): ExtractedFeatures
 }
 
 class YoloDetector(
@@ -50,7 +51,9 @@ class YoloDetector(
     )
 
     override fun detect(bitmap: Bitmap): Detections {
-        if (!enabled || isClosed) return Detections(emptyList(), bitmap.width, bitmap.height)
+        if (!enabled || isClosed) return Detections(
+            emptyList(), 0, 0, 0, 0
+        )
 
 
         val croppedBitmap = when (imageMode) {
@@ -65,8 +68,8 @@ class YoloDetector(
 
         val rawDetections = postProcessor.process(
             output = output,
-            width = croppedBitmap.width,
-            height = croppedBitmap.height,
+            contextWidth = croppedBitmap.width,
+            contextHeight = croppedBitmap.height,
             originalWidth = bitmap.width,
             originalHeight = bitmap.height,
             lbScale = letterboxResult.scale,
@@ -76,28 +79,38 @@ class YoloDetector(
 
         return Detections(
             rawDetections,
-            croppedBitmap.width,
-            croppedBitmap.height
+            contextWidth = croppedBitmap.width,
+            contextHeight = croppedBitmap.height,
+            originalWidth = bitmap.width,
+            originalHeight = bitmap.height,
         )
     }
 
     override fun detect(imageProxy: ImageProxy): Detections {
-        if (!enabled || isClosed) return Detections(emptyList(), imageProxy.width, imageProxy.height)
+        if (!enabled || isClosed) return Detections(
+            emptyList(), 0, 0, 0, 0
+        )
         val bitmap = imageProxy.toUprightBitmap()
         return detect(bitmap)
     }
 
     override fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int): ExtractedFeatures {
-        if (!enabled || isClosed) return ExtractedFeatures(emptyList(), imageProxy.width, imageProxy.height)
+        if (!enabled || isClosed) return ExtractedFeatures(emptyList(), 0, 0, 0, 0)
 
         val bitmap = imageProxy.toUprightBitmap()
-        val rawDetections = detect(bitmap)
+        val rawDetections: Detections = detect(bitmap)
 
         val detections = rawDetections.detections.take(maxCutouts).map {
             buildDetection(bitmap, it, 0)
         }
 
-        return ExtractedFeatures(detections, rawDetections.imageWidth, rawDetections.imageHeight)
+        return ExtractedFeatures(
+            detections,
+            rawDetections.contextWidth,
+            rawDetections.contextHeight,
+            rawDetections.originalWidth,
+            rawDetections.originalHeight
+        )
     }
 
     @Synchronized

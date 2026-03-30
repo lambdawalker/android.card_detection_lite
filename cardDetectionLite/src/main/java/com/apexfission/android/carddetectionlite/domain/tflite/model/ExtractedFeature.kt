@@ -13,13 +13,28 @@ data class ExtractedFeature(
 
 data class ExtractedFeatures(
     val extractedFeatures: List<ExtractedFeature>,
-    val imageWidth: Int,
-    val imageHeight: Int
+    val contextWidth: Int,
+    val contextHeight: Int,
+    val originalWidth: Int,
+    val originalHeight: Int
 )
 
 fun buildDetection(originalBitmap: Bitmap, detection: Detection, padding: Int = 0): ExtractedFeature {
-    val coordinates = detectionToRect(detection, originalBitmap.width, originalBitmap.height, padding)
-    val cutoff = Bitmap.createBitmap(originalBitmap, coordinates.left, coordinates.top, coordinates.width(), coordinates.height())
+    val coordinates = detectionToRect(
+        detection,
+        originalBitmap.width,
+        originalBitmap.height,
+        padding
+    )
+
+    val cutoff = Bitmap.createBitmap(
+        originalBitmap,
+        coordinates.left,
+        coordinates.top,
+        coordinates.width(),
+        coordinates.height()
+    )
+
     return ExtractedFeature(detection = detection, coordinates = coordinates, objectBitmap = cutoff)
 }
 

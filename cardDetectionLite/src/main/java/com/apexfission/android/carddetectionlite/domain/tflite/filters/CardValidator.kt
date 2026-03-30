@@ -14,10 +14,10 @@ fun interface CardValidator {
      * Determines if the given `ExtractedFeature` is valid.
      *
      * @param extractedFeature The detected feature to validate.
-     * @param imageWidth The width of the image in which the feature was detected.
-     * @param imageHeight The height of the image in which the feature was detected.
+     * @param contextWidth The width of the image in which the feature was detected.
+     * @param contextHeight The height of the image in which the feature was detected.
      * @return `true` if the feature is valid, `false` otherwise.
      */
-    fun isValid(extractedFeature: ExtractedFeature, imageWidth: Int, imageHeight: Int): Boolean
+    fun isValid(extractedFeature: ExtractedFeature, contextWidth: Int, contextHeight: Int, originalWidth: Int, originalHeight: Int): Boolean
 }
 

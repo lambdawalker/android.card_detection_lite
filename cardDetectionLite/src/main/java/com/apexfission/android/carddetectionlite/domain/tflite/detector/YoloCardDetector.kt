@@ -60,7 +60,13 @@ class YoloCardDetector(
 
         val card = result.extractedFeatures.firstOrNull {
             it.classId in cardClasses && cardValidators.all { filter ->
-                filter.isValid(it, result.imageWidth, result.imageHeight)
+                filter.isValid(
+                    it,
+                    result.contextWidth,
+                    result.contextHeight,
+                    result.originalWidth,
+                    result.originalHeight
+                )
             }
         }
 
@@ -102,8 +108,7 @@ class YoloCardDetector(
             val centerX = (region.coordinates.left + region.coordinates.right) / 2
             val centerY = (region.coordinates.top + region.coordinates.bottom) / 2
 
-            region.classId !in cardClasses &&
-                card.coordinates.contains(centerX, centerY)
+            region.classId !in cardClasses && card.coordinates.contains(centerX, centerY)
         }
 
 
@@ -112,7 +117,7 @@ class YoloCardDetector(
             isNewDetection = isNewDetection,
             card = card,
             features = otherElements,
-            contextSize = Rect(0, 0, result.imageWidth, result.imageHeight),
+            contextSize = Rect(0, 0, result.contextWidth, result.contextHeight),
             lockOnProgress = lockOnProgress
         )
 
