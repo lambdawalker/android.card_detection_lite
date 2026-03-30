@@ -57,11 +57,14 @@ class MainActivity : ComponentActivity() {
                             cardCardFilters = listOf(
                                 MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
                             ),
-                            imageMode = InputShape.SquareCrop
+                            imageMode = InputShape.SquareCrop,
+                            inferenceIntervalMs = 33L,
+                            tapToFocusEnabled = true,
+                            focusOnCardEnabled = true,
+                            lockOnThreshold = 3
                         )
                     }
                 }
-
             }
         }
     }
