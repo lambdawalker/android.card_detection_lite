@@ -4,6 +4,18 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * Post-processor for YOLO models.
+ *
+ * @param outLayout The layout of the output tensor.
+ * @param outBoxes The number of boxes in the output.
+ * @param outAttrs The number of attributes in the output.
+ * @param numClasses The number of classes.
+ * @param inputImageWidth The width of the input image.
+ * @param scoreThreshold The score threshold for detections.
+ * @param iouThreshold The IOU threshold for non-max suppression.
+ * @param maxNmsCandidates The maximum number of candidates for non-max suppression.
+ */
 class YoloPostProcessor(
     private val outLayout: TfliteInterpreter.OutputLayout,
     private val outBoxes: Int,
@@ -15,6 +27,19 @@ class YoloPostProcessor(
     private val maxNmsCandidates: Int,
 ) {
 
+    /**
+     * Processes the output of a YOLO model.
+     *
+     * @param output The output of the model.
+     * @param width The width of the image.
+     * @param height The height of the image.
+     * @param lbScale The letterbox scale.
+     * @param padX The letterbox padding in the x direction.
+     * @param padY The letterbox padding in the y direction.
+     * @param originalWidth The original width of the image.
+     * @param originalHeight The original height of the image.
+     * @return A list of detections.
+     */
     fun process(
         output: FloatArray, contextWidth: Int, contextHeight: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
     ): List<Detection> {

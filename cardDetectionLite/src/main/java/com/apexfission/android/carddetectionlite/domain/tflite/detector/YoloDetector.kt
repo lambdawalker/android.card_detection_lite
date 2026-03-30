@@ -14,15 +14,48 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.buildDetect
 import java.io.Closeable
 import kotlinx.coroutines.flow.MutableStateFlow
 
+/**
+ * Interface for a detector that can detect objects in images.
+ */
 interface Detector : Closeable {
+    /**
+     * Whether the detector is enabled.
+     */
     var enabled: Boolean
 
+    /**
+     * Detects objects in a bitmap.
+     * @param bitmap The bitmap to detect objects in.
+     * @return The detections.
+     */
     fun detect(bitmap: Bitmap): Detections
+    /**
+     * Detects objects in an ImageProxy.
+     * @param imageProxy The ImageProxy to detect objects in.
+     * @return The detections.
+     */
     fun detect(imageProxy: ImageProxy): Detections
-    // This limit is flexible enough to include cards, and smaller features (photos, qr, barcodes, etc.)
-    fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int = 15): ExtractedFeatures
+    /**
+     * Extracts features from an ImageProxy.
+     * @param imageProxy The ImageProxy to extract features from.
+     * @param maxCutouts The maximum number of cutouts to extract. 30 is a limit flexible enough to include cards, and smaller features (photos, qr, barcodes, etc.).
+     * @return The extracted features.
+     */
+    fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int = 30): ExtractedFeatures
 }
 
+/**
+ * A detector that uses a YOLO model to detect objects.
+ * @param context The context.
+ * @param modelPath The path to the model.
+ * @param scoreThreshold The score threshold for detections.
+ * @param iouThreshold The IOU threshold for non-max suppression.
+ * @param useGpu Whether to use the GPU.
+ * @param maxNmsCandidates The maximum number of candidates for non-max suppression.
+ * @param numThreads The number of threads to use.
+ * @param canvasSize The size of the canvas.
+ * @param imageMode The image mode.
+ */
 class YoloDetector(
     context: Context,
     modelPath: String,
@@ -50,6 +83,11 @@ class YoloDetector(
         maxNmsCandidates
     )
 
+    /**
+     * Detects objects in a bitmap.
+     * @param bitmap The bitmap to detect objects in.
+     * @return The detections.
+     */
     override fun detect(bitmap: Bitmap): Detections {
         if (!enabled || isClosed) return Detections(
             emptyList(), 0, 0, 0, 0
@@ -86,6 +124,11 @@ class YoloDetector(
         )
     }
 
+    /**
+     * Detects objects in an ImageProxy.
+     * @param imageProxy The ImageProxy to detect objects in.
+     * @return The detections.
+     */
     override fun detect(imageProxy: ImageProxy): Detections {
         if (!enabled || isClosed) return Detections(
             emptyList(), 0, 0, 0, 0
@@ -94,6 +137,12 @@ class YoloDetector(
         return detect(bitmap)
     }
 
+    /**
+     * Extracts features from an ImageProxy.
+     * @param imageProxy The ImageProxy to extract features from.
+     * @param maxCutouts The maximum number of cutouts to extract.
+     * @return The extracted features.
+     */
     override fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int): ExtractedFeatures {
         if (!enabled || isClosed) return ExtractedFeatures(emptyList(), 0, 0, 0, 0)
 
@@ -113,6 +162,9 @@ class YoloDetector(
         )
     }
 
+    /**
+     * Closes the detector.
+     */
     @Synchronized
     override fun close() {
         if (isClosed) return
