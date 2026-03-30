@@ -15,6 +15,27 @@ import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
 
+
+/**
+ * TODO: Refactor and Optimization Roadmap for TfliteInterpreter
+ * * ## 1. Performance & Image Processing [Priority: High]
+ * - [ ] **Optimize Manual Pixel Loop**: Use tensorflow libraries instead of local
+ * functions. The problem comes with tensorflow libraries dependencies management
+ *
+ * ## 2. Metadata & Configuration [Priority: Medium]
+ * - [ ] **Decouple Metadata**: Instead of probing the model with a temporary
+ * Interpreter (which doubles memory during init), pass a Metadata object
+ * containing [outLayout], [outAttrs], and [outBoxes] alongside the [modelPath].
+ */
+
+/**
+ * A wrapper for the TFLite interpreter.
+ *
+ * @param context The context.
+ * @param modelPath The path to the model.
+ * @param useGpu Whether to use the GPU.
+ * @param numThreads The number of threads to use in case of not using the GPU.
+ */
 class TfliteInterpreter(
     context: Context,
     modelPath: String,
@@ -29,9 +50,6 @@ class TfliteInterpreter(
     private var gpuDelegate: GpuDelegate? = null
     private var isClosed = false
 
-    val isInt8: Boolean
-    val inputImageWidth: Int
-
     private val inputBuffer: ByteBuffer
     private val pixelBuffer: IntArray
 
@@ -44,20 +62,53 @@ class TfliteInterpreter(
     private val outScale: Float
     private val outZeroPoint: Int
 
+    /**
+     * Whether the model is quantized to INT8.
+     */
+    val isInt8: Boolean
+
+    /**
+     * The width of the input image.
+     */
+    val inputImageWidth: Int
+
+
+    /**
+     * The layout of the output tensor.
+     */
     enum class OutputLayout { ATTRS_X_BOXES, BOXES_X_ATTRS }
 
+    /**
+     * The layout of the output tensor.
+     */
     val outLayout: OutputLayout
+
+    /**
+     * The number of attributes per detection.
+     */
     val outAttrs: Int
+
+    /**
+     * The number of boxes per detection.
+     */
     val outBoxes: Int
+
+    /**
+     * The number of classes.
+     */
     val numClasses: Int
 
+    /**
+     * The time it took to run the last inference in milliseconds.
+     */
     var lastInferenceTimeMs: Long = 0L
         private set
 
-    init {
-        val model = loadModelFile(context, modelPath)
 
-        val temp = Interpreter(model)
+    init {
+        val modelBuffer = loadModelFile(context, modelPath)
+
+        val temp = Interpreter(modelBuffer)
         val inputTensor = temp.getInputTensor(0)
         val outputTensor = temp.getOutputTensor(0)
 
@@ -106,7 +157,7 @@ class TfliteInterpreter(
             }
         }
 
-        interpreter = Interpreter(model, options)
+        interpreter = Interpreter(modelBuffer, options)
 
         val inQ = interpreter.getInputTensor(0).quantizationParams()
         inScale = inQ.scale
@@ -122,6 +173,12 @@ class TfliteInterpreter(
         outFloats = FloatArray(outCount)
     }
 
+    /**
+     * Runs inference on a bitmap.
+     *
+     * @param bitmap The bitmap to run inference on.
+     * @return The output of the model.
+     */
     @Synchronized
     fun runInference(bitmap: Bitmap): FloatArray {
         if (isClosed) return FloatArray(0)
@@ -150,25 +207,38 @@ class TfliteInterpreter(
     private fun fillBitmapToFloatBuffer(bm: Bitmap, buf: ByteBuffer) {
         buf.rewind()
         bm.getPixels(pixelBuffer, 0, inputImageWidth, 0, 0, inputImageWidth, inputImageWidth)
+
+        val inv255 = 1.0f / 255.0f
         for (v in pixelBuffer) {
-            buf.putFloat(((v shr 16) and 0xFF) / 255f)
-            buf.putFloat(((v shr 8) and 0xFF) / 255f)
-            buf.putFloat((v and 0xFF) / 255f)
+            buf.putFloat(((v shr 16) and 0xFF) * inv255)
+            buf.putFloat(((v shr 8) and 0xFF) * inv255)
+            buf.putFloat((v and 0xFF) * inv255)
         }
     }
 
     private fun fillBitmapToByteBuffer(bm: Bitmap, buf: ByteBuffer) {
         buf.rewind()
         bm.getPixels(pixelBuffer, 0, inputImageWidth, 0, 0, inputImageWidth, inputImageWidth)
+
+        // Combine normalization (1/255) and quantization scale (1/inScale)
+        // into a single constant to multiply by.
         val invScale = if (inScale != 0f) 1f / inScale else 1f
+        val combinedMultiplier = (1.0f / 255.0f) * invScale
+
         for (v in pixelBuffer) {
-            buf.put(quantizeToInt8(((v shr 16) and 0xFF) / 255f, invScale, inZeroPoint))
-            buf.put(quantizeToInt8(((v shr 8) and 0xFF) / 255f, invScale, inZeroPoint))
-            buf.put(quantizeToInt8((v and 0xFF) / 255f, invScale, inZeroPoint))
+            // Red channel
+            buf.put(quantizeToInt8(((v shr 16) and 0xFF) * combinedMultiplier, inZeroPoint))
+            // Green channel
+            buf.put(quantizeToInt8(((v shr 8) and 0xFF) * combinedMultiplier, inZeroPoint))
+            // Blue channel
+            buf.put(quantizeToInt8((v and 0xFF) * combinedMultiplier, inZeroPoint))
         }
     }
 
-    private fun quantizeToInt8(v: Float, invScale: Float, zeroPoint: Int): Byte = (v * invScale + zeroPoint).toInt().coerceIn(-128, 127).toByte()
+    /**
+     * Updated helper to accept the pre-multiplied value.
+     */
+    private fun quantizeToInt8(v: Float, zeroPoint: Int): Byte = (v + zeroPoint).toInt().coerceIn(-128, 127).toByte()
 
     private fun loadModelFile(context: Context, assetPath: String): ByteBuffer {
         val fd = context.assets.openFd(assetPath)
@@ -177,6 +247,9 @@ class TfliteInterpreter(
         ).order(ByteOrder.nativeOrder())
     }
 
+    /**
+     * Closes the interpreter.
+     */
     @Synchronized
     override fun close() {
         if (isClosed) return
