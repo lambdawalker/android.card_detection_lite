@@ -60,11 +60,13 @@ data class PreviewScalingInfo(
  *                   used for aspect-ratio calculations.
  * @param imageMode The [InputShape] configuration for image preprocessing.
  * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
+ * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
+ *                        similar before it is considered "locked on."
  */
 class CardDetectorLiteViewModel(
     application: Application, modelPath: String, cardClasses: List<Int>, useGpu: Boolean,
     scoreThreshold: Float, cardFilters: List<CardValidator>, canvasSize: MutableStateFlow<IntSize>,
-    imageMode: InputShape, private val inferenceIntervalMs: Long,
+    imageMode: InputShape, private val inferenceIntervalMs: Long, lockOnThreshold: Int,
 ) : AndroidViewModel(application) {
 
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
@@ -80,9 +82,10 @@ class CardDetectorLiteViewModel(
     val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
 
     private val detector = YoloCardDetector(
-        YoloDetector(application, modelPath, scoreThreshold, 0.45f, useGpu, canvasSize = canvasSize, imageMode = imageMode),
-        cardFilters,
-        cardClasses
+        yoloDetector = YoloDetector(application, modelPath, scoreThreshold, 0.45f, useGpu, canvasSize = canvasSize, imageMode = imageMode),
+        cardValidators = cardFilters,
+        cardClasses = cardClasses,
+        lockOnThreshold = lockOnThreshold
     )
 
     private val lastInferenceMs = AtomicLong(0L)

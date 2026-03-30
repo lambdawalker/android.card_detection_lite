@@ -63,6 +63,7 @@ import kotlin.math.abs
  *                (size, position, cooldown) to avoid excessive focus hunting and intelligently
  *                adjusts the camera to keep the detected card sharp and well-exposed.
  * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
+ * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
  */
 @Composable
 @Suppress("DEPRECATION")
@@ -74,6 +75,7 @@ fun CameraPreview(
     analysisTargetResolution: Size = Size(2048, 1080), // 2k
     focusOn: CardDetection?,
     tapToFocusEnabled: Boolean = true,
+    focusOnCardEnabled: Boolean = true,
 ) {
     val context = LocalContext.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
@@ -150,6 +152,7 @@ fun CameraPreview(
 
     // This effect runs whenever a new `focusOn` detection is received.
     LaunchedEffect(focusOn) {
+        if (!focusOnCardEnabled) return@LaunchedEffect
         val control = cameraControl ?: return@LaunchedEffect
         val detection = focusOn ?: return@LaunchedEffect
 

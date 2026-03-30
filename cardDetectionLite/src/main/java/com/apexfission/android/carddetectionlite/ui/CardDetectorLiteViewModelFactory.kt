@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @property imageMode The chosen [InputShape] for image preprocessing.
  * @property cardClasses The list of class IDs to be treated as primary card targets.
  * @property inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
+ * @property lockOnThreshold The number of consecutive frames a card must be detected and visually
+ *                         similar before it is considered "locked on."
  */
 class CardDetectorLiteViewModelFactory(
     private val application: Application,
@@ -36,6 +38,7 @@ class CardDetectorLiteViewModelFactory(
     private val imageMode: InputShape,
     private val cardClasses: List<Int>,
     private val inferenceIntervalMs: Long,
+    private val lockOnThreshold: Int,
 ) : ViewModelProvider.Factory {
 
     /**
@@ -50,7 +53,7 @@ class CardDetectorLiteViewModelFactory(
         if (modelClass.isAssignableFrom(CardDetectorLiteViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return CardDetectorLiteViewModel(
-                application, modelPath, cardClasses, useGpu, scoreThreshold, cardFilters, canvasSize, imageMode, inferenceIntervalMs
+                application, modelPath, cardClasses, useGpu, scoreThreshold, cardFilters, canvasSize, imageMode, inferenceIntervalMs, lockOnThreshold
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

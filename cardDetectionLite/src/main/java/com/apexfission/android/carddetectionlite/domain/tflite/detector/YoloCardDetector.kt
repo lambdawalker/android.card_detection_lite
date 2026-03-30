@@ -28,18 +28,20 @@ import java.io.Closeable
  * @param cardClasses A list of integer class IDs from the TFLite model that represent cards.
  *                    Detections with a class ID not in this list will be ignored as primary targets
  *                    but can still be considered sub-features.
+ * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
+ *                        similar before it is considered "locked on."
  */
 class YoloCardDetector(
     private val yoloDetector: YoloDetector,
     private val cardValidators: List<CardValidator>,
     private val cardClasses: List<Int>,
+    private val lockOnThreshold: Int = 5,
 ) : Closeable {
     private var previousHash: ULong = 0u
     private var similarityCount = 0
     private var isSent: Boolean = false
     private var lastDetectionTime: Long = 0L
     private var cardIdCount = 0
-    private val stabilityThreshold = 5
 
     /**
      * Analyzes an image frame to find and track a card.
@@ -92,7 +94,7 @@ class YoloCardDetector(
         if (!isSimilar) {
             // If the card is visually different from the last one, reset the stability counter.
             resetTrackingState()
-        } else if (similarityCount <= stabilityThreshold) {
+        } else if (similarityCount <= lockOnThreshold) {
             // If it's the same card, increment the counter.
             similarityCount++
         }
@@ -100,7 +102,7 @@ class YoloCardDetector(
         previousHash = currentHash
 
         // --- State Calculation ---
-        val isNewDetection = if (similarityCount >= stabilityThreshold && !isSent) {
+        val isNewDetection = if (similarityCount >= lockOnThreshold && !isSent) {
             isSent = true // Ensure we only flag "new" once per lock-on.
             cardIdCount++
             true
@@ -108,8 +110,8 @@ class YoloCardDetector(
             false
         }
 
-        val cardId = if (similarityCount >= stabilityThreshold) cardIdCount else null
-        val lockOnProgress = (similarityCount.toFloat() / stabilityThreshold).coerceAtMost(1f)
+        val cardId = if (similarityCount >= lockOnThreshold) cardIdCount else null
+        val lockOnProgress = (similarityCount.toFloat() / lockOnThreshold).coerceAtMost(1f)
 
         // Find other detected features that are inside the bounding box of the main card.
         val otherElements = result.extractedFeatures.filter { region ->

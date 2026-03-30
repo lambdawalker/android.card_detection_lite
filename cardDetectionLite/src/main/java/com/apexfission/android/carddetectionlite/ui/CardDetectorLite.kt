@@ -67,6 +67,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
  *                  before being sent to the model.
  * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
  * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
+ * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
+ * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
+ *                        similar before it is considered "locked on."
  */
 @Composable
 fun CardDetectorLite(
@@ -89,6 +92,8 @@ fun CardDetectorLite(
     imageMode: InputShape = InputShape.SquareCrop,
     inferenceIntervalMs: Long = 33L,
     tapToFocusEnabled: Boolean = true,
+    focusOnCardEnabled: Boolean = true,
+    lockOnThreshold: Int = 5,
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
@@ -105,6 +110,7 @@ fun CardDetectorLite(
             canvasSize = sizeInPixels,
             imageMode = imageMode,
             inferenceIntervalMs = inferenceIntervalMs,
+            lockOnThreshold = lockOnThreshold,
         )
     )
 
@@ -133,7 +139,8 @@ fun CardDetectorLite(
             flashlightEnabled = flashlightEnabled,
             analysisTargetResolution = analysisTargetResolution,
             focusOn = cardDetection,
-            tapToFocusEnabled = tapToFocusEnabled
+            tapToFocusEnabled = tapToFocusEnabled,
+            focusOnCardEnabled = focusOnCardEnabled
         )
 
         // Conditionally display overlays based on configuration and state.
