@@ -35,7 +35,6 @@ fun buildDetection(originalBitmap: Bitmap, detection: Detection, padding: Int = 
     )
 }
 
-
 private fun percentageCoordinatesToRect(detection: Detection, originalWidth: Int, originalHeight: Int): Rect {
     val x1 = (detection.x1Pct * originalWidth).toInt()
     val y1 = (detection.y1Pct * originalHeight).toInt()
