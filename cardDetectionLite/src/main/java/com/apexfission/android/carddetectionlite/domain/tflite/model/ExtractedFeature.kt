@@ -22,7 +22,7 @@ fun buildDetection(originalBitmap: Bitmap, detection: Detection, padding: Int = 
     )
 
 
-    val contextCoordinates = percentageCoordinatesToRect(
+    val contextCoordinates = percentageCoordinatesContextToRect(
         detection, originalBitmap.width, originalBitmap.height
     )
 

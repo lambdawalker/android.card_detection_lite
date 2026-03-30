@@ -1,6 +1,5 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
-import android.util.Log
 import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeature
 import kotlin.math.sqrt
 
