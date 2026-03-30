@@ -5,6 +5,12 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import kotlin.math.roundToInt
 
+/**
+ * TODO: Refactor this entire utility to use the TFLite Support Library (ImageProcessor)
+ * once the stable version is deployed. This will reduce manual Bitmap math and
+ * potentially improve memory performance by avoiding intermediate Bitmap allocations.
+ */
+
 fun rotateIfNeeded(bm: Bitmap, deg: Int): Bitmap {
     if (deg == 0) return bm
     val m = Matrix().apply { postRotate(deg.toFloat()) }
