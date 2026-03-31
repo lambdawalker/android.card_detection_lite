@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
                             onCardDetection = {
                                 mainViewModel.onDetections(it)
                             },
-                            cardCardFilters = listOf(
+                            cardFilters = listOf(
                                 MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
                             ),
                             imageMode = InputShape.SquareCrop,

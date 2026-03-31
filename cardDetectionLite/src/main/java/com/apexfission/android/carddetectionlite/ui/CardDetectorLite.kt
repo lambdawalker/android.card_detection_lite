@@ -58,7 +58,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param scoreThreshold The minimum confidence score (0.0 to 1.0) a detection must have to be considered.
  *                       Lowering this may increase recall but can also lead to more false positives.
  * @param analysisTargetResolution The target resolution for the image analysis stream passed to `CameraPreview`.
- * @param cardCardFilters A list of [CardValidator] instances used to apply additional heuristic
+ * @param cardFilters A list of [CardValidator] instances used to apply additional heuristic
  *                        checks on potential card detections (e.g., ensuring a plausible aspect ratio).
  * @param onCardDetection A callback lambda that is invoked only when the detector achieves a stable
  *                        "lock-on" on a card (`lockOnProgress >= 1.0`). It provides the final,
@@ -86,7 +86,7 @@ fun CardDetectorLite(
     showLockOnProgress: Boolean = true,
     scoreThreshold: Float = 0.65f,
     analysisTargetResolution: Size = Size(2048, 1080),
-    cardCardFilters: List<CardValidator> = listOf(
+    cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
     onCardDetection: (CardDetection) -> Unit,
@@ -108,7 +108,7 @@ fun CardDetectorLite(
             cardClasses = cardClasses,
             useGpu = useGpu,
             scoreThreshold = scoreThreshold,
-            cardFilters = cardCardFilters,
+            cardFilters = cardFilters,
             canvasSize = sizeInPixels,
             imageMode = imageMode,
             inferenceIntervalMs = inferenceIntervalMs,
