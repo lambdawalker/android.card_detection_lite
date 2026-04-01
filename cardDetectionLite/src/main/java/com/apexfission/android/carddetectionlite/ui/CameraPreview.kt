@@ -33,6 +33,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -106,24 +107,24 @@ fun CameraPreview(
 
             LaunchedEffect(currentFocusPoint) {
                 isVisible = true
-                delay(1000)
+                delay(2000)
                 isVisible = false
             }
 
             val alpha by animateFloatAsState(
                 targetValue = if (isVisible) 1f else 0f,
-                animationSpec = tween(durationMillis = 500),
+                animationSpec = tween(durationMillis = 1800),
                 label = "alpha"
             )
 
             if (currentFocusPoint != null) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    val radius = 60f
+                    val radius = 30f
                     drawCircle(
                         color = Color.White.copy(alpha = alpha),
                         radius = radius,
                         center = Offset(currentFocusPoint.x, currentFocusPoint.y),
-                        style = Stroke(width = 2f)
+                        style = Stroke(width = 3f)
                     )
                 }
             }
@@ -195,6 +196,7 @@ fun CameraPreview(
     var lastFocusCenter by remember { mutableStateOf<PointF?>(null) }
     var lastFocusArea by remember { mutableFloatStateOf(0f) } // Track the area
     var lastFocusTimestamp by remember { mutableLongStateOf(0L) }
+    var lastCardCoordinates by remember { mutableStateOf<PointF>(PointF(-1000f, -1000f)) }
 
     // This effect runs whenever a new `focusOn` detection is received.
     LaunchedEffect(focusOn) {
@@ -202,30 +204,33 @@ fun CameraPreview(
         val control = cameraControl ?: return@LaunchedEffect
         val detection: CardDetection = focusOn ?: return@LaunchedEffect
 
-        val coords = detection.card.coordinates
+        val cardCoordinates = detection.card.coordinates
         val originalSize = detection.sourceSize
         val detContextSize = detection.contextSize
 
-        val currentArea = coords.width().toFloat() * coords.height()
+        val currentArea = cardCoordinates.width().toFloat() * cardCoordinates.height()
         val totalArea = detContextSize.width().toFloat() * detContextSize.height()
-        val centerX = coords.centerX().toFloat()
-        val centerY = coords.centerY().toFloat()
+
+        val centerX = cardCoordinates.centerX().toFloat()
+        val centerY = cardCoordinates.centerY().toFloat()
 
         // Heuristic 1: Ignore very small detections to prevent focusing on noise.
         if ((currentArea / totalArea) < 0.02f) return@LaunchedEffect
 
         val currentTime = System.currentTimeMillis()
-        val cooldownMs = 300L
+        val cooldownMs = 500L
 
         // Heuristic 2: Enforce a cooldown to prevent rapid, unnecessary focus changes.
         val isCooldownOver = (currentTime - lastFocusTimestamp) >= cooldownMs
 
         // Heuristic 3: Trigger focus if the card's position has shifted significantly.
         val hasMovedSignificantly = lastFocusCenter?.let { last ->
-            val deltaX = abs(last.x - centerX) / detContextSize.width().toFloat()
-            val deltaY = abs(last.y - centerY) / detContextSize.height().toFloat()
+            val deltaX = abs(lastCardCoordinates.x - centerX) / originalSize.width().toFloat()
+            val deltaY = abs(lastCardCoordinates.y - centerY) / originalSize.height().toFloat()
+            lastCardCoordinates = PointF(centerX, centerY)
             deltaX > 0.05f || deltaY > 0.05f
         } ?: true // Always true for the first detection.
+
 
         // Heuristic 4: Trigger focus if the card's size has changed, indicating movement
         // towards or away from the camera.
@@ -239,6 +244,7 @@ fun CameraPreview(
 
         // Only trigger focus if the cooldown is over AND there's a good reason to.
         if (isCooldownOver && (hasMovedSignificantly || hasScaleChanged)) {
+            Log.d("CAM-LOG", "auto-focus $hasMovedSignificantly $hasScaleChanged")
             val viewWidth = previewView.width.toFloat()
             val viewHeight = previewView.height.toFloat()
 
@@ -266,14 +272,13 @@ fun CameraPreview(
             val factory = previewView.meteringPointFactory
             val point = factory.createPoint(viewX, viewY)
 
-            // ADDED FLAG_AE for exposure correction
             val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE)
                 .setAutoCancelDuration(3, TimeUnit.SECONDS).build()
 
             try {
                 control.startFocusAndMetering(action)
                 // Update state for the next check.
-                lastFocusCenter = PointF(centerX, centerY)
+                lastFocusCenter = focusPoint
                 lastFocusArea = currentArea
                 lastFocusTimestamp = currentTime
             } catch (e: Exception) {

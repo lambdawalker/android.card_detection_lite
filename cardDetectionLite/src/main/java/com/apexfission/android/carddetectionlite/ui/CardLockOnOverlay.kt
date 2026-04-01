@@ -54,18 +54,16 @@ fun CardLockOnOverlay(
     val det = card.detection
     val lockOnProgress = activeDetection.lockOnProgress
 
-    val coordSpring = spring<Float>(
-        stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy
-    )
+    val tweenSpec = tween<Float>(durationMillis = 200, easing = FastOutSlowInEasing)
 
     val progressSpring = spring<Float>(
         stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy
     )
 
-    val smoothX1 by animateFloatAsState(det.x1Pct, coordSpring, label = "x1")
-    val smoothY1 by animateFloatAsState(det.y1Pct, coordSpring, label = "y1")
-    val smoothX2 by animateFloatAsState(det.x2Pct, coordSpring, label = "x2")
-    val smoothY2 by animateFloatAsState(det.y2Pct, coordSpring, label = "y2")
+    val smoothX1 by animateFloatAsState(det.x1Pct, tweenSpec, label = "x1")
+    val smoothY1 by animateFloatAsState(det.y1Pct, tweenSpec, label = "y1")
+    val smoothX2 by animateFloatAsState(det.x2Pct, tweenSpec, label = "x2")
+    val smoothY2 by animateFloatAsState(det.y2Pct, tweenSpec, label = "y2")
     val smoothProgress by animateFloatAsState(
         targetValue = lockOnProgress.coerceIn(0f, 1f), animationSpec = progressSpring, label = "progress"
     )
