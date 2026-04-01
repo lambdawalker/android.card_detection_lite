@@ -58,6 +58,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
  *                           feedback as the detector locks onto a card.
  * @param showDebugOverlay If `true`, an overlay is displayed showing the current values of various
  *                         configuration parameters for debugging purposes.
+ * @param showFocusIndicator If `true`, a visual indicator (a white circle) is briefly displayed
+ *                           where the camera is focusing, whether triggered by a tap or by the
+ *                           auto-focus-on-card mechanism.
  * @param scoreThreshold The minimum confidence score (0.0 to 1.0) a detection must have to be considered.
  *                       Lowering this may increase recall but can also lead to more false positives.
  * @param analysisTargetResolution The target resolution for the image analysis stream passed to `CameraPreview`.
@@ -77,23 +80,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
  *                   the [NumThreads] sealed class, allowing for predefined percentages of available
  *                   cores (e.g., `NumThreads.Half`) or a specific count (e.g., `NumThreads.CustomCount(2)`).
  *                   Defaults to `NumThreads.Default`.
- * @param showFocusIndicator If `true`, a visual indicator (a white circle) is briefly displayed
- *                           where the camera is focusing, whether triggered by a tap or by the
- *                           auto-focus-on-card mechanism.
  */
 @Composable
 fun CardDetectorLite(
+    modifier: Modifier = Modifier,
     modelPath: String,
     classLabels: Map<Int, String>,
     cardClasses: List<Int>,
     isDetectionEnabled: Boolean,
-    modifier: Modifier = Modifier,
     useGpu: Boolean = true,
     showBoundingBoxes: Boolean = false,
     showClassNames: Boolean = false,
     showFlashlightSwitch: Boolean = true,
     showLockOnProgress: Boolean = true,
     showDebugOverlay: Boolean = false,
+    showFocusIndicator: Boolean = true,
     scoreThreshold: Float = 0.65f,
     analysisTargetResolution: Size = Size(2048, 1080),
     cardFilters: List<CardValidator> = listOf(
@@ -106,7 +107,6 @@ fun CardDetectorLite(
     focusOnCardEnabled: Boolean = true,
     lockOnThreshold: Int = 4,
     numThreads: NumThreads = NumThreads.Default,
-    showFocusIndicator: Boolean = true,
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)

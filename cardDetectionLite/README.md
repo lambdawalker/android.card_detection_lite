@@ -41,12 +41,12 @@ dependencies {
 
 ```xml
 
-<uses-feature android:name="android.hardware.camera.any" android:required="true" /><uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.CAMERA" /><uses-feature android:name="android.hardware.camera" />
 ```
 
 ### 2. Manage permission and detection state
 
-Use the provided `HandleCameraPermission` composable and a `ViewModel` to control when detection is active.
+Is recommended to Create a `ViewModel` to process the ID card detections.
 
 ```kotlin
 class MainViewModel : ViewModel() {
@@ -69,6 +69,9 @@ class MainViewModel : ViewModel() {
 ```
 
 ### 3. Add `CardDetectorLite` to your UI
+
+Optionally, Use the provided `HandleCameraPermission` composable to handle permissions. It is meant to be used as a wrapper for the CardDetectorLite
+Composable.
 
 ```kotlin
 class MainActivity : ComponentActivity() {
@@ -126,7 +129,7 @@ The `onCardDetection` callback returns a `CardDetection` object with the followi
 ## Model Details
 
 - **Architecture**: Modified YOLOv11 optimized for mobile TensorFlow Lite inference
-- **Training Data**: Private synthetic dataset with more than 20,000 examples across multiple ID card types
+- **Training Data**: Synthetic dataset with more than 20,000 examples across multiple ID card types
 - **Model Size**: Approximately 5.3 MB
 
 This balance keeps the model lightweight enough for mobile use while still supporting real-time detection scenarios.
@@ -150,6 +153,7 @@ This balance keeps the model lightweight enough for mobile use while still suppo
 | `showClassNames`           | `Boolean`                 | `false`                                             | Shows class labels and confidence values above boxes.                                |
 | `showFlashlightSwitch`     | `Boolean`                 | `true`                                              | Shows a built-in flashlight toggle button.                                           |
 | `showLockOnProgress`       | `Boolean`                 | `true`                                              | Displays visual feedback while lock-on stabilizes.                                   |
+| `showFocusIndicator`       | `Boolean`                 | `true`                                              | Shows a visual indicator when the camera focuses.                                    |
 | `scoreThreshold`           | `Float`                   | `0.65f`                                             | Minimum confidence required for a detection to be considered valid.                  |
 | `analysisTargetResolution` | `Size`                    | `Size(2048, 1080)`                                  | Resolution requested for the analysis stream.                                        |
 | `cardCardFilters`          | `List<CardValidator>`     | `listOf(MarginValidator(), AspectRatioValidator())` | Heuristic validators applied to candidate card detections.                           |
@@ -159,7 +163,6 @@ This balance keeps the model lightweight enough for mobile use while still suppo
 | `focusOnCardEnabled`       | `Boolean`                 | `true`                                              | Enables auto-focus behavior targeting the detected card.                             |
 | `lockOnThreshold`          | `Int`                     | `5`                                                 | Number of consistent frames required before lock-on succeeds.                        |
 | `numThreads`               | `NumThreads`              | `NumThreads.Default`                                | Number of CPU threads used for inference. See `NumThreads` sealed class for options. |
-| `showFocusIndicator`       | `Boolean`                 | `true`                                              | Shows a visual indicator when the camera focuses.                                    |
 
 ---
 
