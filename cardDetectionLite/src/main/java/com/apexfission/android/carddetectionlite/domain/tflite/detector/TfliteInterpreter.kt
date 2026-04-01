@@ -10,7 +10,6 @@ import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
-import kotlin.math.max
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
@@ -43,7 +42,7 @@ class TfliteInterpreter(
     context: Context,
     modelPath: String,
     useGpu: Boolean,
-    numThreads : NumThreads= NumThreads.Default
+    numThreads: NumThreads = NumThreads.Default
 ) : Closeable {
 
     companion object {
@@ -56,6 +55,7 @@ class TfliteInterpreter(
 
     /** Direct buffer for model input. Its size is adjusted based on the model's data type ([isInt8]). */
     private val inputBuffer: ByteBuffer
+
     /** A reusable array to hold raw pixel data from the input bitmap, avoiding per-frame allocations. */
     private val pixelBuffer: IntArray
 
@@ -81,16 +81,20 @@ class TfliteInterpreter(
     enum class OutputLayout {
         /** Tensor shape is `[Attributes x Boxes]` (e.g., 85 attributes, 8400 boxes). */
         ATTRS_X_BOXES,
+
         /** Tensor shape is `[Boxes x Attributes]` (e.g., 8400 boxes, 85 attributes). */
         BOXES_X_ATTRS
     }
 
     /** The detected output layout of the loaded model. */
     val outLayout: OutputLayout
+
     /** The number of attributes per detection (e.g., 4 for box coords + 80 for classes + 1 for confidence = 85). */
     val outAttrs: Int
+
     /** The total number of bounding boxes the model can predict in a single inference. */
     val outBoxes: Int
+
     /** The number of distinct object classes the model can identify. */
     val numClasses: Int
 

@@ -50,6 +50,7 @@ class YoloPostProcessor(
     enum class OutputScalingMode {
         /** Assumes model outputs are raw pixel values (e.g., 0 to 640). No scaling is applied. */
         NONE,
+
         /** Assumes model outputs are normalized values (0.0 to 1.0) and scales them by [inputImageWidth]. */
         NORMALIZED
     }
@@ -132,7 +133,14 @@ class YoloPostProcessor(
             val y2C = ((cyI * scale + halfH) - padY) / lbScale
 
             // Normalize coordinates to the cropped image dimensions and store.
-            detections += RawDetection((x1C / cropW).coerceIn(0f, 1f), (y1C / cropH).coerceIn(0f, 1f), (x2C / cropW).coerceIn(0f, 1f), (y2C / cropH).coerceIn(0f, 1f), maxClassScore, bestCls)
+            detections += RawDetection(
+                (x1C / cropW).coerceIn(0f, 1f),
+                (y1C / cropH).coerceIn(0f, 1f),
+                (x2C / cropW).coerceIn(0f, 1f),
+                (y2C / cropH).coerceIn(0f, 1f),
+                maxClassScore,
+                bestCls
+            )
         }
         return detections
     }
@@ -146,7 +154,18 @@ class YoloPostProcessor(
         val xOffset = (1f - xFactor) / 2f
         val yOffset = (1f - yFactor) / 2f
         return detections.map {
-            Detection(it.x1Pct * xFactor + xOffset, it.y1Pct * yFactor + yOffset, it.x2Pct * xFactor + xOffset, it.y2Pct * yFactor + yOffset, it.x1Pct, it.y1Pct, it.x2Pct, it.y2Pct, it.confidence, it.classId)
+            Detection(
+                it.x1Pct * xFactor + xOffset,
+                it.y1Pct * yFactor + yOffset,
+                it.x2Pct * xFactor + xOffset,
+                it.y2Pct * yFactor + yOffset,
+                it.x1Pct,
+                it.y1Pct,
+                it.x2Pct,
+                it.y2Pct,
+                it.confidence,
+                it.classId
+            )
         }
     }
 

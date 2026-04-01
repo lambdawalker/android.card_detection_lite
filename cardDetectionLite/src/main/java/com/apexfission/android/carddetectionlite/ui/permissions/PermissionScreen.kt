@@ -115,7 +115,13 @@ fun PermissionScreen(
             // Main text content explaining the permission.
             Text(text = title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = body, style = MaterialTheme.typography.bodyMedium, lineHeight = 22.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 8.dp))
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodyMedium,
+                lineHeight = 22.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
             Spacer(modifier = Modifier.weight(0.5f))
 
             // List of features enabled by the permission.
@@ -126,14 +132,21 @@ fun PermissionScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             // Action buttons for the user.
-            Button(onClick = onAllow, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(12.dp)) {
+            Button(onClick = onAllow, modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp), shape = RoundedCornerShape(12.dp)) {
                 Text("Allow Camera Access", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
             TextButton(onClick = onNotNow, modifier = Modifier.fillMaxWidth()) {
                 Text("Not Now", fontWeight = FontWeight.SemiBold)
             }
 
-            Text(text = "Powered by LambdaWalker", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(vertical = 16.dp), letterSpacing = 2.sp)
+            Text(
+                text = "Powered by LambdaWalker",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(vertical = 16.dp),
+                letterSpacing = 2.sp
+            )
         }
     }
 }
@@ -146,15 +159,31 @@ fun PermissionScreen(
 @Composable
 private fun HeaderSection(onBack: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        IconButton(onClick = onBack, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), CircleShape)) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), CircleShape)
+        ) {
             Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
         }
-        Box(modifier = Modifier.width(100.dp).height(4.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
-            Box(modifier = Modifier.fillMaxWidth(0.33f).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
+        Box(
+            modifier = Modifier
+                .width(100.dp)
+                .height(4.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Box(modifier = Modifier
+                .fillMaxWidth(0.33f)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.primary))
         }
         Spacer(modifier = Modifier.size(40.dp)) // Spacer for symmetrical alignment.
     }
@@ -167,29 +196,61 @@ private fun HeaderSection(onBack: () -> Unit) {
 @Composable
 private fun CameraIllustration() {
     Box(
-        modifier = Modifier.height(210.dp).width(260.dp).clip(RoundedCornerShape(24.dp))
+        modifier = Modifier
+            .height(210.dp)
+            .width(260.dp)
+            .clip(RoundedCornerShape(24.dp))
             .background(Brush.linearGradient(colors = listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), Color.Transparent))),
         contentAlignment = Alignment.Center
     ) {
         // Mock ID Card element
-        Box(modifier = Modifier.size(width = 180.dp, height = 110.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(12.dp)) {
+        Box(
+            modifier = Modifier
+                .size(width = 180.dp, height = 110.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(12.dp)
+        ) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(32.dp).background(MaterialTheme.colorScheme.onSurface.copy(0.1f), RoundedCornerShape(4.dp)))
+                    Box(modifier = Modifier
+                        .size(32.dp)
+                        .background(MaterialTheme.colorScheme.onSurface.copy(0.1f), RoundedCornerShape(4.dp)))
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
-                        Box(modifier = Modifier.size(width = 80.dp, height = 6.dp).background(MaterialTheme.colorScheme.onSurface.copy(0.1f), CircleShape))
+                        Box(
+                            modifier = Modifier
+                                .size(width = 80.dp, height = 6.dp)
+                                .background(MaterialTheme.colorScheme.onSurface.copy(0.1f), CircleShape)
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Box(modifier = Modifier.size(width = 50.dp, height = 6.dp).background(MaterialTheme.colorScheme.onSurface.copy(0.1f), CircleShape))
+                        Box(
+                            modifier = Modifier
+                                .size(width = 50.dp, height = 6.dp)
+                                .background(MaterialTheme.colorScheme.onSurface.copy(0.1f), CircleShape)
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                Box(modifier = Modifier.size(width = 60.dp, height = 6.dp).background(MaterialTheme.colorScheme.onSurface.copy(0.1f), CircleShape))
+                Box(modifier = Modifier
+                    .size(width = 60.dp, height = 6.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(0.1f), CircleShape))
             }
-            Box(modifier = Modifier.align(Alignment.Center).fillMaxWidth().height(2.dp).background(MaterialTheme.colorScheme.primary))
+            Box(modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(MaterialTheme.colorScheme.primary))
         }
         // Mock Camera Badge element
-        Box(modifier = Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp).size(56.dp).background(MaterialTheme.colorScheme.primary, CircleShape).padding(4.dp), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 8.dp, y = (-8).dp)
+                .size(56.dp)
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .padding(4.dp), contentAlignment = Alignment.Center
+        ) {
             Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(28.dp))
         }
     }
@@ -202,7 +263,12 @@ private fun CameraIllustration() {
 @Composable
 private fun FeatureItem(icon: ImageVector, title: String, subtitle: String) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        Box(modifier = Modifier.size(32.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
         }
         Spacer(modifier = Modifier.width(12.dp))

@@ -126,7 +126,7 @@ class YoloCardDetector(
             card = card,
             features = otherElements,
             contextSize = Rect(0, 0, result.contextWidth, result.contextHeight),
-            sourceSize = Rect(0,0, result.originalWidth, result.originalHeight),
+            sourceSize = Rect(0, 0, result.originalWidth, result.originalHeight),
             lockOnProgress = lockOnProgress
         )
     }

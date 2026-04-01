@@ -76,6 +76,7 @@ fun DebugOverlay(
                         InputShape.VisibleImage -> Color(0xFF00BCD4) // Cyan
                         InputShape.VisibleImageSquareCrop -> Color(0xFFF44336) // Red
                     }
+
                     is NumThreads -> Color.White
                     else -> Color.White
                 }

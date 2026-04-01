@@ -128,7 +128,7 @@ fun CardLockOnOverlay(
 
         val cornerLen = lerpF(18.dp.toPx(), 24.dp.toPx(), smoothProgress)
         val tickLen = lerpF(7.dp.toPx(), 9.dp.toPx(), smoothProgress)
-        val tickInset = 3.dp.toPx()
+        3.dp.toPx()
         val midY = (top + bottom) / 2f
         val inset = radius * 0.45f
 

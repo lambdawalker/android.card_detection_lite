@@ -16,12 +16,12 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDete
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.rotateRectToUpright
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Holds critical metadata for mapping coordinates from the model's analysis space to the UI's

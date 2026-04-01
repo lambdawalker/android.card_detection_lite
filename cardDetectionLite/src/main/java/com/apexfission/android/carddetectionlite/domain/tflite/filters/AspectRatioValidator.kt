@@ -33,7 +33,13 @@ class AspectRatioValidator(
      * @return `true` if the aspect ratio is within the valid range, `false` otherwise. Returns
      *         `false` if the feature has a non-positive width or height.
      */
-    override fun isValid(extractedFeature: ExtractedFeature, contextWidth: Int, contextHeight: Int, originalWidth: Int, originalHeight: Int): Boolean {
+    override fun isValid(
+        extractedFeature: ExtractedFeature,
+        contextWidth: Int,
+        contextHeight: Int,
+        originalWidth: Int,
+        originalHeight: Int
+    ): Boolean {
         val width = extractedFeature.coordinates.width().toDouble()
         val height = extractedFeature.coordinates.height().toDouble()
 
