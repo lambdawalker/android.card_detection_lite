@@ -16,6 +16,10 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -28,11 +32,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import kotlinx.coroutines.delay
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
@@ -65,6 +73,7 @@ import kotlin.math.abs
  *                adjusts the camera to keep the detected card sharp and well-exposed.
  * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
  * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
+ * @param showFocusIndicator A boolean flag to enable or disable the focus indicator.
  */
 @Composable
 @Suppress("DEPRECATION")
@@ -77,6 +86,7 @@ fun CameraPreview(
     focusOn: CardDetection?,
     tapToFocusEnabled: Boolean = true,
     focusOnCardEnabled: Boolean = true,
+    showFocusIndicator: Boolean = true,
 ) {
     val context = LocalContext.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
@@ -85,8 +95,41 @@ fun CameraPreview(
     val previewView = remember { PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER } }
 
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
+    var focusPoint by remember { mutableStateOf<PointF?>(null) }
 
-    AndroidView(modifier = Modifier.fillMaxSize(), factory = { previewView })
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(modifier = Modifier.fillMaxSize(), factory = { previewView })
+
+        if (showFocusIndicator && focusPoint != null) {
+            val currentFocusPoint = focusPoint
+            var isVisible by remember { mutableStateOf(false) }
+
+            LaunchedEffect(currentFocusPoint) {
+                isVisible = true
+                delay(1000)
+                isVisible = false
+            }
+
+            val alpha by animateFloatAsState(
+                targetValue = if (isVisible) 1f else 0f,
+                animationSpec = tween(durationMillis = 500),
+                label = "alpha"
+            )
+
+            if (currentFocusPoint != null) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val radius = 60f
+                    drawCircle(
+                        color = Color.White.copy(alpha = alpha),
+                        radius = radius,
+                        center = Offset(currentFocusPoint.x, currentFocusPoint.y),
+                        style = Stroke(width = 2f)
+                    )
+                }
+            }
+        }
+    }
+
 
     // DisposableEffect manages the camera's setup and teardown, binding it to the lifecycle.
     DisposableEffect(lifecycleOwner, flashlightEnabled, tapToFocusEnabled) {
@@ -94,8 +137,8 @@ fun CameraPreview(
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
             val previewUseCase = Preview.Builder().build().also {
-                    it.surfaceProvider = previewView.surfaceProvider
-                }
+                it.surfaceProvider = previewView.surfaceProvider
+            }
 
             val resolutionStrategy = ResolutionStrategy(
                 analysisTargetResolution, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
@@ -103,9 +146,10 @@ fun CameraPreview(
 
             val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(resolutionStrategy).build()
 
-            val analysisUseCaseBuilder = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetRotation(previewView.display.rotation).setResolutionSelector(resolutionSelector)
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+            val analysisUseCaseBuilder =
+                ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .setTargetRotation(previewView.display.rotation).setResolutionSelector(resolutionSelector)
+                    .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
 
 
             val analysisUseCase = analysisUseCaseBuilder.build()
@@ -125,8 +169,9 @@ fun CameraPreview(
                 )
                 cameraControl = camera.cameraControl
                 camera.cameraControl.enableTorch(flashlightEnabled)
-                if(tapToFocusEnabled) {
+                if (tapToFocusEnabled) {
                     previewView.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
+                        focusPoint = PointF(event.x, event.y)
                         onFocusEvent(
                             camera.cameraControl, previewView.meteringPointFactory.createPoint(event.x, event.y)
                         )
@@ -196,7 +241,7 @@ fun CameraPreview(
         if (isCooldownOver && (hasMovedSignificantly || hasScaleChanged)) {
             val viewWidth = previewView.width.toFloat()
             val viewHeight = previewView.height.toFloat()
-            
+
             val analysisWidth = originalSize.width().toFloat()
             val analysisHeight = originalSize.height().toFloat()
 
@@ -204,7 +249,7 @@ fun CameraPreview(
             if (viewWidth == 0f || viewHeight == 0f || analysisWidth == 0f || analysisHeight == 0f) {
                 return@LaunchedEffect
             }
-            
+
             val scaleFactor = maxOf(viewWidth / analysisWidth, viewHeight / analysisHeight)
             val scaledWidth = analysisWidth * scaleFactor
             val scaledHeight = analysisHeight * scaleFactor
@@ -216,6 +261,7 @@ fun CameraPreview(
             // Apply the scale and offset to find the point in the view's coordinates.
             val viewX = centerX * scaleFactor + offsetX
             val viewY = centerY * scaleFactor + offsetY
+            focusPoint = PointF(viewX, viewY)
 
             val factory = previewView.meteringPointFactory
             val point = factory.createPoint(viewX, viewY)

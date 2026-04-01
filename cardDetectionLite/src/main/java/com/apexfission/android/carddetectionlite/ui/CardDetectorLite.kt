@@ -74,6 +74,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
  *                        similar before it is considered "locked on."
  * @param numThreads The number of threads to use for inference on the CPU, encapsulated in the [NumThreads] sealed class.
+ * @param showFocusIndicator A boolean flag to enable or disable the focus indicator.
  */
 @Composable
 fun CardDetectorLite(
@@ -100,6 +101,7 @@ fun CardDetectorLite(
     focusOnCardEnabled: Boolean = true,
     lockOnThreshold: Int = 4,
     numThreads: NumThreads = NumThreads.Default,
+    showFocusIndicator: Boolean = true,
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
@@ -147,7 +149,8 @@ fun CardDetectorLite(
             analysisTargetResolution = analysisTargetResolution,
             focusOn = cardDetection,
             tapToFocusEnabled = tapToFocusEnabled,
-            focusOnCardEnabled = focusOnCardEnabled
+            focusOnCardEnabled = focusOnCardEnabled,
+            showFocusIndicator = showFocusIndicator
         )
 
         // Conditionally display overlays based on configuration and state.
