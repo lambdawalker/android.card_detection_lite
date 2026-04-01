@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.SystemClock
 import android.util.Log
+import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.io.Closeable
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -42,7 +43,7 @@ class TfliteInterpreter(
     context: Context,
     modelPath: String,
     useGpu: Boolean,
-    numThreads: Int?
+    numThreads : NumThreads= NumThreads.Default
 ) : Closeable {
 
     companion object {
@@ -126,7 +127,7 @@ class TfliteInterpreter(
         // 2. Configure Final Interpreter with appropriate options.
         pixelBuffer = IntArray(inputImageWidth * inputImageWidth)
         val options = Interpreter.Options().apply {
-            setNumThreads(numThreads ?: max(2, Runtime.getRuntime().availableProcessors() / 2))
+            setNumThreads(numThreads.toInt())
         }
 
         if (useGpu && !isInt8) {

@@ -13,6 +13,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -55,6 +56,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
  *                             camera's flashlight.
  * @param showLockOnProgress If `true`, the [CardLockOnOverlay] is displayed, providing visual
  *                           feedback as the detector locks onto a card.
+ * @param showDebugOverlay If `true`, an overlay is displayed showing the current values of various
+ *                         configuration parameters for debugging purposes.
  * @param scoreThreshold The minimum confidence score (0.0 to 1.0) a detection must have to be considered.
  *                       Lowering this may increase recall but can also lead to more false positives.
  * @param analysisTargetResolution The target resolution for the image analysis stream passed to `CameraPreview`.
@@ -70,7 +73,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
  * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
  *                        similar before it is considered "locked on."
- * @param numThreads The number of threads to use for inference on the CPU. If null, a default is chosen.
+ * @param numThreads The number of threads to use for inference on the CPU, encapsulated in the [NumThreads] sealed class.
  */
 @Composable
 fun CardDetectorLite(
@@ -84,6 +87,7 @@ fun CardDetectorLite(
     showClassNames: Boolean = false,
     showFlashlightSwitch: Boolean = true,
     showLockOnProgress: Boolean = true,
+    showDebugOverlay: Boolean = false,
     scoreThreshold: Float = 0.65f,
     analysisTargetResolution: Size = Size(2048, 1080),
     cardFilters: List<CardValidator> = listOf(
@@ -95,7 +99,7 @@ fun CardDetectorLite(
     tapToFocusEnabled: Boolean = true,
     focusOnCardEnabled: Boolean = true,
     lockOnThreshold: Int = 4,
-    numThreads: Int? = null,
+    numThreads: NumThreads = NumThreads.Default,
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)
@@ -169,6 +173,22 @@ fun CardDetectorLite(
                     contentDescription = "Toggle Flashlight"
                 )
             }
+        }
+
+        if (showDebugOverlay) {
+            DebugOverlay(
+                isDetectionEnabled = isDetectionEnabled,
+                useGpu = useGpu,
+                showBoundingBoxes = showBoundingBoxes,
+                showLockOnProgress = showLockOnProgress,
+                imageMode = imageMode,
+                inferenceIntervalMs = inferenceIntervalMs,
+                tapToFocusEnabled = tapToFocusEnabled,
+                focusOnCardEnabled = focusOnCardEnabled,
+                lockOnThreshold = lockOnThreshold,
+                numThreads = numThreads,
+                modifier = Modifier.align(Alignment.BottomStart)
+            )
         }
     }
 }

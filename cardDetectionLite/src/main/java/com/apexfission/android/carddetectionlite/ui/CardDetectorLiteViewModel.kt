@@ -68,7 +68,7 @@ class CardDetectorLiteViewModel(
     application: Application, modelPath: String, cardClasses: List<Int>, useGpu: Boolean,
     scoreThreshold: Float, cardFilters: List<CardValidator>, canvasSize: MutableStateFlow<IntSize>,
     imageMode: InputShape, private val inferenceIntervalMs: Long, lockOnThreshold: Int,
-    numThreads: Int?,
+    numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)

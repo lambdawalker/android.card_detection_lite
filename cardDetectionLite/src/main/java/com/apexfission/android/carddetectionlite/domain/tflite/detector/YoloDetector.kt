@@ -11,6 +11,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBi
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detections
 import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeatures
 import com.apexfission.android.carddetectionlite.domain.tflite.model.buildDetection
+import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.io.Closeable
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -85,7 +86,7 @@ class YoloDetector(
     iouThreshold: Float,
     useGpu: Boolean,
     maxNmsCandidates: Int = 300,
-    numThreads: Int? = null,
+    numThreads: NumThreads = NumThreads.Default,
     private val canvasSize: MutableStateFlow<IntSize>,
     private val imageMode: InputShape,
 ) : Detector {

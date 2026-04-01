@@ -61,7 +61,8 @@ class MainActivity : ComponentActivity() {
                             inferenceIntervalMs = 33L,
                             tapToFocusEnabled = true,
                             focusOnCardEnabled = true,
-                            lockOnThreshold = 4
+                            lockOnThreshold = 4,
+                            showDebugOverlay = true
                         )
                     }
                 }

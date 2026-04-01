@@ -40,7 +40,7 @@ class CardDetectorLiteViewModelFactory(
     private val cardClasses: List<Int>,
     private val inferenceIntervalMs: Long,
     private val lockOnThreshold: Int,
-    private val numThreads: Int?,
+    private val numThreads: NumThreads,
 ) : ViewModelProvider.Factory {
 
     /**
