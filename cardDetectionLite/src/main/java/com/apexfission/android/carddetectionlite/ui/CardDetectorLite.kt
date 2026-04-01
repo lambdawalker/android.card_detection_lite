@@ -73,8 +73,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
  * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
  *                        similar before it is considered "locked on."
- * @param numThreads The number of threads to use for inference on the CPU, encapsulated in the [NumThreads] sealed class.
- * @param showFocusIndicator A boolean flag to enable or disable the focus indicator.
+ * @param numThreads The number of threads to use for inference on the CPU. This is controlled via
+ *                   the [NumThreads] sealed class, allowing for predefined percentages of available
+ *                   cores (e.g., `NumThreads.Half`) or a specific count (e.g., `NumThreads.CustomCount(2)`).
+ *                   Defaults to `NumThreads.Default`.
+ * @param showFocusIndicator If `true`, a visual indicator (a white circle) is briefly displayed
+ *                           where the camera is focusing, whether triggered by a tap or by the
+ *                           auto-focus-on-card mechanism.
  */
 @Composable
 fun CardDetectorLite(

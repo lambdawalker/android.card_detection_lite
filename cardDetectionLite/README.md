@@ -2,17 +2,21 @@
 
 ## Overview
 
-`cardDetectionLite` is a real-time Jetpack Compose module for detecting government-issued ID cards, such as driver’s licenses, voter IDs, and similar documents, directly from the camera feed.
+`cardDetectionLite` is a real-time Jetpack Compose module for detecting government-issued ID cards, such as driver’s licenses, voter IDs, and similar
+documents, directly from the camera feed.
 
-It uses a YOLO-based TensorFlow Lite model to detect the card in view, stabilize the detection across frames, and return a cropped card image along with any detected subfeatures inside the card area.
+It uses a YOLO-based TensorFlow Lite model to detect the card in view, stabilize the detection across frames, and return a cropped card image along
+with any detected subfeatures inside the card area.
 
 This module is designed as the **first stage** of an ID-processing pipeline. It focuses on **detection and extraction only**.
 
 > `cardDetectionLite` does **not** perform OCR.
 >
-> Its role is to find the card, isolate it from the live camera stream, and return the cropped result so it can be passed to a separate OCR or data-extraction component.
+> Its role is to find the card, isolate it from the live camera stream, and return the cropped result so it can be passed to a separate OCR or
+> data-extraction component.
 
-The main entry point is the `CardDetectorLite` composable, which bundles camera preview, model inference, lock-on logic, and optional visual overlays into a single configurable UI component.
+The main entry point is the `CardDetectorLite` composable, which bundles camera preview, model inference, lock-on logic, and optional visual overlays
+into a single configurable UI component.
 
 ---
 
@@ -36,10 +40,8 @@ dependencies {
 ### 1. Declare camera permission in `AndroidManifest.xml`
 
 ```xml
-<uses-feature
-    android:name="android.hardware.camera.any"
-    android:required="true" />
-<uses-permission android:name="android.permission.CAMERA" />
+
+<uses-feature android:name="android.hardware.camera.any" android:required="true" /><uses-permission android:name="android.permission.CAMERA" />
 ```
 
 ### 2. Manage permission and detection state
@@ -135,30 +137,29 @@ This balance keeps the model lightweight enough for mobile use while still suppo
 
 `CardDetectorLite` supports the following parameters:
 
-| Parameter                  | Type                      | Default                                             | Description                                                                         |
-| -------------------------- | ------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `modelPath`                | `String`                  | -                                                   | Path to the `.tflite` model inside the app assets.                                  |
-| `classLabels`              | `Map<Int, String>`        | -                                                   | Maps class IDs to human-readable labels.                                            |
-| `cardClasses`              | `List<Int>`               | -                                                   | Class IDs that should be treated as primary card targets.                           |
-| `isDetectionEnabled`       | `Boolean`                 | -                                                   | Enables or pauses detection dynamically.                                            |
-| `onCardDetection`          | `(CardDetection) -> Unit` | -                                                   | Called when a stable card lock-on is achieved.                                      |
-| `modifier`                 | `Modifier`                | `Modifier`                                          | Modifier applied to the root container.                                             |
-| `useGpu`                   | `Boolean`                 | `true`                                              | Enables TFLite GPU delegate when available.                                         |
-| `showBoundingBoxes`        | `Boolean`                 | `false`                                             | Draws bounding boxes for detected objects.                                          |
-| `showClassNames`           | `Boolean`                 | `false`                                             | Shows class labels and confidence values above boxes.                               |
-| `showFlashlightSwitch`     | `Boolean`                 | `true`                                              | Shows a built-in flashlight toggle button.                                          |
-| `showLockOnProgress`       | `Boolean`                 | `true`                                              | Displays visual feedback while lock-on stabilizes.                                  |
-| `scoreThreshold`           | `Float`                   | `0.65f`                                             | Minimum confidence required for a detection to be considered valid.                 |
-| `analysisTargetResolution` | `Size`                    | `Size(2048, 1080)`                                  | Resolution requested for the analysis stream.                                       |
-| `cardCardFilters`          | `List<CardValidator>`     | `listOf(MarginValidator(), AspectRatioValidator())` | Heuristic validators applied to candidate card detections.                          |
-| `imageMode`                | `InputShape`              | `InputShape.SquareCrop`                             | Defines how the camera image is prepared before inference.                          |
-| `inferenceIntervalMs`      | `Long`                    | `33L`                                               | Minimum interval between inference runs.                                            |
-| `tapToFocusEnabled`        | `Boolean`                 | `true`                                              | Enables tap-to-focus on the preview.                                                |
-| `focusOnCardEnabled`       | `Boolean`                 | `true`                                              | Enables auto-focus behavior targeting the detected card.                            |
-| `lockOnThreshold`          | `Int`                     | `5`                                                 | Number of consistent frames required before lock-on succeeds.                       |
-| `numThreads`               | `Int?`                    | `null`                                              | Number of CPU threads used for inference. Defaults to `max(2, num_processors / 2)`. |
-
-> Note: The parameter name `cardCardFilters` appears unusual and may be intentional for backward compatibility. If this is not required by the API, consider renaming it to `cardFilters` for clarity.
+| Parameter                  | Type                      | Default                                             | Description                                                                          |
+|----------------------------|---------------------------|-----------------------------------------------------|--------------------------------------------------------------------------------------|
+| `modelPath`                | `String`                  | -                                                   | Path to the `.tflite` model inside the app assets.                                   |
+| `classLabels`              | `Map<Int, String>`        | -                                                   | Maps class IDs to human-readable labels.                                             |
+| `cardClasses`              | `List<Int>`               | -                                                   | Class IDs that should be treated as primary card targets.                            |
+| `isDetectionEnabled`       | `Boolean`                 | -                                                   | Enables or pauses detection dynamically.                                             |
+| `onCardDetection`          | `(CardDetection) -> Unit` | -                                                   | Called when a stable card lock-on is achieved.                                       |
+| `modifier`                 | `Modifier`                | `Modifier`                                          | Modifier applied to the root container.                                              |
+| `useGpu`                   | `Boolean`                 | `true`                                              | Enables TFLite GPU delegate when available.                                          |
+| `showBoundingBoxes`        | `Boolean`                 | `false`                                             | Draws bounding boxes for detected objects.                                           |
+| `showClassNames`           | `Boolean`                 | `false`                                             | Shows class labels and confidence values above boxes.                                |
+| `showFlashlightSwitch`     | `Boolean`                 | `true`                                              | Shows a built-in flashlight toggle button.                                           |
+| `showLockOnProgress`       | `Boolean`                 | `true`                                              | Displays visual feedback while lock-on stabilizes.                                   |
+| `scoreThreshold`           | `Float`                   | `0.65f`                                             | Minimum confidence required for a detection to be considered valid.                  |
+| `analysisTargetResolution` | `Size`                    | `Size(2048, 1080)`                                  | Resolution requested for the analysis stream.                                        |
+| `cardCardFilters`          | `List<CardValidator>`     | `listOf(MarginValidator(), AspectRatioValidator())` | Heuristic validators applied to candidate card detections.                           |
+| `imageMode`                | `InputShape`              | `InputShape.SquareCrop`                             | Defines how the camera image is prepared before inference.                           |
+| `inferenceIntervalMs`      | `Long`                    | `33L`                                               | Minimum interval between inference runs.                                             |
+| `tapToFocusEnabled`        | `Boolean`                 | `true`                                              | Enables tap-to-focus on the preview.                                                 |
+| `focusOnCardEnabled`       | `Boolean`                 | `true`                                              | Enables auto-focus behavior targeting the detected card.                             |
+| `lockOnThreshold`          | `Int`                     | `5`                                                 | Number of consistent frames required before lock-on succeeds.                        |
+| `numThreads`               | `NumThreads`              | `NumThreads.Default`                                | Number of CPU threads used for inference. See `NumThreads` sealed class for options. |
+| `showFocusIndicator`       | `Boolean`                 | `true`                                              | Shows a visual indicator when the camera focuses.                                    |
 
 ---
 
@@ -168,11 +169,13 @@ The cropped card image returned through `onCardDetection` does **not** have a fi
 
 ### 1. `analysisTargetResolution`
 
-This determines the resolution of the camera image used for inference and extraction. Higher values generally allow better card crops, but they also increase processing cost.
+This determines the resolution of the camera image used for inference and extraction. Higher values generally allow better card crops, but they also
+increase processing cost.
 
 ### 2. Physical distance to the card
 
-This is usually the biggest factor. A card that occupies more of the camera frame will produce a higher-resolution crop than one captured from farther away.
+This is usually the biggest factor. A card that occupies more of the camera frame will produce a higher-resolution crop than one captured from farther
+away.
 
 ### 3. `imageMode`
 
@@ -248,4 +251,3 @@ It is especially useful when you want to:
 - optionally identify subfeatures inside the detected card.
 
 For OCR, field parsing, or document classification beyond detection, pair this module with a separate recognition pipeline.
-
