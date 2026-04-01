@@ -34,6 +34,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 /**
@@ -154,9 +155,10 @@ fun CameraPreview(
     LaunchedEffect(focusOn) {
         if (!focusOnCardEnabled) return@LaunchedEffect
         val control = cameraControl ?: return@LaunchedEffect
-        val detection = focusOn ?: return@LaunchedEffect
+        val detection: CardDetection = focusOn ?: return@LaunchedEffect
 
         val coords = detection.card.coordinates
+        val originalSize = detection.sourceSize
         val detContextSize = detection.contextSize
 
         val currentArea = coords.width().toFloat() * coords.height()
@@ -192,12 +194,35 @@ fun CameraPreview(
 
         // Only trigger focus if the cooldown is over AND there's a good reason to.
         if (isCooldownOver && (hasMovedSignificantly || hasScaleChanged)) {
+            val viewWidth = previewView.width.toFloat()
+            val viewHeight = previewView.height.toFloat()
+            
+            val analysisWidth = originalSize.width().toFloat()
+            val analysisHeight = originalSize.height().toFloat()
+
+            // Avoid division by zero if view or analysis dimensions are not ready.
+            if (viewWidth == 0f || viewHeight == 0f || analysisWidth == 0f || analysisHeight == 0f) {
+                return@LaunchedEffect
+            }
+            
+            val scaleFactor = maxOf(viewWidth / analysisWidth, viewHeight / analysisHeight)
+            val scaledWidth = analysisWidth * scaleFactor
+            val scaledHeight = analysisHeight * scaleFactor
+
+            // The offset to center the scaled image within the view.
+            val offsetX = (viewWidth - scaledWidth) / 2f
+            val offsetY = (viewHeight - scaledHeight) / 2f
+
+            // Apply the scale and offset to find the point in the view's coordinates.
+            val viewX = centerX * scaleFactor + offsetX
+            val viewY = centerY * scaleFactor + offsetY
+
             val factory = previewView.meteringPointFactory
-            val point = factory.createPoint(centerX, centerY)
+            val point = factory.createPoint(viewX, viewY)
 
             // ADDED FLAG_AE for exposure correction
             val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE)
-                .setAutoCancelDuration(3, java.util.concurrent.TimeUnit.SECONDS).build()
+                .setAutoCancelDuration(3, TimeUnit.SECONDS).build()
 
             try {
                 control.startFocusAndMetering(action)
