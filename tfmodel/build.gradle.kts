@@ -56,7 +56,7 @@ mavenPublishing {
     coordinates(
         "com.apexfission.android.carddetectionlite",
         "tfmodel-Y11-640-F16",
-        "0.0.1-A1"
+        "0.1.0-B1"
     )
 
     pom {
