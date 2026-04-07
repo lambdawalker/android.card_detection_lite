@@ -46,32 +46,64 @@ dependencies {
 
 ### 2. Manage permission and detection state
 
-Is recommended to Create a `ViewModel` to process the ID card detections.
+Since cardDetectionLite provides the cropped image, you should use a `ViewModel` to bridge the detection event to your chosen OCR provider.
 
 ```kotlin
+
 class MainViewModel : ViewModel() {
     private val _isDetectionEnabled = MutableStateFlow(true)
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
+    val useCloud: Boolean = false
 
     fun onDetections(card: CardDetection) {
-        _isDetectionEnabled.value = false
+        if (!card.isNewDetection && card.id == null) return
+        if (!_isDetectionEnabled.value) return
 
         viewModelScope.launch {
             try {
-                Log.d("CardDetection", "Card detected: ${card.id}")
+                _isDetectionEnabled.value = false
+
+                // The ViewModel doesn't care about Dispatchers;
+                // it just calls the function and waits.
+                if (useCloud) {
+                    performCloudOcr(card)
+                } else {
+                    performOnDeviceOcr(card)
+                }
+
+            } catch (e: Exception) {
+                Log.e("OCR", "Error processing card", e)
             } finally {
-                delay(2000)
                 _isDetectionEnabled.value = true
             }
+        }
+    }
+
+    // OPTION A: Cloud-based (Network/IO)
+    private suspend fun performCloudOcr(card: CardDetection) = withContext(Dispatchers.IO) {
+        Log.d("OCR", "Running Cloud OCR (Network bound)")
+        withContext(Dispatchers.IO) {
+            // api.uploadAndRecognize(card.image)
+        }
+    }
+
+    // OPTION B: On-Device (CPU/Math)
+    private suspend fun performOnDeviceOcr(card: CardDetection) = withContext(Dispatchers.Default) {
+        Log.d("OCR", "Running On-Device OCR (CPU bound)")
+        withContext(Dispatchers.Default) {
+            // localLibrary.process(card.bitmap)
         }
     }
 }
 ```
 
+> Threading Note: While the CardDetectorLite internal inference runs on its own background executor, you should always perform your OCR on
+> Dispatchers.Default (for on-device) or Dispatchers.IO (for cloud) to avoid blocking the Main thread or starving the detector's resources.
+
 ### 3. Add `CardDetectorLite` to your UI
 
 Optionally, Use the provided `HandleCameraPermission` composable to handle permissions. It is meant to be used as a wrapper for the CardDetectorLite
-Composable.
+Composable. Use collectAsStateWithLifecycle() to observe the enabled state and pass the detection result to your ViewModel.
 
 ```kotlin
 class MainActivity : ComponentActivity() {
@@ -80,19 +112,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             val mainViewModel: MainViewModel by viewModels()
 
-            HandleCameraPermission {
+            HandleCameraPermission { // Optional
                 val isDetectionEnabled by mainViewModel
                     .isDetectionEnabled
                     .collectAsStateWithLifecycle()
 
+                // Minimum setup for CardDetectorLite
                 CardDetectorLite(
                     modelPath = ModelCatalog.TfLite.modelPath,
                     classLabels = ModelCatalog.TfLite.classes,
                     cardClasses = ModelCatalog.TfLite.cardClasses,
                     isDetectionEnabled = isDetectionEnabled,
-                    onCardDetection = { card ->
-                        mainViewModel.onDetections(card)
-                    }
+                    onCardDetection = mainViewModel::onDetections
                 )
             }
         }
@@ -156,7 +187,7 @@ This balance keeps the model lightweight enough for mobile use while still suppo
 | `showFocusIndicator`       | `Boolean`                 | `true`                                              | Shows a visual indicator when the camera focuses.                                    |
 | `scoreThreshold`           | `Float`                   | `0.65f`                                             | Minimum confidence required for a detection to be considered valid.                  |
 | `analysisTargetResolution` | `Size`                    | `Size(2048, 1080)`                                  | Resolution requested for the analysis stream.                                        |
-| `cardCardFilters`          | `List<CardValidator>`     | `listOf(MarginValidator(), AspectRatioValidator())` | Heuristic validators applied to candidate card detections.                           |
+| `cardFilters`              | `List<CardValidator>`     | `listOf(MarginValidator(), AspectRatioValidator())` | Heuristic validators applied to candidate card detections.                           |
 | `imageMode`                | `InputShape`              | `InputShape.SquareCrop`                             | Defines how the camera image is prepared before inference.                           |
 | `inferenceIntervalMs`      | `Long`                    | `33L`                                               | Minimum interval between inference runs.                                             |
 | `tapToFocusEnabled`        | `Boolean`                 | `true`                                              | Enables tap-to-focus on the preview.                                                 |
@@ -165,6 +196,49 @@ This balance keeps the model lightweight enough for mobile use while still suppo
 | `numThreads`               | `NumThreads`              | `NumThreads.Default`                                | Number of CPU threads used for inference. See `NumThreads` sealed class for options. |
 
 ---
+
+```kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            val mainViewModel: MainViewModel by viewModels()
+
+            HandleCameraPermission {
+                val isDetectionEnabled by mainViewModel
+                    .isDetectionEnabled
+                    .collectAsStateWithLifecycle()
+
+                CardDetectorLite(
+                    modifier = Modifier.padding(innerPadding),
+                    modelPath = ModelCatalog.TfLite.modelPath,
+                    classLabels = ModelCatalog.TfLite.classes,
+                    cardClasses = ModelCatalog.TfLite.cardClasses,
+                    useGpu = true,
+                    scoreThreshold = 0.6f,
+                    showBoundingBoxes = false,
+                    showClassNames = false,
+                    showLockOnProgress = true,
+                    showFocusIndicator = true,
+                    showFlashlightSwitch = true,
+                    analysisTargetResolution = Size(2048, 1080),
+                    isDetectionEnabled = isDetectionEnabled,
+                    onCardDetection = mainViewModel::onDetections,
+                    cardFilters = listOf(
+                        MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
+                    ),
+                    imageMode = InputShape.SquareCrop,
+                    inferenceIntervalMs = 33L,
+                    tapToFocusEnabled = true,
+                    focusOnCardEnabled = true,
+                    lockOnThreshold = 4,
+                    showDebugOverlay = true
+                )
+            }
+        }
+    }
+}
+```
 
 ## Understanding Output Card Resolution
 
@@ -254,3 +328,6 @@ It is especially useful when you want to:
 - optionally identify subfeatures inside the detected card.
 
 For OCR, field parsing, or document classification beyond detection, pair this module with a separate recognition pipeline.
+
+
+

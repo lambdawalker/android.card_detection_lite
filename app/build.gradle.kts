@@ -7,11 +7,11 @@ plugins {
 }
 
 extensions.configure<ApplicationExtension> {
-    namespace = "com.apexfission.android.tflitetest"
+    namespace = "com.apexfission.android.carddetectiontest"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.apexfission.android.tflitetest"
+        applicationId = "com.apexfission.android.cardDetectionTest"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
@@ -44,6 +44,7 @@ kotlin {
 dependencies {
     implementation(project(":cardDetectionLite"))
     implementation(project(":tfmodel"))
+    implementation(project(":permissionsCompose"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

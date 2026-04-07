@@ -1,6 +1,0 @@
-<resources>
-    <string name="camera_permission_title">Accès à la Caméra Requis</string>
-    <string name="camera_permission_body">Pour offrir une expérience fluide, nous avons besoin d\'accéder à votre caméra. Cela nous permet de numériser des documents, de vérifier votre identité, et plus encore.</string>
-    <string name="permission_feature_title_identity">Vérification de l\'Identité</string>
-    <string name="permission_feature_subtitle_identity">Confirmez votre identité en toute sécurité pour prévenir la fraude.</string>
-</resources>

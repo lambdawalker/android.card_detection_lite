@@ -93,7 +93,7 @@ mavenPublishing {
 
     pom {
         name.set("Card Detection Lite")
-        description.set("Card Detection Lite is a high-performance Android module that provides developers with a ready-to-use solution for real-time ID card detection and extraction using YOLO models and TensorFlow Lite. Built with Jetpack Compose and CameraX, the module features an optimized inference pipeline with GPU acceleration that handles complex coordinate mapping from the camera's cropRect to a dynamic UI overlay. It is designed for seamless integration into existing apps, offering customizable bounding box visualization, class labeling, and a robust \"cutout\" feature that automatically captures and crops high-resolution images of detected ID cards for further processing or identity verification workflows.")
+        description.set("Card Detection Lite is a high-performance Android module for real-time ID detection using Sentinel-Card and TFLite. Built with Jetpack Compose and CameraX, it leverages GPU acceleration for rapid inference. Key features include an auto-cutout tool, a lock-on process, and intelligent auto-focus.")
         inceptionYear.set("2026")
         url.set("https://github.com/lambdawalker/android.card_detection_lite")
 
