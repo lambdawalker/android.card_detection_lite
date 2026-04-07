@@ -29,12 +29,12 @@ into a single configurable UI component.
 ```toml
 [versions]
 carddetectionlite = "0.1.0-B2"
-tfmodel = "0.1.0-B2"
+sentinel = "TFY11640F16-0.1.0-B2"
 permissioncompose = "0.0.1-B0"
 
 [libraries]
 af-cdl-core = { module = "com.apexfission.android.carddetectionlite:core", version.ref = "carddetectionlite" }
-af-cdl-sentinel = { module = "com.apexfission.android.carddetectionlite:sentinel-card-model-TFY11640F16", version.ref = "tfmodel" }
+af-cdl-sentinel = { module = "com.apexfission.android.carddetectionlite:sentinel-card-model", version.ref = "sentinel" }
 af-permission-compose = { module = "com.apexfission.android.permissionscompose:core", version.ref = "permissioncompose" }
 ```
 

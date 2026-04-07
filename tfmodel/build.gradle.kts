@@ -55,8 +55,8 @@ mavenPublishing {
 mavenPublishing {
     coordinates(
         "com.apexfission.android.carddetectionlite",
-        "sentinel-card-model-TFY11640F16",
-        "0.1.0-B2"
+        "sentinel-card-model",
+        "TFY11640F16-0.1.0-B2"
     )
 
     pom {
