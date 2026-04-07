@@ -24,12 +24,27 @@ into a single configurable UI component.
 
 ### Dependencies
 
-Add the module and model dependencies to your `build.gradle.kts` file:
+#### libs.versions.toml
+
+```toml
+[versions]
+carddetectionlite = "0.1.0-B2"
+tfmodel = "0.1.0-B2"
+permissioncompose = "0.0.1-B0"
+
+[libraries]
+af-cdl-core = { module = "com.apexfission.android.carddetectionlite:core", version.ref = "carddetectionlite" }
+af-cdl-sentinel = { module = "com.apexfission.android.carddetectionlite:sentinel-card-model-TFY11640F16", version.ref = "tfmodel" }
+af-permission-compose = { module = "com.apexfission.android.permissionscompose:core", version.ref = "permissioncompose" }
+```
+
+#### app/build.gradle.kts
 
 ```kotlin
 dependencies {
-    implementation("com.apexfission.android.carddetectionlite:core:0.0.1-A1")
-    implementation("com.apexfission.android.carddetectionlite:tfmodel-Y11-640-F16:0.0.1-A1")
+  implementation(libs.af.cdl.core)
+  implementation(libs.af.cdl.sentinel)
+  implementation(libs.af.permission.compose)
 }
 ```
 
@@ -41,7 +56,8 @@ dependencies {
 
 ```xml
 
-<uses-permission android:name="android.permission.CAMERA" /><uses-feature android:name="android.hardware.camera" />
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-feature android:name="android.hardware.camera" />
 ```
 
 ### 2. Manage permission and detection state
