@@ -55,7 +55,7 @@ class MainViewModel : ViewModel() {
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
     val useCloud: Boolean = false
 
-    fun onDetections(card: CardDetection) {
+    fun onDetection(card: CardDetection) {
         if (!card.isNewDetection && card.id == null) return
         if (!_isDetectionEnabled.value) return
 
@@ -123,7 +123,7 @@ class MainActivity : ComponentActivity() {
                     classLabels = ModelCatalog.TfLite.classes,
                     cardClasses = ModelCatalog.TfLite.cardClasses,
                     isDetectionEnabled = isDetectionEnabled,
-                    onCardDetection = mainViewModel::onDetections
+                    onCardDetection = mainViewModel::onDetection
                 )
             }
         }
@@ -223,7 +223,7 @@ class MainActivity : ComponentActivity() {
                     showFlashlightSwitch = true,
                     analysisTargetResolution = Size(2048, 1080),
                     isDetectionEnabled = isDetectionEnabled,
-                    onCardDetection = mainViewModel::onDetections,
+                    onCardDetection = mainViewModel::onDetection,
                     cardFilters = listOf(
                         MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
                     ),

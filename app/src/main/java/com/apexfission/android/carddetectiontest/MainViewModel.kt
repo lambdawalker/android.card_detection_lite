@@ -16,7 +16,7 @@ class MainViewModel : ViewModel() {
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
     val useCloud: Boolean = false
 
-    fun onDetections(card: CardDetection) {
+    fun onDetection(card: CardDetection) {
         if (!card.isNewDetection && card.id == null) return
         if (!_isDetectionEnabled.value) return
 

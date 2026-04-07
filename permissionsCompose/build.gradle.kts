@@ -77,7 +77,7 @@ mavenPublishing {
     coordinates(
         "com.apexfission.android.permissionscompose",
         "core",
-        "0.0.1"
+        "0.0.1-B0"
     )
 
     pom {

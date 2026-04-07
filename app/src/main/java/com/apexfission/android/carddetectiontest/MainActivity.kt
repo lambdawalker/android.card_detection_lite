@@ -21,7 +21,7 @@ import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
 import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.CardDetectorLite
-import com.apexfission.android.carddetectiontest.ui.theme.TfLiteTestTheme
+import com.apexfission.android.carddetectiontest.ui.theme.CardDetectionTestTheme
 import com.apexfission.android.permissionscompose.HandleCameraPermission
 
 class MainActivity : ComponentActivity() {
@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
         val mainViewModel: MainViewModel by viewModels()
 
         setContent {
-            TfLiteTestTheme {
+            CardDetectionTestTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
                     HandleCameraPermission(
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
                             showFlashlightSwitch = true,
                             analysisTargetResolution=Size(2048, 1080),
                             isDetectionEnabled = isDetectionEnabled,
-                            onCardDetection = mainViewModel::onDetections,
+                            onCardDetection = mainViewModel::onDetection,
                             cardFilters = listOf(
                                 MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
                             ),

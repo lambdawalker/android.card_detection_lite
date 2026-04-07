@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">TfLiteTest</string>
+    <string name="app_name">CardDetectionTest</string>
     <string name="demo">Démo</string>
 </resources>

@@ -55,13 +55,13 @@ mavenPublishing {
 mavenPublishing {
     coordinates(
         "com.apexfission.android.carddetectionlite",
-        "tfmodel-Y11-640-F16",
-        "0.1.0-B1"
+        "sentinel-card-model-TFY11640F16",
+        "0.1.0-B2"
     )
 
     pom {
         name.set("Sentinel Card Model")
-        description.set("Is a YoloV11 based model trained with more than 20,000 examples. It is optimized for mobile inference, detects horizontal/vertical cards, photos, MRZ text, and multiple barcode formats (PDF417, QR), providing high-precision extraction for ID pipelines.")
+        description.set("Sentinel Card Model is a YoloV11 based model trained with more than 20,000 examples. It is optimized for mobile inference, detects horizontal/vertical cards, photos, MRZ text, and multiple barcode formats (PDF417, QR), providing high-precision extraction for ID pipelines.")
         inceptionYear.set("2026")
         url.set("https://github.com/lambdawalker/android.card_detection_lite")
 
