@@ -87,7 +87,7 @@ class YoloCardDetector(
 
         // --- Temporal Stability Check using Perceptual Hashing ---
         val currentHash = card.objectBitmap.generateDHash(8)
-        val isSimilar = isVisuallySimilar(previousHash, currentHash, 20)
+        val isSimilar = isVisuallySimilar(previousHash, currentHash, 25)
 
         Log.d("HDLOG", "$isSimilar $previousHash $currentHash ${previousHash.hammingDistanceTo(currentHash)}")
 

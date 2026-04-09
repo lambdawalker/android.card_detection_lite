@@ -1,0 +1,18 @@
+lockOnProgress: 1.0
+id: 1
+isNewDetection: true
+
+# Primary ID Card Detection
+card:
+  classId: 0
+  confidence: 0.96875
+  objectBitmap: "[BITMAP]"
+
+# Sub-features found inside the card (e.g., Photos, Barcodes)
+features:
+  - classId: 3
+    confidence: 0.9243164
+    objectBitmap: "[BITMAP]"
+  - classId: 3
+    confidence: 0.8457031
+    objectBitmap: "[BITMAP]"
