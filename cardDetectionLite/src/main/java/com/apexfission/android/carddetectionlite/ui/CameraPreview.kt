@@ -202,7 +202,7 @@ fun CameraPreview(
         val control = cameraControl ?: return@LaunchedEffect
         val detection: CardDetection = focusOn ?: return@LaunchedEffect
 
-        val cardCoordinates = detection.card.coordinates
+        val cardCoordinates = detection.card.sensorCoordinates
         val originalSize = detection.sourceSize
         val detContextSize = detection.contextSize
 

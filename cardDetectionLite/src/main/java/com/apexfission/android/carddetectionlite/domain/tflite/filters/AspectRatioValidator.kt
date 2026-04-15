@@ -40,8 +40,8 @@ class AspectRatioValidator(
         originalWidth: Int,
         originalHeight: Int
     ): Boolean {
-        val width = extractedFeature.coordinates.width().toDouble()
-        val height = extractedFeature.coordinates.height().toDouble()
+        val width = extractedFeature.sensorCoordinates.width().toDouble()
+        val height = extractedFeature.sensorCoordinates.height().toDouble()
 
         if (width <= 0 || height <= 0) {
             return false

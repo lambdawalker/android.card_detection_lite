@@ -37,7 +37,7 @@ class MarginValidator(private val margin: Int = 20) : CardValidator {
         // Defensive check: Ensure margin doesn't exceed image dimensions
         if (margin * 2 >= w || margin * 2 >= h) return false
 
-        val coordinates = extractedFeature.contextCoordinates
+        val coordinates = extractedFeature.cropCoordinates
 
         return coordinates.top >= margin &&
             coordinates.left >= margin &&

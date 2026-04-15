@@ -55,6 +55,10 @@ dependencies {
         exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
     }
 
+    /* -------------------- ExoPlayer -------------------- */
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+
     implementation(libs.text.recognition)
     implementation(libs.accompanist.permissions)
 
@@ -95,7 +99,7 @@ mavenPublishing {
         name.set("Card Detection Lite")
         description.set("Card Detection Lite is a high-performance Android module for real-time ID detection using Sentinel-Card and TFLite. Built with Jetpack Compose and CameraX, it leverages GPU acceleration for rapid inference. Key features include an auto-cutout tool, a lock-on process, and intelligent auto-focus.")
         inceptionYear.set("2026")
-        url.set("https://github.com/lambdawalker/android.card_detection_lite")
+        url.set("https.github.com/lambdawalker/android.card_detection_lite")
 
         licenses {
             license {

@@ -51,6 +51,8 @@ interface Detector : Closeable {
      *         each with a cropped bitmap of the detected object.
      */
     fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int = 30): ExtractedFeatures
+    
+    fun extractFeatures(bitmap: Bitmap, maxCutouts: Int = 30): ExtractedFeatures
 }
 
 /**
@@ -153,6 +155,12 @@ class YoloDetector(
         if (!enabled || isClosed) return ExtractedFeatures(emptyList(), 0, 0, 0, 0)
 
         val bitmap = imageProxy.toUprightBitmap()
+        return extractFeatures(bitmap, maxCutouts)
+    }
+
+    override fun extractFeatures(bitmap: Bitmap, maxCutouts: Int): ExtractedFeatures {
+        if (!enabled || isClosed) return ExtractedFeatures(emptyList(), 0, 0, 0, 0)
+
         val rawDetections: Detections = detect(bitmap)
 
         val detections = rawDetections.detections.take(maxCutouts).map {

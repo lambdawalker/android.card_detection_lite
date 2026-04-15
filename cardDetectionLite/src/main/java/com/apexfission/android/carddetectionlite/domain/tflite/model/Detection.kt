@@ -33,9 +33,16 @@ data class RawDetection(val x1Pct: Float, val y1Pct: Float, val x2Pct: Float, va
  * @property classId The integer ID of the detected class.
  */
 data class Detection(
-    val x1Pct: Float, val y1Pct: Float, val x2Pct: Float, val y2Pct: Float,
-    val contextX1Pct: Float, val contextY1Pct: Float, val contextX2Pct: Float, val contextY2Pct: Float,
-    val confidence: Float, val classId: Int
+    val x1Pct: Float,
+    val y1Pct: Float,
+    val x2Pct: Float,
+    val y2Pct: Float,
+    val contextX1Pct: Float,
+    val contextY1Pct: Float,
+    val contextX2Pct: Float,
+    val contextY2Pct: Float,
+    val confidence: Float,
+    val classId: Int
 )
 
 /**

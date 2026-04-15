@@ -106,7 +106,7 @@ fun CardDetectorLite(
     tapToFocusEnabled: Boolean = true,
     focusOnCardEnabled: Boolean = true,
     lockOnThreshold: Int = 4,
-    numThreads: NumThreads = NumThreads.Default,
+    numThreads: NumThreads = NumThreads.Default
 ) {
     val context = LocalContext.current
     val sizeInPixels = MutableStateFlow(IntSize.Zero)

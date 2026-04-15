@@ -1,5 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
+import android.graphics.Bitmap
 import android.graphics.Rect
 import android.os.SystemClock
 import android.util.Log
@@ -58,6 +59,15 @@ class YoloCardDetector(
      */
     fun extractCard(imageProxy: ImageProxy): CardDetection? {
         val result = yoloDetector.extractFeatures(imageProxy)
+        return processDetections(result)
+    }
+
+    fun extractCard(bitmap: Bitmap): CardDetection? {
+        val result = yoloDetector.extractFeatures(bitmap)
+        return processDetections(result)
+    }
+
+    private fun processDetections(result: com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeatures): CardDetection? {
         val currentTime = SystemClock.elapsedRealtime()
 
         // Reset tracking if no card has been seen for a while.
@@ -115,9 +125,9 @@ class YoloCardDetector(
 
         // Find other detected features that are inside the bounding box of the main card.
         val otherElements = result.extractedFeatures.filter { region ->
-            val centerX = (region.coordinates.left + region.coordinates.right) / 2
-            val centerY = (region.coordinates.top + region.coordinates.bottom) / 2
-            region.classId !in cardClasses && card.coordinates.contains(centerX, centerY)
+            val centerX = (region.sensorCoordinates.left + region.sensorCoordinates.right) / 2
+            val centerY = (region.sensorCoordinates.top + region.sensorCoordinates.bottom) / 2
+            region.classId !in cardClasses && card.sensorCoordinates.contains(centerX, centerY)
         }
 
         return CardDetection(

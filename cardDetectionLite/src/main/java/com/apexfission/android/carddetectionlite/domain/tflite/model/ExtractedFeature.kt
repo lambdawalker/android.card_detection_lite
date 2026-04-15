@@ -13,9 +13,9 @@ import android.graphics.Rect
  *
  * @property detection The original [Detection] instance, containing the raw, normalized
  *           coordinate data and confidence scores.
- * @property coordinates The bounding box of the detected object, converted into an absolute pixel
+ * @property sensorCoordinates The bounding box of the detected object, converted into an absolute pixel
  *           `Rect` relative to the **original, full-sized** image.
- * @property contextCoordinates The bounding box of the detected object, converted into an
+ * @property cropCoordinates The bounding box of the detected object, converted into an
  *           absolute pixel `Rect` relative to the **context** (potentially cropped) image.
  * @property objectBitmap A new [Bitmap] that has been cropped from the source image to show
  *           only the detected object. This is useful for UI display, logging, or as input
@@ -25,8 +25,9 @@ import android.graphics.Rect
  */
 data class ExtractedFeature(
     val detection: Detection,
-    val coordinates: Rect,
-    val contextCoordinates: Rect,
+    val sensorCoordinates: Rect,
+    val cropCoordinates: Rect,
+
     val objectBitmap: Bitmap,
     val confidence: Float = detection.confidence,
     val classId: Int = detection.classId
@@ -82,7 +83,10 @@ fun buildDetection(originalBitmap: Bitmap, detection: Detection, padding: Int = 
     )
 
     return ExtractedFeature(
-        detection = detection, coordinates = coordinates, contextCoordinates = contextCoordinates, objectBitmap = cutoff
+        detection = detection,
+        sensorCoordinates = coordinates,
+        cropCoordinates = contextCoordinates,
+        objectBitmap = cutoff
     )
 }
 

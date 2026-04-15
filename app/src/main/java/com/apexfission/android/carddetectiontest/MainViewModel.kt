@@ -42,7 +42,7 @@ class MainViewModel : ViewModel() {
 
     // OPTION A: Cloud-based (Network/IO)
     private suspend fun performCloudOcr(card: CardDetection) = withContext(Dispatchers.IO) {
-        Log.d("OCR", "Running Cloud OCR (Network bound)")
+        Log.d("OCR-X", "Running Cloud OCR (Network bound)")
         withContext(Dispatchers.IO){
             // api.uploadAndRecognize(card.image)
         }
@@ -50,7 +50,7 @@ class MainViewModel : ViewModel() {
 
     // OPTION B: On-Device (CPU/Math)
     private suspend fun performOnDeviceOcr(card: CardDetection) = withContext(Dispatchers.Default) {
-        Log.d("OCR", "Running On-Device OCR (CPU bound)")
+        Log.d("OCR-X", "Running On-Device OCR (CPU bound)")
         withContext(Dispatchers.Default){
             // localLibrary.process(card.bitmap)
         }

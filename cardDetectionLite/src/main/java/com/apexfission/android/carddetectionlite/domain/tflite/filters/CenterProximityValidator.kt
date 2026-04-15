@@ -54,7 +54,7 @@ class CenterProximityValidator(private val maxDistancePercentage: Float = .2f) :
         val imageCenterY = targetHeight / 2.0
 
         // 3. Find the center of the detection's bounding box.
-        val coords = extractedFeature.coordinates
+        val coords = extractedFeature.sensorCoordinates
         val detCenterX = coords.centerX().toDouble()
         val detCenterY = coords.centerY().toDouble()
 
