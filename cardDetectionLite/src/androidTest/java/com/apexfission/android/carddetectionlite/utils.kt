@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import androidx.test.services.storage.TestStorage
 import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
+import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import kotlin.math.max
 import kotlin.math.min
 
@@ -33,6 +34,53 @@ fun parseGroundTruth(text: String): GroundTruth {
     )
 }
 
+data class ExpectedFrameData(
+    val frameIndex: Int,
+    val classId: Int,
+    val confidence: Float,
+    val id: Long?,
+    val lockProgress: Float,
+    val lockingStatus: LockingStatus,
+    val dHash: ULong,
+    val xPct: Float,
+    val yPct: Float,
+    val x2Pct: Float,
+    val y2Pct: Float
+) {
+    fun toPixelBox(imageWidth: Int, imageHeight: Int): ImageBox2P {
+        val x1 = (xPct * imageWidth).coerceAtLeast(0f).toUInt()
+        val y1 = (yPct * imageHeight).coerceAtLeast(0f).toUInt()
+        val x2 = (x2Pct * imageWidth).coerceAtMost(imageWidth.toFloat()).toUInt()
+        val y2 = (y2Pct * imageHeight).coerceAtMost(imageHeight.toFloat()).toUInt()
+        return ImageBox2P(x1, y1, x2, y2)
+    }
+}
+
+fun parseExpectedData(text: String): List<ExpectedFrameData> {
+    val lines = text.trim().lines().filter { it.isNotBlank() }
+    if (lines.isEmpty()) return emptyList()
+
+    val dataLines = if (lines.first().contains("frame")) lines.drop(1) else lines
+
+    return dataLines.map { line ->
+        val parts = line.split(",").map { it.trim() }
+        require(parts.size >= 11) { "Invalid expected_data line: $line" }
+        ExpectedFrameData(
+            frameIndex = parts[0].toInt(),
+            classId = parts[1].toInt(),
+            confidence = parts[2].toFloat(),
+            id = if (parts[3] == "null") null else parts[3].toLong(),
+            lockProgress = parts[4].toFloat(),
+            lockingStatus = LockingStatus.valueOf(parts[5]),
+            dHash = parts[6].toULong(),
+            xPct = parts[7].toFloat(),
+            yPct = parts[8].toFloat(),
+            x2Pct = parts[9].toFloat(),
+            y2Pct = parts[10].toFloat()
+        )
+    }
+}
+
 fun calculateIoU(a: ImageBox2P, b: ImageBox2P): Float {
     val interX1 = max(a.x, b.x)
     val interY1 = max(a.y, b.y)
@@ -50,10 +98,7 @@ fun calculateIoU(a: ImageBox2P, b: ImageBox2P): Float {
 }
 
 fun autoSaveBitmap(bitmap: Bitmap, filename: String) {
-    // Instantiate TestStorage (notice the parentheses)
     val testStorage = TestStorage()
-
-    // Now call the instance method
     val outputStream = testStorage.openOutputFile("$filename.png")
 
     outputStream.use { out ->
