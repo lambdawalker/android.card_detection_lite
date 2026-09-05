@@ -86,7 +86,7 @@ fun CardDetectorLite(
     modifier: Modifier = Modifier,
     modelPath: String,
     classLabels: Map<Int, String>,
-    cardClasses: List<Int>,
+    cardClasses: Set<Int>,
     isDetectionEnabled: Boolean,
     useGpu: Boolean = true,
     showBoundingBoxes: Boolean = false,

@@ -74,15 +74,17 @@ class YoloPostProcessor(
     fun process(
         output: FloatArray, contextWidth: Int, contextHeight: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
     ): List<Detection> {
-        // Step 1: Decode the flat float array into detections, removing the letterbox padding.
-        // The coordinates are now relative to the 'context' (cropped) image.
         val raw = decodeToCropNormalized(output, contextWidth, contextHeight, lbScale, padX, padY)
 
         // Step 2: Remap coordinates from the 'context' space to the 'original' full image space.
         val processed = if (contextWidth == originalWidth && contextHeight == originalHeight) {
             // If there was no initial crop, the context and original are the same.
             raw.map {
-                Detection(it.x1Pct, it.y1Pct, it.x2Pct, it.y2Pct, it.x1Pct, it.y1Pct, it.x2Pct, it.y2Pct, it.confidence, it.classId)
+                Detection(
+                    x1Pct = it.x1Pct, y1Pct = it.y1Pct, x2Pct = it.x2Pct, y2Pct = it.y2Pct,
+                    contextX1Pct = it.x1Pct, contextY1Pct = it.y1Pct, contextX2Pct = it.x2Pct, contextY2Pct = it.y2Pct,
+                    confidence = it.confidence, classId = it.classId
+                )
             }
         } else {
             mapFromCropToOriginal(raw, contextWidth, contextHeight, originalWidth, originalHeight)
@@ -153,6 +155,7 @@ class YoloPostProcessor(
         val yFactor = height.toFloat() / originalHeight
         val xOffset = (1f - xFactor) / 2f
         val yOffset = (1f - yFactor) / 2f
+
         return detections.map {
             Detection(
                 it.x1Pct * xFactor + xOffset,

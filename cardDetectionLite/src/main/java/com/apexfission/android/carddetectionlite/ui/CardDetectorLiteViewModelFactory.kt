@@ -37,7 +37,7 @@ class CardDetectorLiteViewModelFactory(
     private val cardFilters: List<CardValidator>,
     private val canvasSize: MutableStateFlow<IntSize>,
     private val imageMode: InputShape,
-    private val cardClasses: List<Int>,
+    private val cardClasses: Set<Int>,
     private val inferenceIntervalMs: Long,
     private val lockOnThreshold: Int,
     private val numThreads: NumThreads,

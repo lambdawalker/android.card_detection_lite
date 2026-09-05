@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 class CardDetectionLiteSimulatorViewModel(
     application: Application,
     modelPath: String,
-    cardClasses: List<Int>,
+    cardClasses: Set<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,
     cardFilters: List<CardValidator>,
@@ -80,7 +80,7 @@ class CardDetectionLiteSimulatorViewModel(
                     fullH = bitmap.height.toFloat()
                 )
 
-                val card = detector.extractCard(bitmap)
+                val card: CardDetection? = detector.extractCard(bitmap)
 
                 Log.d("YOLO_SIM", "Card: ${card != null}")
 

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class CardDetectionLiteSimulatorViewModelFactory(
     private val application: Application,
     private val modelPath: String,
-    private val cardClasses: List<Int>,
+    private val cardClasses: Set<Int>,
     private val useGpu: Boolean,
     private val scoreThreshold: Float,
     private val cardFilters: List<CardValidator>,

@@ -1,4 +1,7 @@
 import com.android.build.api.dsl.LibraryExtension
+import com.android.build.gradle.BaseExtension
+import jdk.internal.org.jline.utils.ExecHelper.exec
+import sun.jvmstat.monitor.MonitoredVmUtil.commandLine
 
 plugins {
     alias(libs.plugins.android.library)
@@ -15,8 +18,16 @@ extensions.configure<LibraryExtension>  {
     defaultConfig {
         minSdk = 26
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         consumerProguardFiles("consumer-rules.pro")
+
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+        testInstrumentationRunnerArguments["useTestStorageService"] = "true"
+        if (project.hasProperty("imageTestsOnly")) {
+            testInstrumentationRunnerArguments["annotation"] = "com.apexfission.android.carddetectionlite.GenerateImage"
+        }
     }
 
     buildTypes {
@@ -34,6 +45,8 @@ extensions.configure<LibraryExtension>  {
     buildFeatures {
         compose = true
     }
+
+
 }
 
 kotlin {
@@ -41,6 +54,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":coordinates"))
+
     implementation(libs.androidx.compose.material.icons.extended)
 
     /* -------------------- CameraX -------------------- */
@@ -48,6 +63,7 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.junit.ktx)
 
     /* ---------------- TensorFlow Lite ---------------- */
     implementation(libs.litert.gpu)
@@ -74,14 +90,54 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
+    androidTestImplementation(project(":tfmodel"))
+    androidTestImplementation("androidx.test.services:storage:1.4.2")
+    androidTestUtil("androidx.test.services:test-services:1.4.2")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(libs.junit)
 }
+
+
+
+
+tasks.register<Copy>("runTestsAndExtractImages") {
+    description = "Runs UI tests, copies generated images to the project, and cleans the device."
+    group = "verification"
+
+    dependsOn("connectedDebugAndroidTest")
+    from(layout.buildDirectory.dir("outputs/connected_android_test_additional_output"))
+    include("**/*.png")
+    includeEmptyDirs = false
+
+    // Intercept the path and strip the first 3 folders
+    // (e.g. debugAndroidTest/connected/emulator_name/)
+    eachFile {
+        val segments = relativePath.segments
+        if (segments.size > 3) {
+            // Drops the top 3 directories and joins the rest back together
+            path = segments.drop(3).joinToString("/")
+        }
+    }
+
+    into(layout.projectDirectory.dir("test/results/detection"))
+
+    doLast {
+        // Asks the Android Gradle Plugin for the exact path to adb.exe
+        val adbPath = project.extensions.getByType<BaseExtension>().adbExecutable.absolutePath
+
+        ProcessBuilder(adbPath, "shell", "rm", "-rf", "/sdcard/googletest/test_outputfiles/*")
+            .start()
+            .waitFor()
+
+        println("Cleaned up test images from the device.")
+    }
+}
+
+
 
 mavenPublishing {
     publishToMavenCentral()
@@ -124,3 +180,5 @@ mavenPublishing {
         }
     }
 }
+
+

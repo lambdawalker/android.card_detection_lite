@@ -28,3 +28,18 @@ data class CardDetection(
     val isNewDetection: Boolean,
     val sourceSize: Rect
 )
+
+
+data class CardDetection2(
+    val lockOnProgress: Float,
+    val id: Long?,
+    val card: Feature,
+    val features: List<Feature>,
+    val lockingStatus: LockingStatus,
+)
+
+enum class LockingStatus {
+    LockingCard,
+    NewCard,
+    CardLocked
+}

@@ -3,6 +3,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import android.graphics.Bitmap
 import androidx.core.graphics.scale
+import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
 
 /**
  * Implements the Difference Hash (dHash) algorithm for fast, perceptual image comparison.
@@ -76,6 +77,75 @@ fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
     return hash
 }
 
+fun Bitmap.generateDHashFromRegion(
+    box: ImageBox2P,
+    hashSize: Int = 8
+): ULong {
+    require(hashSize in 2..8) {
+        "hashSize must be between 2 and 8"
+    }
+
+    val left = box.x.toInt().coerceIn(0, width)
+    val top = box.y.toInt().coerceIn(0, height)
+    val right = box.x2.toInt().coerceIn(0, width)
+    val bottom = box.y2.toInt().coerceIn(0, height)
+
+    require(right > left) {
+        "Invalid crop box: x2 (${box.x2}) must be greater than x (${box.x})"
+    }
+
+    require(bottom > top) {
+        "Invalid crop box: y2 (${box.y2}) must be greater than y (${box.y})"
+    }
+
+    val regionWidth = right - left
+    val regionHeight = bottom - top
+
+    val targetWidth = hashSize + 1
+    val targetHeight = hashSize
+
+    var hash = 0uL
+    var bitIndex = 0
+
+    for (y in 0 until targetHeight) {
+        // Sample approximately from the center of each target cell.
+        val sourceY = (
+            top +
+                ((y + 0.5f) * regionHeight / targetHeight)
+            ).toInt()
+            .coerceIn(top, bottom - 1)
+
+        var previousLuminance: Int? = null
+
+        for (x in 0 until targetWidth) {
+            val sourceX = (
+                left +
+                    ((x + 0.5f) * regionWidth / targetWidth)
+                ).toInt()
+                .coerceIn(left, right - 1)
+
+            val pixel = getPixel(sourceX, sourceY)
+
+            val luminance =
+                30 * ((pixel shr 16) and 0xFF) +
+                    59 * ((pixel shr 8) and 0xFF) +
+                    11 * (pixel and 0xFF)
+
+            if (previousLuminance != null) {
+                if (previousLuminance > luminance) {
+                    hash = hash or (1uL shl bitIndex)
+                }
+
+                bitIndex++
+            }
+
+            previousLuminance = luminance
+        }
+    }
+
+    return hash
+}
+
 /**
  * Calculates the Hamming distance between two dHashes.
  *
@@ -133,9 +203,9 @@ fun isVisuallySimilar(a: Bitmap, b: Bitmap, maxDistance: Int = 18, hashSize: Int
  *
  * @param a The first dHash.
  * @param b The second dHash.
- * @param maxDistance The maximum Hamming distance to be considered "similar".
+ * @param differenceHashDistanceLimit The maximum Hamming distance to be considered "similar".
  * @return `true` if the distance is less than or equal to `maxDistance`.
  */
-fun isVisuallySimilar(a: ULong, b: ULong, maxDistance: Int = 18): Boolean {
-    return a.hammingDistanceTo(b) <= maxDistance
+fun isVisuallySimilar(a: ULong, b: ULong, differenceHashDistanceLimit: Int = 18): Boolean {
+    return a.hammingDistanceTo(b) <= differenceHashDistanceLimit
 }

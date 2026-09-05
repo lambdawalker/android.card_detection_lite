@@ -51,7 +51,7 @@ interface Detector : Closeable {
      *         each with a cropped bitmap of the detected object.
      */
     fun extractFeatures(imageProxy: ImageProxy, maxCutouts: Int = 30): ExtractedFeatures
-    
+
     fun extractFeatures(bitmap: Bitmap, maxCutouts: Int = 30): ExtractedFeatures
 }
 

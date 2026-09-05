@@ -65,7 +65,7 @@ data class PreviewScalingInfo(
  * @param numThreads The number of threads to use for inference on the CPU.
  */
 class CardDetectorLiteViewModel(
-    application: Application, modelPath: String, cardClasses: List<Int>, useGpu: Boolean,
+    application: Application, modelPath: String, cardClasses: Set<Int>, useGpu: Boolean,
     scoreThreshold: Float, cardFilters: List<CardValidator>, canvasSize: MutableStateFlow<IntSize>,
     imageMode: InputShape, private val inferenceIntervalMs: Long, lockOnThreshold: Int,
     numThreads: NumThreads,

@@ -13,6 +13,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.apexfission.android.carddetectionlite.domain.coordinates.ImagePoint
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlin.math.max
 
@@ -37,11 +38,11 @@ import kotlin.math.max
  *                    string labels for display.
  */
 @Composable
-fun DetectionOverlay(
+fun  DetectionOverlay(
     cardDetection: CardDetection?,
     scalingInfo: PreviewScalingInfo,
     showClassNames: Boolean,
-    classLabels: Map<Int, String>
+    classLabels: Map<Int, String>,
 ) {
     val textMeasurer = rememberTextMeasurer()
     val textStyle = TextStyle(color = Color.White, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
@@ -58,6 +59,8 @@ fun DetectionOverlay(
         val offsetY = (screenH - scalingInfo.fullH * scale) / 2f
 
         val features = cardDetection?.let { it.features + it.card } ?: emptyList()
+
+
 
         features.forEach { feature ->
             val det = feature.detection

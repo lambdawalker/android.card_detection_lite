@@ -35,7 +35,7 @@ import java.io.Closeable
 class YoloCardDetector(
     private val yoloDetector: YoloDetector,
     private val cardValidators: List<CardValidator>,
-    private val cardClasses: List<Int>,
+    private val cardClasses: Set<Int>,
     private val lockOnThreshold: Int = 5,
 ) : Closeable {
     private var previousHash: ULong = 0u

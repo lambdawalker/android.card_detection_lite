@@ -3,6 +3,8 @@ package com.apexfission.android.carddetectionlite.domain.tflite.image
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.Rect
+import androidx.compose.ui.unit.IntSize
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 import kotlin.math.roundToInt
 
 /**
@@ -93,4 +95,14 @@ fun centerCropSquare(src: Bitmap, maxSize: Int = Int.MAX_VALUE): Bitmap {
     val cropRect = Rect(left, top, left + size, top + size)
 
     return Bitmap.createBitmap(src, cropRect.left, cropRect.top, cropRect.width(), cropRect.height())
+}
+
+
+fun crop(imageMode: InputShape, bitmap: Bitmap, canvasSize: IntSize): Bitmap {
+    return when (imageMode) {
+        InputShape.FullImage -> bitmap
+        InputShape.SquareCrop -> centerCropSquare(bitmap)
+        InputShape.VisibleImage -> cropToAspectRatio(bitmap, canvasSize.width, canvasSize.height)
+        InputShape.VisibleImageSquareCrop -> cropToAspectRatio(bitmap, canvasSize.width, canvasSize.height, true)
+    }
 }

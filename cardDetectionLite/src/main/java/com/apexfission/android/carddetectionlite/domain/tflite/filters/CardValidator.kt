@@ -1,5 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
+import android.graphics.Bitmap
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
 import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeature
 
 /**
@@ -29,4 +31,15 @@ fun interface CardValidator {
      * @return `true` if the feature satisfies the validation rule, `false` otherwise.
      */
     fun isValid(extractedFeature: ExtractedFeature, contextWidth: Int, contextHeight: Int, originalWidth: Int, originalHeight: Int): Boolean
+}
+
+
+fun interface CardValidator2 {
+    /**
+     * Evaluates an [ExtractedFeature] against a specific validation rule.
+     *
+     * @param extractedFeature The detected object to be validated. It contains the bounding box
+     *                         and other metadata of the detection.
+     */
+    fun isValid(detection: Detection2, previousCardDetection: Detection2?, bitmap: Bitmap): Boolean
 }

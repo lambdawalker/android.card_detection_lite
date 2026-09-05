@@ -10,7 +10,11 @@ import android.view.Surface
 import android.view.TextureView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -22,13 +26,15 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
+import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.max
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun CardDetectionLiteSimulator(
@@ -36,7 +42,7 @@ fun CardDetectionLiteSimulator(
     videoUri: Uri,
     modelPath: String,
     classLabels: Map<Int, String>,
-    cardClasses: List<Int>,
+    cardClasses: Set<Int>,
     isDetectionEnabled: Boolean,
     useGpu: Boolean = true,
     showBoundingBoxes: Boolean = false,
@@ -94,7 +100,7 @@ fun CardDetectionLiteSimulator(
         )
 
         if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
-            DetectionOverlay(
+            DetectionOverlay2(
                 cardDetection = cardDetection,
                 scalingInfo = scalingInfo,
                 showClassNames = showClassNames,
@@ -132,20 +138,40 @@ fun VideoPreviewWithFrameCapture(
                     val videoWidth = videoSize.width.toFloat()
                     val videoHeight = videoSize.height.toFloat()
 
+                    val mainImageSpace = ImageSpace(
+                        width = videoWidth.toUInt(),
+                        height = videoHeight.toUInt()
+                    )
+
                     if (viewWidth == 0f || viewHeight == 0f || videoWidth == 0f || videoHeight == 0f) {
                         return
                     }
 
-                    Log.d("DXXD", "video $videoWidth x $videoHeight")
-                    Log.d("DXXD", "view $viewWidth x $viewHeight")
-
                     val matrix = Matrix()
                     val scaleX = viewWidth / videoWidth
                     val scaleY = viewHeight / videoHeight
-                    val scale = max(scaleX, scaleY)
+                    val scale = maxOf(scaleX, scaleY, 1F)
 
                     val scaledWidth = videoWidth * scale
                     val scaledHeight = videoHeight * scale
+
+                    val scaledMainImageSpace = ImageSpace(
+                        width = scaledWidth.toUInt(),
+                        height = scaledHeight.toUInt(),
+                        xScale = scale,
+                        yScale = scale
+                    )
+
+                    val previewImageSpace = ImageSpace(
+                        width = videoWidth.toUInt(),
+                        height = videoHeight.toUInt(),
+                        xOffset = ((viewWidth - scaledWidth) / 2).toUInt(),
+                        yOffset = ((viewHeight - scaledHeight) / 2).toUInt()
+                    )
+
+
+                    val imageSpaceChain = listOf(mainImageSpace, scaledMainImageSpace, previewImageSpace)
+
 
                     val dx = (viewWidth - scaledWidth) / 2
                     val dy = (viewHeight - scaledHeight) / 2
