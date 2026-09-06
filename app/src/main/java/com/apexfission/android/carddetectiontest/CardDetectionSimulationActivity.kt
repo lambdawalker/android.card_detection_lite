@@ -13,11 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
 import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
+import com.apexfission.android.carddetectionlite.ui.CameraPreset
+import com.apexfission.android.carddetectionlite.ui.CardDetectorPreset
+import com.apexfission.android.carddetectionlite.ui.ViewPreset
 import com.apexfission.android.carddetectionlite.ui.simulation.CardTrackingSimulator
 import com.apexfission.android.carddetectiontest.ui.theme.CardDetectionTestTheme
 
@@ -41,19 +42,11 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         modelPath = ModelCatalog.TfLite.modelPath,
                         classLabels = ModelCatalog.TfLite.classes,
                         cardClasses = ModelCatalog.TfLite.cardClasses,
-                        useGpu = false,
-                        scoreThreshold = 0.3f,
-                        showBoundingBoxes = true,
-                        showClassNames = true,
-                        showLockOnProgress = true,
+                        detectorPreset = CardDetectorPreset.BatterySaver.copy(scoreThreshold = 0.3f, lockOnThreshold = 5, noDetectionCountLimit = 8),
+                        viewPreset = ViewPreset.Debug,
+                        cameraPreset = CameraPreset.Default,
                         isDetectionEnabled = isDetectionEnabled,
-                        onCardDetection = mainViewModel::onDetection,
-                        cardFilters = listOf(
-                            MarginValidator(), AspectRatioValidator()
-                        ),
-                        inferenceIntervalMs = 33L,
-                        lockOnThreshold = 5,
-                        noDetectionCountLimit = 8
+                        onCardDetection = mainViewModel::onDetection
                     )
                 }
             }

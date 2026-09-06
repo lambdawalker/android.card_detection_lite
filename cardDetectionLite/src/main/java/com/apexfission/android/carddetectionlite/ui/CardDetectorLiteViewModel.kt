@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.camerapreview
+package com.apexfission.android.carddetectionlite.ui
 
 import android.app.Application
 import android.os.SystemClock
@@ -13,7 +13,6 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTrac
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +26,7 @@ import kotlinx.coroutines.launch
  * This class serves as the bridge between the UI Composables and the underlying [CardTracker].
  * Its responsibilities include:
  * - Owning and initializing [CardTracker] and [YoloDetector].
- * - Receiving image frames from [CameraPreview].
+ * - Receiving image frames from [com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview].
  * - Throttling inference rate to maintain smooth UI performance.
  * - Dispatching inference work to background threads.
  * - Exposing state flows for detection results and flashlight state.

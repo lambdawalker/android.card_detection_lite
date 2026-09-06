@@ -1,10 +1,9 @@
-package com.apexfission.android.carddetectionlite.ui.camerapreview
+package com.apexfission.android.carddetectionlite.ui
 
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
-import com.apexfission.android.carddetectionlite.ui.NumThreads
 
 /**
  * A [ViewModelProvider.Factory] responsible for creating instances of [CardDetectorLiteViewModel].
