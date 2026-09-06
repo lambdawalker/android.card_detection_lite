@@ -1,5 +1,8 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.model
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
+
 /**
  * Encapsulates the tracking and detection result for a card in an image frame.
  *
@@ -9,6 +12,8 @@ package com.apexfission.android.carddetectionlite.domain.tflite.model
  * @property features Secondary detected features found within the frame.
  * @property lockingStatus The current tracking lifecycle state ([LockingStatus.LockingCard], [LockingStatus.NewCard], or [LockingStatus.CardLocked]).
  */
+@Immutable
+@Stable
 data class CardDetection(
     val lockOnProgress: Float,
     val id: Long?,
@@ -20,6 +25,8 @@ data class CardDetection(
 /**
  * Represents the temporal tracking state of a detected card.
  */
+@Immutable
+@Stable
 enum class LockingStatus {
     /** The detector is evaluating a candidate card over consecutive frames to confirm stability. */
     LockingCard,

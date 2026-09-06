@@ -1,5 +1,9 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates.models
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
+
+
 /**
  * Represents a 2D coordinate space defined by dimensions, scale factors, and offsets.
  *
@@ -10,6 +14,8 @@ package com.apexfission.android.carddetectionlite.domain.coordinates.models
  * @property xOffset The horizontal offset (in pixels) relative to the reference space origin.
  * @property yOffset The vertical offset (in pixels) relative to the reference space origin.
  */
+@Immutable
+@Stable
 data class ImageSpace(
     val width: UInt,
     val height: UInt,

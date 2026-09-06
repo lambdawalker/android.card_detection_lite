@@ -1,6 +1,8 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.model
 
 import android.graphics.Bitmap
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 
 /**
@@ -10,6 +12,8 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
  * @property confidence Confidence score of the detection from 0.0 to 1.0.
  * @property classId The integer ID of the detected class.
  */
+@Immutable
+@Stable
 data class Detection(
     val box: ImageBox,
      val confidence: Float,
@@ -24,6 +28,8 @@ data class Detection(
  * @property classId The integer ID of the detected class.
  * @property image The source bitmap containing the cropped feature image or full frame.
  */
+@Immutable
+@Stable
 data class Feature(
     val box: ImageBox,
     val confidence: Float,
