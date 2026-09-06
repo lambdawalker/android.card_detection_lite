@@ -14,5 +14,5 @@ kotlin {
 
 dependencies {
     testImplementation(libs.junit)
-    implementation("androidx.compose.runtime:runtime-annotation:1.12.0")
+    compileOnly("androidx.compose.runtime:runtime:1.7.8")
 }

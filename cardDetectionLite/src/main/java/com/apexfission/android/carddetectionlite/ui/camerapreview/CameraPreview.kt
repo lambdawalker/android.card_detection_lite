@@ -1,6 +1,5 @@
 package com.apexfission.android.carddetectionlite.ui.camerapreview
 
-import android.graphics.PointF
 import android.util.Log
 import android.util.Size
 import android.view.MotionEvent
@@ -25,8 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -43,7 +40,6 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 
@@ -79,7 +75,7 @@ fun CameraPreview(
     val previewView = remember { PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER } }
 
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
-    var focusPoint by remember { mutableStateOf<PointF?>(null) }
+    var focusPoint by remember { mutableStateOf<FocusPoint?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(modifier = Modifier.fillMaxSize(), factory = { previewView })
@@ -170,7 +166,7 @@ fun CameraPreview(
                 camera.cameraControl.enableTorch(flashlightEnabled)
                 if (tapToFocusEnabled) {
                     previewView.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
-                        focusPoint = PointF(event.x, event.y)
+                        focusPoint = FocusPoint(event.x, event.y)
                         onFocusEvent(
                             camera.cameraControl, previewView.meteringPointFactory.createPoint(event.x, event.y)
                         )
@@ -188,55 +184,30 @@ fun CameraPreview(
         }
     }
 
-    // --- Smart Auto-Focus Logic ---
-    var lastFocusCenter by remember { mutableStateOf<PointF?>(null) }
-    var lastFocusArea by remember { mutableFloatStateOf(0f) }
-    var lastFocusTimestamp by remember { mutableLongStateOf(0L) }
-    var lastCardCoordinates by remember { mutableStateOf<PointF>(PointF(-1000f, -1000f)) }
+    // --- Smart Auto-Focus Logic using AutoFocusPolicy ---
+    val autoFocusPolicy = remember { AutoFocusPolicy() }
 
     LaunchedEffect(focusOn) {
         if (!focusOnCardEnabled) return@LaunchedEffect
         val control = cameraControl ?: return@LaunchedEffect
-        val detection: CardDetection = focusOn ?: return@LaunchedEffect
 
-        val cardBox = detection.card.box
-        val centerX = (cardBox.x + cardBox.x2).toFloat() / 2f
-        val centerY = (cardBox.y + cardBox.y2).toFloat() / 2f
-        val currentArea = cardBox.width.toFloat() * cardBox.height.toFloat()
-
-        val currentTime = System.currentTimeMillis()
-        val cooldownMs = 500L
-        val isCooldownOver = (currentTime - lastFocusTimestamp) >= cooldownMs
-
-        val deltaX = abs(lastCardCoordinates.x - centerX)
-        val deltaY = abs(lastCardCoordinates.y - centerY)
-        lastCardCoordinates = PointF(centerX, centerY)
-
-        val hasMovedSignificantly = deltaX > 50f || deltaY > 50f
-        val hasScaleChanged = lastFocusArea.let { lastArea ->
-            if (lastArea == 0f) true
-            else {
-                val areaChange = abs(currentArea - lastArea) / lastArea
-                areaChange > 0.10f
-            }
-        }
-
-        if (isCooldownOver && (hasMovedSignificantly || hasScaleChanged)) {
+        val focusResult = autoFocusPolicy.shouldTriggerFocus(focusOn)
+        if (focusResult.shouldFocus && focusResult.focusPoint != null) {
+            val targetPoint = focusResult.focusPoint
             val viewWidth = previewView.width.toFloat()
             val viewHeight = previewView.height.toFloat()
+
             if (viewWidth > 0f && viewHeight > 0f) {
-                focusPoint = PointF(centerX, centerY)
+                focusPoint = targetPoint
                 val factory = previewView.meteringPointFactory
-                val point = factory.createPoint(centerX, centerY)
+                val point = factory.createPoint(targetPoint.x, targetPoint.y)
 
                 val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE)
-                    .setAutoCancelDuration(3, TimeUnit.SECONDS).build()
+                    .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                    .build()
 
                 try {
                     control.startFocusAndMetering(action)
-                    lastFocusCenter = focusPoint
-                    lastFocusArea = currentArea
-                    lastFocusTimestamp = currentTime
                 } catch (e: Exception) {
                     Log.e("CAM", "Smart auto-focus failed", e)
                 }
