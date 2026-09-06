@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.simulation
 
 import android.graphics.Bitmap
 import android.net.Uri

@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.simulation
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
@@ -31,28 +31,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * the `PreviewView`'s `FILL_CENTER` display mode.
  *
  * @param cardDetection The [CardDetection2] result from the ViewModel.
- * @param imageSpace A [ImageSpace] object from the ViewModel.
  * @param showClassNames A boolean flag. If `true`, a text label with the object's class name and
  *                       confidence score is drawn above each bounding box.
  * @param classLabels A map that translates integer class IDs from the model into human-readable
  *                    string labels for display.
  */
 @Composable
-fun DetectionOverlay2(
+fun SimulationDetectionOverlay(
     cardDetection: CardDetection2?, imageSpaceChain: ImageSpaceChain, showClassNames: Boolean, classLabels: Map<Int, String>
 ) {
     val textMeasurer = rememberTextMeasurer()
 
     val cardCount = remember { MutableStateFlow(0) }
+    val misses = remember { MutableStateFlow(0) }
 
     Canvas(
         modifier = Modifier.fillMaxSize()
     ) {
-        val screenW = size.width
-        val screenH = size.height
-
-        Log.d("XDDX", "screenW: $screenW, screenH: $screenH")
-
         val features = cardDetection?.let { it.features + it.card } ?: emptyList()
 
         val textStyle = TextStyle(color = Color.Green, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
@@ -60,7 +55,9 @@ fun DetectionOverlay2(
         val logLayout = textMeasurer.measure(log, textStyle)
         drawText(textLayoutResult = logLayout, topLeft = Offset(10f, 12f))
 
+
         if (cardDetection == null) {
+            misses.value++
             val errorTextStyle = TextStyle(color = Color.Red, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
             val errorLog = "cardDetection not detected"
             val errorLogLayout = textMeasurer.measure(errorLog, errorTextStyle)
@@ -68,10 +65,15 @@ fun DetectionOverlay2(
         } else {
             cardCount.value++
             val infoTextStyle = TextStyle(color = Color.Green, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
-            val infoLog = "lockOnProgress: ${cardDetection.lockOnProgress}\n id: ${cardDetection.id}"
+            val infoLog = "lockOnProgress: ${cardDetection.lockOnProgress} | id: ${cardDetection.id} | confidence: ${(cardDetection.card.confidence * 100).toInt()}%"
             val infoLogLayout = textMeasurer.measure(infoLog, infoTextStyle)
             drawText(textLayoutResult = infoLogLayout, topLeft = Offset(10f, 60f))
         }
+
+        val infoTextStyle = TextStyle(color = Color.Red, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
+        val infoLog = "Misses: ${misses.value}"
+        val infoLogLayout = textMeasurer.measure(infoLog, infoTextStyle)
+        drawText(textLayoutResult = infoLogLayout, topLeft = Offset(10f, 108f))
 
         features.forEach { feature ->
             val box = feature.box.toChildSpace(imageSpaceChain)

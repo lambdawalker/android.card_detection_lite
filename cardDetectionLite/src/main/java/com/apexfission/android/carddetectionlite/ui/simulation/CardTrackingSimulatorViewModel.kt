@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.simulation
 
 import android.app.Application
 import android.graphics.Bitmap
@@ -10,6 +10,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTrac
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector2
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator2
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

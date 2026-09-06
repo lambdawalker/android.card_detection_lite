@@ -1,9 +1,10 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.simulation
 
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator2
+import com.apexfission.android.carddetectionlite.ui.NumThreads
 
 class CardTrackingSimulatorViewModelFactory(
     private val application: Application,

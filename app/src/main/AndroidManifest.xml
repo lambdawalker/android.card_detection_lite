@@ -21,12 +21,6 @@
             android:theme="@style/Theme.CardDetectionTest" />
 
         <activity
-            android:name=".CardDetectionSimulationActivity2"
-            android:exported="true"
-            android:label="@string/demo"
-            android:theme="@style/Theme.CardDetectionTest" />
-
-        <activity
             android:name=".CardDetectionActivity"
             android:exported="true"
             android:label="@string/demo"

@@ -13,14 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.CenterProximityValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator2
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator2
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
 import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
-import com.apexfission.android.carddetectionlite.ui.CardDetectionLiteSimulator
+import com.apexfission.android.carddetectionlite.ui.simulation.CardTrackingSimulator
 import com.apexfission.android.carddetectiontest.ui.theme.CardDetectionTestTheme
 
 class CardDetectionSimulationActivity : ComponentActivity() {
@@ -37,7 +35,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
 
                     val videoUri = "android.resource://$packageName/raw/sim5".toUri()
 
-                    CardDetectionLiteSimulator(
+                    CardTrackingSimulator(
                         modifier = Modifier.padding(innerPadding),
                         videoUri = videoUri,
                         modelPath = ModelCatalog.TfLite.modelPath,
@@ -49,11 +47,10 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         showClassNames = true,
                         showLockOnProgress = false,
                         isDetectionEnabled = isDetectionEnabled,
-                        onCardDetection = mainViewModel::onDetection,
+                        onCardDetection = mainViewModel::onDetection2,
                         cardFilters = listOf(
-                            MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
+                            MarginValidator2(), AspectRatioValidator2()
                         ),
-                        imageMode = InputShape.VisibleImageSquareCrop,
                         inferenceIntervalMs = 10L,
                         lockOnThreshold = 4,
                     )

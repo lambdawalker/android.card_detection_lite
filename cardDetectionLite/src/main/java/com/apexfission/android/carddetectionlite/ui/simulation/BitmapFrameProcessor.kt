@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.simulation
 
 import android.graphics.Bitmap
 import androidx.media3.common.GlTextureInfo

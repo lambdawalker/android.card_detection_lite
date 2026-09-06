@@ -1,6 +1,6 @@
 @file:Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
 
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.simulation
 
 import android.app.Application
 import android.net.Uri
@@ -22,6 +22,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRat
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator2
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator2
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.ui.NumThreads
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -92,7 +93,7 @@ fun CardTrackingSimulator(
 
         imageSpaceChain?.let { space ->
             if (isDetectionEnabled && showBoundingBoxes) {
-                DetectionOverlay2(
+                SimulationDetectionOverlay(
                     cardDetection = cardDetection, imageSpaceChain = space, showClassNames = showClassNames, classLabels = classLabels
                 )
             }
