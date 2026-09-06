@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.image.LetterboxBuilder
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.io.Closeable
@@ -22,10 +22,10 @@ interface Detector : Closeable {
     var enabled: Boolean
 
 
-    fun detect(bitmap: Bitmap): List<Detection2>
+    fun detect(bitmap: Bitmap): List<Detection>
 
 
-    fun detect(imageProxy: ImageProxy): List<Detection2>
+    fun detect(imageProxy: ImageProxy): List<Detection>
 }
 
 
@@ -54,7 +54,7 @@ class YoloDetector(
         maxNmsCandidates
     )
 
-    override fun detect(bitmap: Bitmap): List<Detection2> {
+    override fun detect(bitmap: Bitmap): List<Detection> {
         if (!enabled || isClosed) return emptyList()
 
         val letterboxResult: LetterboxResult = LetterboxBuilder.build(bitmap, interpreter.inputImageWidth)
@@ -66,7 +66,7 @@ class YoloDetector(
         )
     }
 
-    override fun detect(imageProxy: ImageProxy): List<Detection2> {
+    override fun detect(imageProxy: ImageProxy): List<Detection> {
         if (!enabled || isClosed) return emptyList()
         val bitmap = imageProxy.toUprightBitmap()
         return detect(bitmap)

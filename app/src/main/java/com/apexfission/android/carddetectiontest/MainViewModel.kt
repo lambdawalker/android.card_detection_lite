@@ -4,7 +4,7 @@ package com.apexfission.android.carddetectiontest
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ class MainViewModel : ViewModel() {
     val useCloud: Boolean = false
 
 
-    fun onDetection(card: CardDetection2) {
+    fun onDetection(card: CardDetection) {
         if (card.lockingStatus != LockingStatus.NewCard && card.id == null) return
         if (!_isDetectionEnabled.value) return
         Log.d("onDetection", "detection id: ${card.id}, locking status: ${card.lockingStatus}")
@@ -45,7 +45,7 @@ class MainViewModel : ViewModel() {
     }
 
     // OPTION A: Cloud-based (Network/IO)
-    private suspend fun performCloudOcr(card: CardDetection2) = withContext(Dispatchers.IO) {
+    private suspend fun performCloudOcr(card: CardDetection) = withContext(Dispatchers.IO) {
         Log.d("OCR-X", "Running Cloud OCR (Network bound)")
         withContext(Dispatchers.IO) {
             // api.uploadAndRecognize(card.image)
@@ -53,7 +53,7 @@ class MainViewModel : ViewModel() {
     }
 
     // OPTION B: On-Device (CPU/Math)
-    private suspend fun performOnDeviceOcr(card: CardDetection2) = withContext(Dispatchers.Default) {
+    private suspend fun performOnDeviceOcr(card: CardDetection) = withContext(Dispatchers.Default) {
         Log.d("OCR-X", "Running On-Device OCR (CPU bound)")
         withContext(Dispatchers.Default) {
             // localLibrary.process(card.bitmap)

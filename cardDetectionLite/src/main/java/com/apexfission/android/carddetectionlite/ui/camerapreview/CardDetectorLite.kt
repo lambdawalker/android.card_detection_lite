@@ -26,37 +26,39 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputSha
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.NumThreads
-import com.apexfission.android.carddetectionlite.ui.simulation.SimulationDetectionOverlay
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * All-in-one Composable that provides a configurable in camera feed card detection solution.
+ * All-in-one Composable that provides a configurable in-camera-feed card detection and tracking solution.
  *
+ * This component seamlessly integrates `CameraPreview`, `DetectionOverlay`, and `CardLockOnOverlay`
+ * with the underlying `CardDetectorLiteViewModel`.
+ *
+ * @param modifier A [Modifier] applied to the root `Box` of this component.
  * @param modelPath The path to the `.tflite` model file within the application's `assets` directory.
  * @param classLabels A map where keys are integer class IDs and values are human-readable string labels.
- * @param cardClasses A set of class IDs from the model that should be treated as the primary target for detection.
+ * @param cardClasses A set of class IDs from the model that should be treated as the primary targets for card detection.
  * @param isDetectionEnabled A boolean flag to dynamically start or stop the detection process.
- * @param modifier A [Modifier] applied to the root `Box` of this component.
- * @param useGpu If `true`, the underlying TFLite interpreter will attempt to use the GPU delegate.
- * @param showBoundingBoxes When `true`, a detection overlay is displayed drawing boxes around detected objects.
- * @param showClassNames If `true`, labels with class name and confidence score are drawn above bounding boxes.
+ * @param useGpu If `true`, the underlying TFLite interpreter will attempt to use GPU acceleration.
+ * @param showBoundingBoxes When `true`, a detection overlay is displayed drawing bounding boxes around detected objects.
+ * @param showClassNames If `true`, text labels with class name and confidence score are drawn above bounding boxes.
  * @param showFlashlightSwitch If `true`, a UI button is provided to toggle the camera flashlight.
  * @param showLockOnProgress If `true`, a lock-on overlay is displayed as the detector locks onto a card.
  * @param showDebugOverlay If `true`, a debug overlay is displayed showing current configuration parameters.
  * @param showFocusIndicator If `true`, a visual indicator is displayed where the camera is focusing.
  * @param scoreThreshold The minimum confidence score (0.0 to 1.0) a detection must have to be considered.
  * @param analysisTargetResolution The target resolution for the image analysis stream.
- * @param cardFilters A list of [CardValidator] instances used to apply additional heuristic checks.
- * @param onCardDetection A callback lambda invoked when a card is detected.
+ * @param cardFilters A list of [CardValidator] instances used to apply additional heuristic validation rules.
+ * @param onCardDetection A callback lambda invoked when a card detection event occurs.
  * @param imageMode The [InputShape] configuration for image preprocessing.
  * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
  * @param tapToFocusEnabled A boolean flag to enable or disable tap-to-focus.
  * @param focusOnCardEnabled A boolean flag to enable or disable smart auto-focus on card.
- * @param lockOnThreshold Number of consistent frames required before lock-on.
- * @param noDetectionCountLimit Number of consecutive missing detections allowed before reset.
- * @param numThreads CPU thread configuration.
+ * @param lockOnThreshold The number of consecutive frames a card must be detected and visually similar before locking.
+ * @param noDetectionCountLimit Number of consecutive missing detections allowed before resetting tracking state.
+ * @param numThreads CPU thread configuration using [NumThreads].
  */
 @Composable
 fun CardDetectorLite(
@@ -77,7 +79,7 @@ fun CardDetectorLite(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: (CardDetection2) -> Unit,
+    onCardDetection: (CardDetection) -> Unit,
     imageMode: InputShape = InputShape.SquareCrop,
     inferenceIntervalMs: Long = 33L,
     tapToFocusEnabled: Boolean = true,
@@ -131,7 +133,7 @@ fun CardDetectorLite(
 
         imageSpaceChain?.let { spaceChain ->
             if (isDetectionEnabled && showBoundingBoxes) {
-                SimulationDetectionOverlay(
+                DetectionOverlay(
                     cardDetection = cardDetection,
                     imageSpaceChain = spaceChain,
                     showClassNames = showClassNames,

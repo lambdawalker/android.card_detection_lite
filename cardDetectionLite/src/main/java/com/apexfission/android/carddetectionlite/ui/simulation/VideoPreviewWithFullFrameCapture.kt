@@ -28,8 +28,18 @@ import androidx.media3.effect.ByteBufferGlEffect
 import androidx.media3.effect.Presentation
 import androidx.media3.exoplayer.ExoPlayer
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.ui.camerapreview.createPreviewImageSpaceChain
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * A video preview composable that renders video output via ExoPlayer and captures full frames
+ * along with their corresponding [ImageSpaceChain] coordinate mapping.
+ *
+ * @param videoUri Source video URI.
+ * @param modifier Composable modifier.
+ * @param captureIntervalMs Minimum interval between captured bitmap frames in milliseconds.
+ * @param onFrame Callback invoked with each captured frame [Bitmap] and its [ImageSpaceChain].
+ */
 @OptIn(UnstableApi::class)
 @Composable
 fun VideoPreviewWithFullFrameCapture(
@@ -119,4 +129,3 @@ fun VideoPreviewWithFullFrameCapture(
             .border(0.5.dp, Color.Green)
             .onSizeChanged { viewSize = it })
 }
-

@@ -9,6 +9,15 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import java.util.concurrent.Executor
 
+/**
+ * Media3 [ByteBufferGlEffect.Processor] implementation that captures video frames into [Bitmap] instances
+ * at a configured time interval.
+ *
+ * @param captureIntervalMs Interval between captured frames in milliseconds.
+ * @param callbackExecutor Executor used for delivering bitmap callbacks.
+ * @param onConfigured Callback invoked when video frame dimensions are configured.
+ * @param onBitmap Callback invoked when a bitmap frame is captured.
+ */
 class BitmapFrameProcessor(
     captureIntervalMs: Long,
     private val callbackExecutor: Executor,

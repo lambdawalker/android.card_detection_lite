@@ -77,6 +77,14 @@ fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
     return hash
 }
 
+/**
+ * Generates a 64-bit perceptual hash (dHash) directly from a cropped region of a [Bitmap]
+ * defined by [box], without allocating an intermediate cropped bitmap.
+ *
+ * @param box The region bounding box in image pixel space.
+ * @param hashSize The hash grid dimension (2..8). Defaults to 8 for a 64-bit hash.
+ * @return A 64-bit [ULong] perceptual hash.
+ */
 fun Bitmap.generateDHashFromRegion(
     box: ImageBox,
     hashSize: Int = 8

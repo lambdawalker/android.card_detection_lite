@@ -1,35 +1,38 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import kotlin.math.max
 import kotlin.math.min
 
 /**
- * A [CardValidator] that checks if a detected object's shape is plausible.
+ * A [CardValidator] that checks if a detected object's shape is plausible based on aspect ratio.
  *
- * This validator is essential for filtering out erroneously shaped detections that might have
- * high confidence scores but are clearly not the target object (e.g., a long, thin box
- * when expecting a credit card). It calculates the aspect ratio by dividing the longest side
- * of the bounding box by its shortest side.
+ * Calculates aspect ratio by dividing the longest side of the bounding box by its shortest side.
  *
- * @property minAspectRatio The minimum acceptable ratio of the longest side to the shortest side.
- *                          For example, a value of 1.28 is suitable for standard ID cards.
- * @property maxAspectRatio The maximum acceptable ratio of the longest side to the shortest side.
- *                          For example, a value of 1.75 accommodates for some perspective skew.
+ * @property minAspectRatio The minimum acceptable ratio of longest to shortest side (default 1.28).
+ * @property maxAspectRatio The maximum acceptable ratio of longest to shortest side (default 1.70).
  */
 class AspectRatioValidator(
     private val minAspectRatio: Float = 1.28f,
     private val maxAspectRatio: Float = 1.7f
 ) : CardValidator {
 
+    /**
+     * Validates that the aspect ratio of the candidate's bounding box falls within `minAspectRatio..maxAspectRatio`.
+     *
+     * @param detection The candidate detection to validate.
+     * @param previousCardDetection The previous accepted detection, if available.
+     * @param bitmap The frame image bitmap.
+     * @return `true` if the aspect ratio is within range, `false` otherwise.
+     */
     override fun isValid(
-        detection: Detection2, previousCardDetection: Detection2?, bitmap: Bitmap
+        detection: Detection, previousCardDetection: Detection?, bitmap: Bitmap
     ): Boolean {
         val width = (detection.box.x2 - detection.box.x).toFloat()
         val height = (detection.box.y2 - detection.box.y).toFloat()
 
-        if (width <= 0 || height <= 0) {
+        if (width <= 0f || height <= 0f) {
             return false
         }
 

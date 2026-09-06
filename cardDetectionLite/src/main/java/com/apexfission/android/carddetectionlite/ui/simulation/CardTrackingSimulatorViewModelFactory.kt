@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 
+/**
+ * Factory for creating [CardTrackingSimulatorViewModel] instances.
+ */
 class CardTrackingSimulatorViewModelFactory(
     private val application: Application,
     private val modelPath: String,

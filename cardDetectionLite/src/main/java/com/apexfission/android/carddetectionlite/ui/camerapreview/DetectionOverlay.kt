@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.simulation
+package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
@@ -15,10 +15,9 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
@@ -30,15 +29,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * It accounts for differences in aspect ratio and scaling between the camera's raw output and
  * the `PreviewView`'s `FILL_CENTER` display mode.
  *
- * @param cardDetection The [CardDetection2] result from the ViewModel.
+ * @param cardDetection The [CardDetection] result from the ViewModel.
  * @param showClassNames A boolean flag. If `true`, a text label with the object's class name and
  *                       confidence score is drawn above each bounding box.
  * @param classLabels A map that translates integer class IDs from the model into human-readable
  *                    string labels for display.
  */
 @Composable
-fun SimulationDetectionOverlay(
-    cardDetection: CardDetection2?, imageSpaceChain: ImageSpaceChain, showClassNames: Boolean, classLabels: Map<Int, String>
+fun DetectionOverlay(
+    cardDetection: CardDetection?, imageSpaceChain: ImageSpaceChain, showClassNames: Boolean, classLabels: Map<Int, String>
 ) {
     val textMeasurer = rememberTextMeasurer()
 

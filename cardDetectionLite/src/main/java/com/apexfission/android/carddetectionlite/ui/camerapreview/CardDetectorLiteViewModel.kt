@@ -12,7 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
@@ -22,21 +22,26 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * The central ViewModel for the [CardDetectorLite] screen, orchestrating the entire detection process.
+ * The central ViewModel for the [CardDetectorLite] screen, orchestrating the card tracking process.
  *
- * This class serves as the bridge between the UI Composables and the underlying detection engine.
+ * This class serves as the bridge between the UI Composables and the underlying [CardTracker].
+ * Its responsibilities include:
+ * - Owning and initializing [CardTracker] and [YoloDetector].
+ * - Receiving image frames from [CameraPreview].
+ * - Throttling inference rate to maintain smooth UI performance.
+ * - Dispatching inference work to background threads.
+ * - Exposing state flows for detection results and flashlight state.
  *
- * @param application The application instance, required by `AndroidViewModel`.
+ * @param application The application instance.
  * @param modelPath The asset path for the TFLite model.
- * @param cardClasses A list of class IDs that the detector should specifically treat as cards.
- * @param useGpu A flag to enable or disable the GPU delegate for TFLite.
- * @param scoreThreshold The minimum confidence for a raw detection to be considered.
- * @param cardFilters A list of [CardValidator]s to apply to potential card detections.
+ * @param cardClasses A set of class IDs that the detector should specifically treat as primary card targets.
+ * @param useGpu A flag to enable or disable GPU acceleration for inference.
+ * @param scoreThreshold The minimum confidence for a raw detection candidate to be considered.
+ * @param cardFilters A list of [CardValidator]s to apply to candidate detections.
  * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
- * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
- *                        similar before it is considered "locked on."
- * @param noDetectionCountLimit Number of consecutive missing detections allowed before reset.
- * @param numThreads The number of threads to use for inference on the CPU.
+ * @param lockOnThreshold The number of consecutive frames a card must be detected and visually similar before locking.
+ * @param noDetectionCountLimit Number of consecutive missing detections allowed before resetting tracking state.
+ * @param numThreads CPU thread configuration using [NumThreads].
  */
 class CardDetectorLiteViewModel(
     application: Application,
@@ -51,8 +56,8 @@ class CardDetectorLiteViewModel(
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
-    private val _cardDetection = MutableStateFlow<CardDetection2?>(null)
-    val cardDetection: StateFlow<CardDetection2?> = _cardDetection.asStateFlow()
+    private val _cardDetection = MutableStateFlow<CardDetection?>(null)
+    val cardDetection: StateFlow<CardDetection?> = _cardDetection.asStateFlow()
 
     private val _flashlightEnabled = MutableStateFlow(false)
     val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
@@ -74,7 +79,7 @@ class CardDetectorLiteViewModel(
 
     private val lastInferenceMs = AtomicLong(0L)
 
-    /** Toggles the detection process on or off. When disabled, the ViewModel will ignore incoming frames. */
+    /** Toggles the detection process on or off. When disabled, incoming frames are ignored. */
     fun setDetectionEnabled(enabled: Boolean) {
         detector.enabled = enabled
 
@@ -97,9 +102,9 @@ class CardDetectorLiteViewModel(
      * The main entry point for processing a camera frame.
      *
      * @param imageProxy The frame from the camera to be processed.
-     * @param onDetection A callback that will be invoked on a card detection.
+     * @param onDetection A callback that will be invoked on a card detection event.
      */
-    fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection2) -> Unit) {
+    fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection) -> Unit) {
         if (!detector.enabled) return
 
         viewModelScope.launch(Dispatchers.Default) {

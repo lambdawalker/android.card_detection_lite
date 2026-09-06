@@ -21,12 +21,36 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputSha
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.ui.NumThreads
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CardLockOnOverlay
 import com.apexfission.android.carddetectionlite.ui.camerapreview.DebugOverlay
-import com.apexfission.android.carddetectionlite.ui.NumThreads
+import com.apexfission.android.carddetectionlite.ui.camerapreview.DetectionOverlay
 import kotlinx.coroutines.flow.MutableStateFlow
 
+/**
+ * A simulation composable that runs card tracking inference over video frames from a URI source.
+ *
+ * @param modifier Composable modifier.
+ * @param videoUri Source video URI.
+ * @param modelPath Asset path to TFLite model.
+ * @param classLabels Map of class IDs to human readable labels.
+ * @param cardClasses Set of class IDs treated as cards.
+ * @param isDetectionEnabled Whether detection is active.
+ * @param useGpu Whether GPU acceleration is enabled.
+ * @param imageMode Input shape strategy.
+ * @param showBoundingBoxes Whether to draw bounding box overlays.
+ * @param showClassNames Whether class names/confidence are drawn.
+ * @param showLockOnProgress Whether lock-on progress overlay is drawn.
+ * @param showDebugOverlay Whether debug overlay is shown.
+ * @param scoreThreshold Minimum score threshold.
+ * @param cardFilters List of card validators.
+ * @param onCardDetection Callback lambda on card detection events.
+ * @param inferenceIntervalMs Interval in milliseconds between inferences.
+ * @param lockOnThreshold Number of frames required for lock-on.
+ * @param noDetectionCountLimit Limit of missing frames before tracking resets.
+ * @param numThreads CPU thread configuration.
+ */
 @Composable
 fun CardTrackingSimulator(
     modifier: Modifier = Modifier,
@@ -45,7 +69,7 @@ fun CardTrackingSimulator(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: (CardDetection2) -> Unit,
+    onCardDetection: (CardDetection) -> Unit,
     inferenceIntervalMs: Long = 33L,
     lockOnThreshold: Int = 5,
     noDetectionCountLimit: Int = 8,
@@ -99,7 +123,7 @@ fun CardTrackingSimulator(
 
         imageSpaceChain?.let { space ->
             if (isDetectionEnabled && showBoundingBoxes) {
-                SimulationDetectionOverlay(
+                DetectionOverlay(
                     cardDetection = cardDetection, imageSpaceChain = space, showClassNames = showClassNames, classLabels = classLabels
                 )
             }
@@ -130,4 +154,3 @@ fun CardTrackingSimulator(
         }
     }
 }
-

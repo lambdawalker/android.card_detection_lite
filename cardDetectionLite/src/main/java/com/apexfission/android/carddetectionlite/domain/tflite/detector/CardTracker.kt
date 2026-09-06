@@ -11,8 +11,8 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHashFromRegion
 import com.apexfission.android.carddetectionlite.domain.tflite.image.isVisuallySimilar
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Feature
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import java.io.Closeable
@@ -92,7 +92,7 @@ class CardTracker(
      *
      * Used by validators and spatial candidate matching.
      */
-    private var previousCardDetection: Detection2? = null
+    private var previousCardDetection: Detection? = null
 
     /**
      * Number of consecutive frames where no valid card was detected.
@@ -126,7 +126,7 @@ class CardTracker(
      *
      * The caller remains responsible for closing [imageProxy].
      */
-    fun track(imageProxy: ImageProxy): CardDetection2? {
+    fun track(imageProxy: ImageProxy): CardDetection? {
         val bitmap = imageProxy.toUprightBitmap()
         val result = yoloDetector.detect(bitmap)
 
@@ -139,7 +139,7 @@ class CardTracker(
     /**
      * Tracks a card from an already-created upright [Bitmap].
      */
-    fun track(bitmap: Bitmap): CardDetection2? {
+    fun track(bitmap: Bitmap): CardDetection? {
         val result = yoloDetector.detect(bitmap)
 
         return processDetections(
@@ -149,9 +149,9 @@ class CardTracker(
     }
 
     private fun processDetections(
-        result: List<Detection2>,
+        result: List<Detection>,
         bitmap: Bitmap
-    ): CardDetection2? {
+    ): CardDetection? {
         val currentTime = SystemClock.elapsedRealtime()
         Log.d("CardTracker", "Raw results: ${result.size} ${cardValidators.size}")
 
@@ -261,7 +261,7 @@ class CardTracker(
             (candidateConsistencyCount.toFloat() / lockOnThreshold)
                 .coerceIn(0f, 1f)
 
-        return CardDetection2(
+        return CardDetection(
             id = cardId,
             lockingStatus = lockingStatus,
             card = Feature(
@@ -277,8 +277,8 @@ class CardTracker(
 
 
     private fun selectCandidate(
-        candidates: List<Detection2>
-    ): Detection2? {
+        candidates: List<Detection>
+    ): Detection? {
         if (candidates.isEmpty()) {
             return null
         }

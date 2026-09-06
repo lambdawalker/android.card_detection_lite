@@ -9,17 +9,16 @@ import com.apexfission.android.carddetectionlite.ui.NumThreads
 /**
  * A [ViewModelProvider.Factory] responsible for creating instances of [CardDetectorLiteViewModel].
  *
- * @property application The application instance, needed by `AndroidViewModel`.
+ * @property application The application instance.
  * @property modelPath The asset path for the TFLite model.
- * @property useGpu A flag to enable or disable the GPU delegate.
+ * @property useGpu A flag to enable or disable GPU acceleration.
  * @property scoreThreshold The minimum confidence for raw detections.
  * @property cardFilters A list of custom [CardValidator]s.
- * @property cardClasses The list of class IDs to be treated as primary card targets.
+ * @property cardClasses The set of class IDs to be treated as primary card targets.
  * @property inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
- * @property lockOnThreshold The number of consecutive frames a card must be detected and visually
- *                         similar before it is considered "locked on."
- * @property noDetectionCountLimit Number of consecutive missing detections allowed before reset.
- * @property numThreads The number of threads to use for inference on the CPU.
+ * @property lockOnThreshold The number of consecutive consistent frames required before locking on.
+ * @property noDetectionCountLimit Number of consecutive missing detections allowed before resetting tracking state.
+ * @property numThreads CPU thread configuration using [NumThreads].
  */
 class CardDetectorLiteViewModelFactory(
     private val application: Application,

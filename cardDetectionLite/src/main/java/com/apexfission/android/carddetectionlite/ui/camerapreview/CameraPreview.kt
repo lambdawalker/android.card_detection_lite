@@ -40,8 +40,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
-import com.apexfission.android.carddetectionlite.ui.simulation.createPreviewImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
@@ -56,7 +55,7 @@ import kotlinx.coroutines.delay
  * @param lifecycleOwner The [LifecycleOwner] to which the CameraX lifecycle will be bound.
  * @param flashlightEnabled A boolean state that directly controls the camera's torch.
  * @param analysisTargetResolution The desired resolution for the image analysis stream.
- * @param focusOn When a [CardDetection2] object is passed to this parameter, it triggers a smart auto-focus routine.
+ * @param focusOn When a [CardDetection] object is passed to this parameter, it triggers a smart auto-focus routine.
  * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
  * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
  * @param showFocusIndicator A boolean flag to enable or disable the focus indicator.
@@ -68,7 +67,7 @@ fun CameraPreview(
     lifecycleOwner: LifecycleOwner,
     flashlightEnabled: Boolean,
     analysisTargetResolution: Size = Size(2048, 1080),
-    focusOn: CardDetection2?,
+    focusOn: CardDetection?,
     tapToFocusEnabled: Boolean = true,
     focusOnCardEnabled: Boolean = true,
     showFocusIndicator: Boolean = true,
@@ -198,7 +197,7 @@ fun CameraPreview(
     LaunchedEffect(focusOn) {
         if (!focusOnCardEnabled) return@LaunchedEffect
         val control = cameraControl ?: return@LaunchedEffect
-        val detection: CardDetection2 = focusOn ?: return@LaunchedEffect
+        val detection: CardDetection = focusOn ?: return@LaunchedEffect
 
         val cardBox = detection.card.box
         val centerX = (cardBox.x + cardBox.x2).toFloat() / 2f

@@ -97,7 +97,14 @@ fun centerCropSquare(src: Bitmap, maxSize: Int = Int.MAX_VALUE): Bitmap {
     return Bitmap.createBitmap(src, cropRect.left, cropRect.top, cropRect.width(), cropRect.height())
 }
 
-
+/**
+ * Crops a [Bitmap] according to the specified [InputShape] strategy.
+ *
+ * @param imageMode The cropping strategy ([InputShape.FullImage], [InputShape.SquareCrop], etc.).
+ * @param bitmap The source image bitmap.
+ * @param canvasSize Target composable dimensions for aspect ratio matching.
+ * @return The cropped [Bitmap].
+ */
 fun crop(imageMode: InputShape, bitmap: Bitmap, canvasSize: IntSize): Bitmap {
     return when (imageMode) {
         InputShape.FullImage -> bitmap

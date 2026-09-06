@@ -1,18 +1,23 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 
 /**
  * A functional interface for creating custom validation rules for detected objects.
  *
- * Implement this interface to define specific criteria that an [Detection2] must meet
+ * Implement this interface to define specific criteria that a [Detection] candidate must meet
  * to be considered a valid target. This allows for a flexible and composable way to
  * filter out unwanted detections based on properties like size, aspect ratio, position, etc.
- *
- * A list of these validators is typically passed to a higher-level detector, which will only
- * proceed with features that pass *all* provided validation checks.
  */
 fun interface CardValidator {
-    fun isValid(detection: Detection2, previousCardDetection: Detection2?, bitmap: Bitmap): Boolean
+    /**
+     * Evaluates a [Detection] candidate against a specific validation rule.
+     *
+     * @param detection The candidate detection to validate.
+     * @param previousCardDetection The previous accepted detection frame, if available.
+     * @param bitmap The frame image bitmap.
+     * @return `true` if the candidate satisfies the validation rule, `false` otherwise.
+     */
+    fun isValid(detection: Detection, previousCardDetection: Detection?, bitmap: Bitmap): Boolean
 }

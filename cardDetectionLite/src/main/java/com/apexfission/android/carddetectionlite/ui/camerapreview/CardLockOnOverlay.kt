@@ -29,19 +29,22 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlin.math.hypot
 import kotlin.math.min
 
 /**
- * A highly stylized and animated overlay that provides visual feedback for the card detection "lock-on" process.
+ * A stylized, animated overlay providing visual feedback during the card lock-on process.
  *
- * @param activeDetection The current [CardDetection2] from the ViewModel.
- * @param imageSpaceChain The [ImageSpaceChain] used to map the detection coordinates to screen space.
+ * Renders a glowing, animated frame around the card whose progress and styling change dynamically
+ * based on `activeDetection.lockOnProgress`. Coordinates are mapped to screen space using [imageSpaceChain].
+ *
+ * @param activeDetection The current [CardDetection] from the ViewModel.
+ * @param imageSpaceChain The [ImageSpaceChain] used to map detection coordinates to screen space.
  */
 @Composable
 fun CardLockOnOverlay(
-    activeDetection: CardDetection2?, imageSpaceChain: ImageSpaceChain
+    activeDetection: CardDetection?, imageSpaceChain: ImageSpaceChain
 ) {
     val card = activeDetection?.card ?: return
     val box = card.box.toChildSpace(imageSpaceChain)

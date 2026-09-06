@@ -1,28 +1,30 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
 import android.graphics.Bitmap
-
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 
 /**
  * A [CardValidator] that checks if a detection is within a specified margin from the image edges.
  *
- * This is useful for filtering out objects that are partially cut off at the borders of the image.
+ * Useful for filtering out objects that are partially cut off at image borders.
  *
- * @property margin The minimum required distance, in pixels, from the image edges.
- *                  A detection is considered invalid if any of its sides are closer to the
- *                  corresponding image edge than this margin.
+ * @property margin The required minimum distance in pixels from the image edges.
  */
 class MarginValidator(private val margin: UInt = 20u) : CardValidator {
+    /**
+     * Validates that the candidate's bounding box is at least [margin] pixels away from image borders.
+     *
+     * @param detection The candidate detection to validate.
+     * @param previousCardDetection The previous accepted detection, if available.
+     * @param bitmap The frame image bitmap.
+     * @return `true` if all sides of the box satisfy the margin requirement, `false` otherwise.
+     */
     override fun isValid(
-        detection: Detection2, previousCardDetection: Detection2?, bitmap: Bitmap
+        detection: Detection, previousCardDetection: Detection?, bitmap: Bitmap
     ): Boolean {
-        // Use the dimensions that match the feature's coordinate space.
-        // Assuming coordinates are scaled to contextWidth/Height here.
         val w = bitmap.width.toUInt()
         val h = bitmap.height.toUInt()
 
-        // Defensive check: Ensure margin doesn't exceed image dimensions
         if (margin * 2u >= w || margin * 2u >= h) return false
 
         val box = detection.box

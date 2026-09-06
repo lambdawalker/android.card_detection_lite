@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 import org.junit.Assert.assertNotNull
@@ -49,7 +49,7 @@ class YoloDetectorTest {
 
 
         detector.use { detector ->
-            val detections: List<Detection2> = detector.detect(bitmap)
+            val detections: List<Detection> = detector.detect(bitmap)
 
             assertTrue("Expected at least one detection for $imageName.jpg", detections.isNotEmpty())
 

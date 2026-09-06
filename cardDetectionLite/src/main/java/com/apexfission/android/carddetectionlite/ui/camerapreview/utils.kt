@@ -1,10 +1,19 @@
-package com.apexfission.android.carddetectionlite.ui.simulation
+package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.cropAtCenter
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.scale
 
+/**
+ * Creates an [ImageSpaceChain] mapping coordinates from source frame dimensions to preview display dimensions.
+ *
+ * @param videoWidth Source video width in pixels.
+ * @param videoHeight Source video height in pixels.
+ * @param viewWidth Viewport display width in pixels.
+ * @param viewHeight Viewport display height in pixels.
+ * @return An [ImageSpaceChain] containing source, scaled, and cropped space definitions.
+ */
 fun createPreviewImageSpaceChain(
     videoWidth: Int,
     videoHeight: Int,
@@ -30,4 +39,3 @@ fun createPreviewImageSpaceChain(
 
     return listOf(source, scaled, cropped)
 }
-

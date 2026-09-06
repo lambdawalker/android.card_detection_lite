@@ -19,6 +19,22 @@ import androidx.compose.ui.unit.sp
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 
+/**
+ * A debug overlay composable that displays current runtime parameters and configuration states.
+ *
+ * @param isDetectionEnabled Whether card detection is active.
+ * @param useGpu Whether GPU inference is enabled.
+ * @param showBoundingBoxes Whether bounding boxes are shown.
+ * @param showLockOnProgress Whether lock-on progress is enabled.
+ * @param imageMode Current input shape configuration.
+ * @param inferenceIntervalMs Minimum time between inferences in milliseconds.
+ * @param tapToFocusEnabled Whether tap-to-focus is enabled.
+ * @param focusOnCardEnabled Whether smart auto-focus on card is enabled.
+ * @param lockOnThreshold Number of consistent frames required for lock-on.
+ * @param numThreads CPU thread configuration.
+ * @param modifier Composable modifier.
+ * @param noDetectionCountLimit Missing detection limit before tracking resets.
+ */
 @Composable
 fun DebugOverlay(
     isDetectionEnabled: Boolean,
@@ -71,13 +87,13 @@ fun DebugOverlay(
                 }
 
                 val valueColor = when (val value = item.value) {
-                    is Boolean -> if (value) Color(0xFF8BC34A) else Color(0xFFE91E63) // Green / Pink
-                    is Number -> Color(0xFF2196F3) // Blue
+                    is Boolean -> if (value) Color(0xFF8BC34A) else Color(0xFFE91E63)
+                    is Number -> Color(0xFF2196F3)
                     is InputShape -> when (value) {
-                        InputShape.SquareCrop -> Color(0xFFFFC107) // Amber
-                        InputShape.FullImage -> Color(0xFF9C27B0) // Purple
-                        InputShape.VisibleImage -> Color(0xFF00BCD4) // Cyan
-                        InputShape.VisibleImageSquareCrop -> Color(0xFFF44336) // Red
+                        InputShape.SquareCrop -> Color(0xFFFFC107)
+                        InputShape.FullImage -> Color(0xFF9C27B0)
+                        InputShape.VisibleImage -> Color(0xFF00BCD4)
+                        InputShape.VisibleImageSquareCrop -> Color(0xFFF44336)
                     }
 
                     is NumThreads -> Color.White

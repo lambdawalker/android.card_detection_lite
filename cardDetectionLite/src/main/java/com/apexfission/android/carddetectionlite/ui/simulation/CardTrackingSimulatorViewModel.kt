@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +16,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel for [CardTrackingSimulator].
+ *
+ * @param application Application instance.
+ * @param modelPath Asset path to TFLite model.
+ * @param cardClasses Set of card class IDs.
+ * @param useGpu Whether GPU inference is enabled.
+ * @param scoreThreshold Score threshold for raw detections.
+ * @param cardFilters List of card validators.
+ * @param inferenceIntervalMs Minimum time interval between inferences.
+ * @param lockOnThreshold Consistent frame threshold for lock-on.
+ * @param noDetectionCountLimit Limit of missing frames before tracking resets.
+ * @param numThreads CPU thread configuration.
+ */
 class CardTrackingSimulatorViewModel(
     application: Application,
     modelPath: String,
@@ -29,7 +43,7 @@ class CardTrackingSimulatorViewModel(
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
-    private val _cardDetection = MutableStateFlow<CardDetection2?>(null)
+    private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection = _cardDetection.asStateFlow()
 
     private val detector = CardTracker(
@@ -56,7 +70,7 @@ class CardTrackingSimulatorViewModel(
         }
     }
 
-    fun processBitmap(bitmap: Bitmap, onDetection: (CardDetection2) -> Unit) {
+    fun processBitmap(bitmap: Bitmap, onDetection: (CardDetection) -> Unit) {
         if (!detector.enabled) return
 
         viewModelScope.launch(Dispatchers.Default) {
@@ -65,8 +79,7 @@ class CardTrackingSimulatorViewModel(
                 if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
                 lastInferenceMs.set(now)
 
-
-                val card: CardDetection2? = detector.track(bitmap)
+                val card: CardDetection? = detector.track(bitmap)
 
                 if (card == null) {
                     _cardDetection.value = null

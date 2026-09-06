@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
 import kotlin.math.max
 import kotlin.math.min
@@ -10,7 +10,7 @@ import kotlin.math.min
  * Handles the complex task of decoding and post-processing the raw output from a YOLO TFLite model.
  *
  * This class is responsible for converting the model's raw tensor (a flat `FloatArray`) into a
- * meaningful and clean list of [Detection2] objects.
+ * meaningful and clean list of [Detection] objects.
  *
  * ### Key Operations:
  * 1.  **Decoding**: Iterates through the raw output, identifying candidate bounding boxes and their
@@ -63,7 +63,7 @@ class YoloPostProcessor(
      */
     fun process(
         output: FloatArray, letterboxResult: LetterboxResult
-    ): List<Detection2> {
+    ): List<Detection> {
         val rawDetections = decodeDetections(
             output = output, lbScale = letterboxResult.scale, padX = letterboxResult.padX, padY = letterboxResult.padY
         )
@@ -74,8 +74,8 @@ class YoloPostProcessor(
     /** Decodes the raw model output, reversing the letterboxing transformation. */
     private fun decodeDetections(
         output: FloatArray, lbScale: Float, padX: Float, padY: Float
-    ): ArrayList<Detection2> {
-        val detections = ArrayList<Detection2>(128)
+    ): ArrayList<Detection> {
+        val detections = ArrayList<Detection>(128)
 
         val isBoxesFirst = outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES
         val strideBox = if (isBoxesFirst) 1 else outAttrs
@@ -119,7 +119,7 @@ class YoloPostProcessor(
             val y2 = ((cy * modelInputImageWidth + halfH) - padY) / lbScale
 
             // Normalize coordinates to the cropped image dimensions and store.
-            detections += Detection2(
+            detections += Detection(
                 ImageBox.from2P(
                     x1 = x1.toUInt(), y1 = y1.toUInt(), x2 = x2.toUInt(), y2 = y2.toUInt()
                 ), maxClassScore, bestCls
@@ -130,7 +130,7 @@ class YoloPostProcessor(
     }
 
     /** An optimized Non-Max Suppression algorithm. */
-    private fun nms(detections: ArrayList<Detection2>): List<Detection2> {
+    private fun nms(detections: ArrayList<Detection>): List<Detection> {
         if (detections.isEmpty()) return emptyList()
         val sorted = detections.sortedByDescending { it.confidence }
         val size = sorted.size
@@ -141,7 +141,7 @@ class YoloPostProcessor(
         }
 
         val suppressed = BooleanArray(size)
-        val keep = ArrayList<Detection2>(min(size, maxNmsCandidates))
+        val keep = ArrayList<Detection>(min(size, maxNmsCandidates))
 
         for (i in 0 until size) {
             if (suppressed[i]) continue
