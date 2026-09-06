@@ -15,13 +15,13 @@ import kotlin.math.min
  * of the bounding box by its shortest side.
  *
  * @property minAspectRatio The minimum acceptable ratio of the longest side to the shortest side.
- *                          For example, a value of 1.4 is suitable for standard ID cards.
+ *                          For example, a value of 1.28 is suitable for standard ID cards.
  * @property maxAspectRatio The maximum acceptable ratio of the longest side to the shortest side.
- *                          For example, a value of 1.8 accommodates for some perspective skew.
+ *                          For example, a value of 1.75 accommodates for some perspective skew.
  */
 class AspectRatioValidator2(
-    private val minAspectRatio: Float = 1.4f,
-    private val maxAspectRatio: Float = 1.8f
+    private val minAspectRatio: Float = 1.28f,
+    private val maxAspectRatio: Float = 1.7f
 ) : CardValidator2 {
     /**
      * Validates that the aspect ratio of the [ExtractedFeature]'s bounding box falls

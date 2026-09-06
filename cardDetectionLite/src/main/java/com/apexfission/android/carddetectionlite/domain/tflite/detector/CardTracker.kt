@@ -2,10 +2,12 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
 import android.graphics.Bitmap
 import android.os.SystemClock
+import android.util.Log
 import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator2
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator2
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator2
+import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHashFromRegion
 import com.apexfission.android.carddetectionlite.domain.tflite.image.isVisuallySimilar
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
@@ -151,6 +153,7 @@ class CardTracker(
         bitmap: Bitmap
     ): CardDetection2? {
         val currentTime = SystemClock.elapsedRealtime()
+        Log.d("CardTracker", "Raw results: ${result.size} ${cardValidators.size}")
 
         if (
             memoryDetectionTimeLimit > 0L &&
@@ -171,7 +174,11 @@ class CardTracker(
                 }
         }
 
+        Log.d("CardTracker", "Filtered results: ${candidates.size}")
+
         val card = selectCandidate(candidates)
+
+        Log.d("CardTracker", "Selected card: $card")
 
         if (card == null) {
             handleMissingDetection()
@@ -180,7 +187,6 @@ class CardTracker(
 
         noDetectionCount = 0
         lastDetectionTime = currentTime
-
 
         // Hash the detected region directly without allocating a cropped bitmap.
         val currentHash = bitmap.generateDHashFromRegion(card.box)
@@ -262,15 +268,7 @@ class CardTracker(
                 card.box,
                 card.confidence,
                 card.classId,
-
-                /*
-                 * Keep the source bitmap instead of allocating a new
-                 * cropped Bitmap every frame.
-                 *
-                 * Consumers can crop lazily if they actually need the
-                 * isolated card image.
-                 */
-                bitmap
+                bitmap.crop(card.box)
             ),
             features = emptyList(),
             lockOnProgress = lockOnProgress

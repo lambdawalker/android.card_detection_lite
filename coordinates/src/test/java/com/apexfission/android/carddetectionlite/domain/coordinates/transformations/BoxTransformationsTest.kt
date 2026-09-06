@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates.transformations
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -18,24 +18,20 @@ class BoxTransformationsTest {
     )
 
     @Test
-    fun testImageBox2PToParentSpace() {
-        val childBox = ImageBox2P(x = 20U, y = 20U, x2 = 40U, y2 = 40U)
-        val expected = ImageBox2P(x = 110U, y = 110U, x2 = 120U, y2 = 120U)
+    fun testImageBoxToParentSpace() {
+        val childBox = ImageBox.from2P(x1 = 20U, y1 = 20U, x2 = 40U, y2 = 40U)
+        val expected = ImageBox.from2P(x1 = 110U, y1 = 110U, x2 = 120U, y2 = 120U)
 
-        val result1 = imageBox2PToParentSpace(childBox, parentSpace, childSpace)
-        assertEquals(expected, result1)
 
         val result2 = childBox.toParentSpace(parentSpace, childSpace)
         assertEquals(expected, result2)
     }
 
     @Test
-    fun testImageBox2PToChildSpace() {
-        val parentBox = ImageBox2P(x = 110U, y = 110U, x2 = 120U, y2 = 120U)
-        val expected = ImageBox2P(x = 20U, y = 20U, x2 = 40U, y2 = 40U)
+    fun testImageBoxToChildSpace() {
+        val parentBox = ImageBox.from2P(x1 = 110U, y1 = 110U, x2 = 120U, y2 = 120U)
+        val expected = ImageBox.from2P(x1 = 20U, y1 = 20U, x2 = 40U, y2 = 40U)
 
-        val result1 = imageBox2PToChildSpace(parentBox, parentSpace, childSpace)
-        assertEquals(expected, result1)
 
         val result2 = parentBox.toChildSpace(parentSpace, childSpace)
         assertEquals(expected, result2)

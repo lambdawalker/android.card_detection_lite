@@ -1,5 +1,10 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates
 
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.NormImageBox
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.NormImagePoint
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -27,21 +32,36 @@ class ModelsTest {
     }
 
     @Test
-    fun testImageBox2PProperties() {
-        val box = ImageBox2P(x = 5U, y = 10U, x2 = 50U, y2 = 60U)
+    fun testImageBoxFrom2P() {
+        val box = ImageBox.from2P(x1 = 5U, y1 = 10U, x2 = 50U, y2 = 60U)
         assertEquals(5U, box.x)
         assertEquals(10U, box.y)
         assertEquals(50U, box.x2)
         assertEquals(60U, box.y2)
+        assertEquals(45U, box.width)
+        assertEquals(50U, box.height)
     }
 
     @Test
-    fun testImageBoxPSProperties() {
-        val box = ImageBoxPS(x = 5U, y = 10U, width = 45, height = 50)
+    fun testImageBoxFrom2PUnarranged() {
+        val box = ImageBox.from2P(x1 = 50U, y1 = 60U, x2 = 5U, y2 = 10U)
         assertEquals(5U, box.x)
         assertEquals(10U, box.y)
-        assertEquals(45, box.width)
-        assertEquals(50, box.height)
+        assertEquals(50U, box.x2)
+        assertEquals(60U, box.y2)
+        assertEquals(45U, box.width)
+        assertEquals(50U, box.height)
+    }
+
+    @Test
+    fun testImageBoxFromPS() {
+        val box = ImageBox.fromPS(x = 5U, y = 10U, width = 45U, height = 50U)
+        assertEquals(5U, box.x)
+        assertEquals(10U, box.y)
+        assertEquals(50U, box.x2)
+        assertEquals(60U, box.y2)
+        assertEquals(45U, box.width)
+        assertEquals(50U, box.height)
     }
 
     @Test
@@ -52,19 +72,23 @@ class ModelsTest {
     }
 
     @Test
-    fun testNormImageBox2PProperties() {
-        val normBox = NormImageBox2P(x = 0.1F, y = 0.2F, x2 = 0.8F, y2 = 0.9F)
+    fun testNormImageBoxFrom2P() {
+        val normBox = NormImageBox.from2P(x1 = 0.1F, y1 = 0.2F, x2 = 0.8F, y2 = 0.9F)
         assertEquals(0.1F, normBox.x, 0.0001F)
         assertEquals(0.2F, normBox.y, 0.0001F)
         assertEquals(0.8F, normBox.x2, 0.0001F)
         assertEquals(0.9F, normBox.y2, 0.0001F)
+        assertEquals(0.7F, normBox.width, 0.0001F)
+        assertEquals(0.7F, normBox.height, 0.0001F)
     }
 
     @Test
-    fun testNormImageBoxPSProperties() {
-        val normBox = NormImageBoxPS(x = 0.1F, y = 0.2F, width = 0.7F, height = 0.7F)
+    fun testNormImageBoxFromPS() {
+        val normBox = NormImageBox.fromPS(x = 0.1F, y = 0.2F, width = 0.7F, height = 0.7F)
         assertEquals(0.1F, normBox.x, 0.0001F)
         assertEquals(0.2F, normBox.y, 0.0001F)
+        assertEquals(0.8F, normBox.x2, 0.0001F)
+        assertEquals(0.9F, normBox.y2, 0.0001F)
         assertEquals(0.7F, normBox.width, 0.0001F)
         assertEquals(0.7F, normBox.height, 0.0001F)
     }

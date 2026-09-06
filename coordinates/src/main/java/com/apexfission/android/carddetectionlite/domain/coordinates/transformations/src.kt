@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates.transformations
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImagePoint
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 
 /**
  * Transforms point coordinates `(x, y)` from a [childSpace] (Local) frame to a [parentSpace] (Original/Global) frame.
@@ -11,7 +11,7 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpace
  * @param y The Y-coordinate in child space.
  * @param childSpace The child coordinate space configuration.
  * @param parentSpace The parent coordinate space configuration.
- * @return The transformed [com.apexfission.android.carddetectionlite.domain.coordinates.ImagePoint] in parent space.
+ * @return The transformed [ImagePoint] in parent space.
  * @throws IllegalArgumentException If resulting coordinates are negative or exceed parent space bounds.
  */
 fun pointToParentSpace(x: UInt, y: UInt, childSpace: ImageSpace, parentSpace: ImageSpace): ImagePoint {

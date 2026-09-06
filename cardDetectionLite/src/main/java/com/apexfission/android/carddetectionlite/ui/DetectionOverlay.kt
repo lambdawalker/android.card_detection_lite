@@ -13,7 +13,6 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImagePoint
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlin.math.max
 
@@ -38,7 +37,7 @@ import kotlin.math.max
  *                    string labels for display.
  */
 @Composable
-fun  DetectionOverlay(
+fun DetectionOverlay(
     cardDetection: CardDetection?,
     scalingInfo: PreviewScalingInfo,
     showClassNames: Boolean,

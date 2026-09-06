@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.model
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 
 /**
  * Represents a raw detection with coordinates normalized to its immediate reference frame (the "context").
@@ -22,7 +22,7 @@ data class RawDetection(
     val y2Pct: Float,
     val confidence: Float,
     val classId: Int,
-    val box: ImageBox2P? = null
+    val box: ImageBox? = null
 )
 
 /**
@@ -57,13 +57,13 @@ data class Detection(
 )
 
 data class Detection2(
-    val box: ImageBox2P,
+    val box: ImageBox,
     val confidence: Float,
     val classId: Int
 )
 
 data class Feature(
-    val box: ImageBox2P,
+    val box: ImageBox,
     val confidence: Float,
     val classId: Int,
     val image: Bitmap
@@ -86,6 +86,3 @@ data class Detections(
     val originalWidth: Int,
     val originalHeight: Int
 )
-
-
-

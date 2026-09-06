@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates.transformations
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImagePoint
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -30,9 +30,6 @@ class PointTransformationsTest {
         val point = ImagePoint(20U, 20U)
         val expected = ImagePoint(110U, 110U)
 
-        val result1 = pointToParentSpace(point, childSpace, parentSpace)
-        assertEquals(expected, result1)
-
         val result2 = point.toParentSpace(parentSpace, childSpace)
         assertEquals(expected, result2)
     }
@@ -49,9 +46,6 @@ class PointTransformationsTest {
     fun testPointToChildSpaceWithImagePoint() {
         val point = ImagePoint(150U, 150U)
         val expected = ImagePoint(100U, 100U)
-
-        val result1 = pointToChildSpace(point, parentSpace, childSpace)
-        assertEquals(expected, result1)
 
         val result2 = point.toChildSpace(parentSpace, childSpace)
         assertEquals(expected, result2)

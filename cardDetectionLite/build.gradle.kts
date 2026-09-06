@@ -1,7 +1,5 @@
 import com.android.build.api.dsl.LibraryExtension
 import com.android.build.gradle.BaseExtension
-import jdk.internal.org.jline.utils.ExecHelper.exec
-import sun.jvmstat.monitor.MonitoredVmUtil.commandLine
 
 plugins {
     alias(libs.plugins.android.library)
@@ -11,7 +9,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.36.0"
 }
 
-extensions.configure<LibraryExtension>  {
+extensions.configure<LibraryExtension> {
     namespace = "com.apexfission.android.carddetectionlite"
     compileSdk = 36
 
@@ -65,9 +63,12 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.junit.ktx)
 
+    implementation("androidx.media3:media3-inspector:1.11.0")
+    implementation("androidx.media3:media3-inspector-frame:1.11.0")
+
     /* ---------------- TensorFlow Lite ---------------- */
     implementation(libs.litert.gpu)
-    implementation(libs.litert.support){
+    implementation(libs.litert.support) {
         exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
     }
 
@@ -129,9 +130,7 @@ tasks.register<Copy>("runTestsAndExtractImages") {
         // Asks the Android Gradle Plugin for the exact path to adb.exe
         val adbPath = project.extensions.getByType<BaseExtension>().adbExecutable.absolutePath
 
-        ProcessBuilder(adbPath, "shell", "rm", "-rf", "/sdcard/googletest/test_outputfiles/*")
-            .start()
-            .waitFor()
+        ProcessBuilder(adbPath, "shell", "rm", "-rf", "/sdcard/googletest/test_outputfiles/*").start().waitFor()
 
         println("Cleaned up test images from the device.")
     }
@@ -146,9 +145,7 @@ mavenPublishing {
 
 mavenPublishing {
     coordinates(
-        "com.apexfission.android.carddetectionlite",
-        "core",
-        "0.1.0-B2"
+        "com.apexfission.android.carddetectionlite", "core", "0.1.0-B2"
     )
 
     pom {

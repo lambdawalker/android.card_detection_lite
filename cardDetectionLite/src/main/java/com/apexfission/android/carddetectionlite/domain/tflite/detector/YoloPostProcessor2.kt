@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
@@ -121,8 +121,8 @@ class YoloPostProcessor2(
 
             // Normalize coordinates to the cropped image dimensions and store.
             detections += Detection2(
-                ImageBox2P(
-                    x = x1.toUInt(), y = y1.toUInt(), x2 = x2.toUInt(), y2 = y2.toUInt()
+                ImageBox.from2P(
+                    x1 = x1.toUInt(), y1 = y1.toUInt(), x2 = x2.toUInt(), y2 = y2.toUInt()
                 ), maxClassScore, bestCls
             )
         }
@@ -168,7 +168,7 @@ class YoloPostProcessor2(
     }
 
     /** Calculates the Intersection over Union of two detections. */
-    private fun calculateIoU(a: ImageBox2P, areaA: Float, b: ImageBox2P, areaB: Float): Float {
+    private fun calculateIoU(a: ImageBox, areaA: Float, b: ImageBox, areaB: Float): Float {
         if (a.x > b.x2 || a.x2 < b.x || a.y > b.y2 || a.y2 < b.y) return 0f
 
         val interW = max(0u, min(a.x2, b.x2) - max(a.x, b.x)).toFloat()

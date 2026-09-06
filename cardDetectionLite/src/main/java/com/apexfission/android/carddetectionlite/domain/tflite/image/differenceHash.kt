@@ -3,7 +3,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import android.graphics.Bitmap
 import androidx.core.graphics.scale
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 
 /**
  * Implements the Difference Hash (dHash) algorithm for fast, perceptual image comparison.
@@ -78,7 +78,7 @@ fun Bitmap.generateDHash(hashSize: Int = 8): ULong {
 }
 
 fun Bitmap.generateDHashFromRegion(
-    box: ImageBox2P,
+    box: ImageBox,
     hashSize: Int = 8
 ): ULong {
     require(hashSize in 2..8) {
@@ -166,7 +166,7 @@ fun ULong.hammingDistanceTo(other: ULong): Int {
  *
  * @param a The first bitmap.
  * @param b The second bitmap.
- * @param hashSize The size of the dHash to generate (e.g., 8 for a 64-bit hash).
+ * @param hashSize The size of the dHash to use (e.g., 8 for a 64-bit hash).
  * @return The Hamming distance between the dHashes of the two bitmaps.
  */
 fun dhashDistance(a: Bitmap, b: Bitmap, hashSize: Int = 8): Int {

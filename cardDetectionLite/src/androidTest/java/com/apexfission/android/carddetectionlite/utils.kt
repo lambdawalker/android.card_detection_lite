@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.test.services.storage.TestStorage
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import kotlin.math.max
 import kotlin.math.min
@@ -13,12 +13,12 @@ import kotlin.math.min
 data class GroundTruth(
     val classId: Int, val cx: Float, val cy: Float, val w: Float, val h: Float
 ) {
-    fun toPixelBox(imageWidth: Int, imageHeight: Int): ImageBox2P {
+    fun toPixelBox(imageWidth: Int, imageHeight: Int): ImageBox {
         val x1 = ((cx - w / 2f) * imageWidth).coerceAtLeast(0f).toUInt()
         val y1 = ((cy - h / 2f) * imageHeight).coerceAtLeast(0f).toUInt()
         val x2 = ((cx + w / 2f) * imageWidth).coerceAtMost(imageWidth.toFloat()).toUInt()
         val y2 = ((cy + h / 2f) * imageHeight).coerceAtMost(imageHeight.toFloat()).toUInt()
-        return ImageBox2P(x1, y1, x2, y2)
+        return ImageBox.from2P(x1, y1, x2, y2)
     }
 }
 
@@ -47,12 +47,12 @@ data class ExpectedFrameData(
     val x2Pct: Float,
     val y2Pct: Float
 ) {
-    fun toPixelBox(imageWidth: Int, imageHeight: Int): ImageBox2P {
+    fun toPixelBox(imageWidth: Int, imageHeight: Int): ImageBox {
         val x1 = (xPct * imageWidth).coerceAtLeast(0f).toUInt()
         val y1 = (yPct * imageHeight).coerceAtLeast(0f).toUInt()
         val x2 = (x2Pct * imageWidth).coerceAtMost(imageWidth.toFloat()).toUInt()
         val y2 = (y2Pct * imageHeight).coerceAtMost(imageHeight.toFloat()).toUInt()
-        return ImageBox2P(x1, y1, x2, y2)
+        return ImageBox.from2P(x1, y1, x2, y2)
     }
 }
 
@@ -81,7 +81,7 @@ fun parseExpectedData(text: String): List<ExpectedFrameData> {
     }
 }
 
-fun calculateIoU(a: ImageBox2P, b: ImageBox2P): Float {
+fun calculateIoU(a: ImageBox, b: ImageBox): Float {
     val interX1 = max(a.x, b.x)
     val interY1 = max(a.y, b.y)
     val interX2 = min(a.x2, b.x2)
@@ -106,7 +106,7 @@ fun autoSaveBitmap(bitmap: Bitmap, filename: String) {
     }
 }
 
-fun drawBoxesOnBitmap(bitmap: Bitmap, groundTruth: ImageBox2P, detection: ImageBox2P): Bitmap {
+fun drawBoxesOnBitmap(bitmap: Bitmap, groundTruth: ImageBox, detection: ImageBox): Bitmap {
     val mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(mutableBitmap)
     val paint = Paint().apply {

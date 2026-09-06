@@ -2,7 +2,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 
 /**
  * Converts a CameraX [ImageProxy] into a correctly oriented [Bitmap].
@@ -25,7 +25,7 @@ fun ImageProxy.toUprightBitmap(): Bitmap {
     return rotateIfNeeded(bitmap, this.imageInfo.rotationDegrees)
 }
 
-fun Bitmap.crop(box: ImageBox2P): Bitmap {
+fun Bitmap.crop(box: ImageBox): Bitmap {
     val left = box.x.toInt().coerceIn(0, width)
     val top = box.y.toInt().coerceIn(0, height)
     val right = box.x2.toInt().coerceIn(0, width)

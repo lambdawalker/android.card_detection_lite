@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.SurfaceTexture
 import android.net.Uri
-import android.util.Log
 import android.view.Surface
 import android.view.TextureView
 import androidx.compose.foundation.layout.Box
@@ -26,14 +25,12 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpace
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import kotlin.math.max
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -99,14 +96,15 @@ fun CardDetectionLiteSimulator(
             }
         )
 
-        if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
-            DetectionOverlay2(
-                cardDetection = cardDetection,
-                scalingInfo = scalingInfo,
-                showClassNames = showClassNames,
-                classLabels = classLabels
-            )
-        }
+
+//        if (isDetectionEnabled && showBoundingBoxes && scalingInfo.fullW > 0) {
+//            DetectionOverlay2(
+//                cardDetection = cardDetection,
+//                imageSpace = scalingInfo,
+//                showClassNames = showClassNames,
+//                classLabels = classLabels
+//            )
+//        }
 
         if (isDetectionEnabled && showLockOnProgress && scalingInfo.fullW > 0) {
             CardLockOnOverlay(
@@ -125,6 +123,7 @@ fun VideoPreviewWithFrameCapture(
 ) {
     val context = LocalContext.current
     val textureView = remember { TextureView(context) }
+
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(videoUri))

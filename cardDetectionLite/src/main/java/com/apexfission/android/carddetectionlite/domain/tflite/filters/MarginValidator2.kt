@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.coordinates.operations.arrange
+
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
 
 /**
@@ -25,7 +25,7 @@ class MarginValidator2(private val margin: UInt = 20u) : CardValidator2 {
         // Defensive check: Ensure margin doesn't exceed image dimensions
         if (margin * 2u >= w || margin * 2u >= h) return false
 
-        val box = detection.box.arrange()
+        val box = detection.box
 
         return box.y >= margin &&
             box.x >= margin &&

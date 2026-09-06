@@ -1,17 +1,25 @@
 package com.apexfission.android.carddetectionlite.ui
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImagePoint
-import com.apexfission.android.carddetectionlite.domain.coordinates.NormImageBox2P
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import kotlin.math.max
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * A Composable that renders bounding boxes and labels for detected objects onto a `Canvas`.
@@ -22,12 +30,8 @@ import kotlin.math.max
  * It accounts for differences in aspect ratio and scaling between the camera's raw output and
  * the `PreviewView`'s `FILL_CENTER` display mode.
  *
- * @param cardDetection The [CardDetection] result from the ViewModel. This object contains the list
- *                      of features (the card and any other objects) to be drawn. If `null`,
- *                      nothing is drawn.
- * @param scalingInfo A [PreviewScalingInfo] object, also from the ViewModel. This is the critical
- *                    piece of metadata containing the dimensions of the camera buffer and the
- *                    cropped analysis region, which is necessary to perform the coordinate mapping.
+ * @param cardDetection The [CardDetection2] result from the ViewModel.
+ * @param imageSpace A [ImageSpace] object from the ViewModel.
  * @param showClassNames A boolean flag. If `true`, a text label with the object's class name and
  *                       confidence score is drawn above each bounding box.
  * @param classLabels A map that translates integer class IDs from the model into human-readable
@@ -35,56 +39,61 @@ import kotlin.math.max
  */
 @Composable
 fun DetectionOverlay2(
-    cardDetection: CardDetection?,
-    scalingInfo: PreviewScalingInfo,
-    showClassNames: Boolean,
-    classLabels: Map<Int, String>,
-    coordinatesTranslator: (() -> ImagePoint)? = null
+    cardDetection: CardDetection2?, imageSpaceChain: ImageSpaceChain, showClassNames: Boolean, classLabels: Map<Int, String>
 ) {
     val textMeasurer = rememberTextMeasurer()
-    val textStyle = TextStyle(color = Color.White, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
 
-    Canvas(modifier = Modifier.fillMaxSize()) {
+    val cardCount = remember { MutableStateFlow(0) }
+
+    Canvas(
+        modifier = Modifier.fillMaxSize()
+    ) {
         val screenW = size.width
         val screenH = size.height
 
-        // --- Coordinate Transformation Logic ---
-        // The camera buffer (fullW x fullH) is scaled to fit the screen (screenW x screenH)
-        // using a "fill center" strategy. We need to replicate that scaling logic here.
-        val scale = max(screenW / scalingInfo.fullW, screenH / scalingInfo.fullH)
-        val offsetX = (screenW - scalingInfo.fullW * scale) / 2f
-        val offsetY = (screenH - scalingInfo.fullH * scale) / 2f
+        Log.d("XDDX", "screenW: $screenW, screenH: $screenH")
 
         val features = cardDetection?.let { it.features + it.card } ?: emptyList()
 
+        val textStyle = TextStyle(color = Color.Green, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
+        val log = "Detection counts: ${cardCount.value}"
+        val logLayout = textMeasurer.measure(log, textStyle)
+        drawText(textLayoutResult = logLayout, topLeft = Offset(10f, 12f))
 
+        if (cardDetection == null) {
+            val errorTextStyle = TextStyle(color = Color.Red, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
+            val errorLog = "cardDetection not detected"
+            val errorLogLayout = textMeasurer.measure(errorLog, errorTextStyle)
+            drawText(textLayoutResult = errorLogLayout, topLeft = Offset(10f, 60f))
+        } else {
+            cardCount.value++
+            val infoTextStyle = TextStyle(color = Color.Green, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
+            val infoLog = "lockOnProgress: ${cardDetection.lockOnProgress}\n id: ${cardDetection.id}"
+            val infoLogLayout = textMeasurer.measure(infoLog, infoTextStyle)
+            drawText(textLayoutResult = infoLogLayout, topLeft = Offset(10f, 60f))
+        }
 
         features.forEach { feature ->
-            val det = feature.detection
+            val box = feature.box.toChildSpace(imageSpaceChain)
 
-            val box = NormImageBox2P(
-                det.contextX1Pct, det.contextY1Pct, det.contextX2Pct, det.contextY2Pct
+            Log.d("DetectionOverlay2", "box: $box, classId: ${feature.classId}, confidence: ${feature.confidence}")
+
+            drawRect(
+                color = Color.Cyan,
+                topLeft = Offset(box.x.toFloat(), box.y.toFloat()),
+                size = Size(box.width.toFloat(), box.height.toFloat()),
+                style = Stroke(width = 2.dp.toPx())
             )
 
-//            // Draw the final, correctly positioned bounding box.
-//            drawRect(
-//                color = Color.Cyan,
-//                topLeft = Offset(x1, y1),
-//                size = Size(x2 - x1, y2 - y1),
-//                style = Stroke(width = 2.dp.toPx())
-//            )
-//
-//            // Optionally, draw the text label.
-//            if (showClassNames) {
-//                val label = classLabels[det.classId] ?: "ID: ${det.classId}"
-//                val displayString = "$label (${(det.confidence * 100).toInt()}%)"
-//                val textLayout = textMeasurer.measure(displayString, textStyle)
-//
-//                // Position the text above the box, but clamp it to the top of the screen.
-//                val textTop = (y1 - textLayout.size.height).coerceAtLeast(0f)
-//
-//                drawText(textLayoutResult = textLayout, topLeft = Offset(x1, textTop))
-//            }
+            if (showClassNames) {
+                val label = classLabels[feature.classId] ?: "ID: ${feature.classId}"
+                val displayString = "$label (${(feature.confidence * 100).toInt()}%)"
+                val labelTextStyle = TextStyle(color = Color.White, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
+                val textLayout = textMeasurer.measure(displayString, labelTextStyle)
+
+                val textTop = (box.y.toFloat() - textLayout.size.height).coerceAtLeast(0f)
+                drawText(textLayoutResult = textLayout, topLeft = Offset(box.x.toFloat(), textTop))
+            }
         }
     }
 }

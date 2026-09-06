@@ -1,59 +1,49 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates.transformations
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageBox2P
-import com.apexfission.android.carddetectionlite.domain.coordinates.ImageSpace
-import com.apexfission.android.carddetectionlite.domain.coordinates.operations.arrange
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+
 
 /**
- * Transforms an [ImageBox2P] bounding box from a [childSpace] frame to a [parentSpace] frame.
- *
- * @param imageBox2P The bounding box in child space.
- * @param parentSpace The target parent coordinate space configuration.
- * @param childSpace The source child coordinate space configuration.
- * @return The transformed [ImageBox2P] in parent space.
- */
-fun imageBox2PToParentSpace(imageBox2P: ImageBox2P, parentSpace: ImageSpace, childSpace: ImageSpace): ImageBox2P {
-    val imageBox2P = imageBox2P.arrange()
-    val pointA = pointToParentSpace(imageBox2P.x, imageBox2P.y, childSpace, parentSpace)
-    val pointB = pointToParentSpace(imageBox2P.x2, imageBox2P.y2, childSpace, parentSpace)
-
-    return ImageBox2P(
-        x = pointA.x, y = pointA.y, x2 = pointB.x, y2 = pointB.y
-    )
-}
-
-/**
- * Extension function to transform this [ImageBox2P] bounding box from a [childSpace] frame to a [parentSpace] frame.
+ * Extension function to transform this [ImageBox] bounding box from a [childSpace] frame to a [parentSpace] frame.
  *
  * @param parentSpace The target parent coordinate space configuration.
  * @param childSpace The source child coordinate space configuration.
- * @return The transformed [ImageBox2P] in parent space.
+ * @return The transformed [ImageBox] in parent space.
  */
-fun ImageBox2P.toParentSpace(parentSpace: ImageSpace, childSpace: ImageSpace): ImageBox2P = imageBox2PToParentSpace(this, parentSpace, childSpace)
+fun ImageBox.toParentSpace(parentSpace: ImageSpace, childSpace: ImageSpace): ImageBox {
+    val pointA = pointToParentSpace(x, y, childSpace, parentSpace)
+    val pointB = pointToParentSpace(x2, y2, childSpace, parentSpace)
 
-/**
- * Transforms an [ImageBox2P] bounding box from a [parentSpace] frame to a [childSpace] frame.
- *
- * @param imageBox2P The bounding box in parent space.
- * @param parentSpace The source parent coordinate space configuration.
- * @param childSpace The target child coordinate space configuration.
- * @return The transformed [ImageBox2P] in child space.
- */
-fun imageBox2PToChildSpace(imageBox2P: ImageBox2P, parentSpace: ImageSpace, childSpace: ImageSpace): ImageBox2P {
-    val imageBox2P = imageBox2P.arrange()
-    val pointA = pointToChildSpace(imageBox2P.x, imageBox2P.y, parentSpace, childSpace)
-    val pointB = pointToChildSpace(imageBox2P.x2, imageBox2P.y2, parentSpace, childSpace)
-
-    return ImageBox2P(
-        x = pointA.x, y = pointA.y, x2 = pointB.x, y2 = pointB.y
+    return ImageBox.from2P(
+        x1 = pointA.x, y1 = pointA.y, x2 = pointB.x, y2 = pointB.y
     )
 }
 
+
 /**
- * Extension function to transform this [ImageBox2P] bounding box from a [parentSpace] frame to a [childSpace] frame.
+ * Extension function to transform this [ImageBox] bounding box from a [parentSpace] frame to a [childSpace] frame.
  *
  * @param parentSpace The source parent coordinate space configuration.
  * @param childSpace The target child coordinate space configuration.
- * @return The transformed [ImageBox2P] in child space.
+ * @return The transformed [ImageBox] in child space.
  */
-fun ImageBox2P.toChildSpace(parentSpace: ImageSpace, childSpace: ImageSpace): ImageBox2P = imageBox2PToChildSpace(this, parentSpace, childSpace)
+fun ImageBox.toChildSpace(parentSpace: ImageSpace, childSpace: ImageSpace): ImageBox {
+    val pointA = pointToChildSpace(x, y, parentSpace, childSpace)
+    val pointB = pointToChildSpace(x2, y2, parentSpace, childSpace)
+
+    return ImageBox.from2P(
+        x1 = pointA.x, y1 = pointA.y, x2 = pointB.x, y2 = pointB.y
+    )
+}
+
+fun ImageBox.toChildSpace(imageSpaceChain: ImageSpaceChain): ImageBox {
+    val pointA = ImagePoint(x, y).toChildSpace(imageSpaceChain)
+    val pointB = ImagePoint(x2, y2).toChildSpace(imageSpaceChain)
+
+    return ImageBox.from2P(
+        x1 = pointA.x, y1 = pointA.y, x2 = pointB.x, y2 = pointB.y
+    )
+}
