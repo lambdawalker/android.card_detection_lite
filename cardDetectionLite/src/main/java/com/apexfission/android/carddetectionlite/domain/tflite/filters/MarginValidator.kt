@@ -1,47 +1,37 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
-import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeature
+import android.graphics.Bitmap
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 
 /**
  * A [CardValidator] that checks if a detection is within a specified margin from the image edges.
  *
- * This is useful for filtering out objects that are partially cut off at the borders of the image.
+ * Useful for filtering out objects that are partially cut off at image borders.
  *
- * @property margin The minimum required distance, in pixels, from the image edges.
- *                  A detection is considered invalid if any of its sides are closer to the
- *                  corresponding image edge than this margin.
+ * @property margin The required minimum distance in pixels from the image edges.
  */
-class MarginValidator(private val margin: Int = 20) : CardValidator {
+class MarginValidator(private val margin: UInt = 20u) : CardValidator {
     /**
-     * Validates that the [com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeature] is within the specified margin.
+     * Validates that the candidate's bounding box is at least [margin] pixels away from image borders.
      *
-     * @param extractedFeature The feature to validate.
-     * @param contextWidth The width of the source image.
-     * @param contextHeight The height of the source image.
-     * @return `true` if the feature's bounding box is entirely within the defined margins, `false` otherwise.
+     * @param detection The candidate detection to validate.
+     * @param previousCardDetection The previous accepted detection, if available.
+     * @param bitmap The frame image bitmap.
+     * @return `true` if all sides of the box satisfy the margin requirement, `false` otherwise.
      */
     override fun isValid(
-        extractedFeature: ExtractedFeature,
-        contextWidth: Int,
-        contextHeight: Int,
-        originalWidth: Int,
-        originalHeight: Int
+        detection: Detection, previousCardDetection: Detection?, bitmap: Bitmap
     ): Boolean {
-        if (margin <= 0) return true
+        val w = bitmap.width.toUInt()
+        val h = bitmap.height.toUInt()
 
-        // Use the dimensions that match the feature's coordinate space.
-        // Assuming coordinates are scaled to contextWidth/Height here.
-        val w = contextWidth
-        val h = contextHeight
+        if (margin * 2u >= w || margin * 2u >= h) return false
 
-        // Defensive check: Ensure margin doesn't exceed image dimensions
-        if (margin * 2 >= w || margin * 2 >= h) return false
+        val box = detection.box
 
-        val coordinates = extractedFeature.contextCoordinates
-
-        return coordinates.top >= margin &&
-            coordinates.left >= margin &&
-            coordinates.right <= (w - margin) &&
-            coordinates.bottom <= (h - margin)
+        return box.y >= margin &&
+            box.x >= margin &&
+            box.x2 <= (w - margin) &&
+            box.y2 <= (h - margin)
     }
 }

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,13 +17,16 @@ class MainViewModel : ViewModel() {
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
     val useCloud: Boolean = false
 
+
     fun onDetection(card: CardDetection) {
-        if (!card.isNewDetection && card.id == null) return
+        if (card.lockingStatus != LockingStatus.NewCard && card.id == null) return
         if (!_isDetectionEnabled.value) return
+        Log.d("onDetection", "detection id: ${card.id}, locking status: ${card.lockingStatus}")
 
         viewModelScope.launch {
             try {
                 _isDetectionEnabled.value = false
+                Log.d("onDetection", "detection id: ${card.id}, locking status: ${card.lockingStatus}")
 
                 // The ViewModel doesn't care about Dispatchers;
                 // it just calls the function and waits.
@@ -42,16 +46,16 @@ class MainViewModel : ViewModel() {
 
     // OPTION A: Cloud-based (Network/IO)
     private suspend fun performCloudOcr(card: CardDetection) = withContext(Dispatchers.IO) {
-        Log.d("OCR", "Running Cloud OCR (Network bound)")
-        withContext(Dispatchers.IO){
+        Log.d("OCR-X", "Running Cloud OCR (Network bound)")
+        withContext(Dispatchers.IO) {
             // api.uploadAndRecognize(card.image)
         }
     }
 
     // OPTION B: On-Device (CPU/Math)
     private suspend fun performOnDeviceOcr(card: CardDetection) = withContext(Dispatchers.Default) {
-        Log.d("OCR", "Running On-Device OCR (CPU bound)")
-        withContext(Dispatchers.Default){
+        Log.d("OCR-X", "Running On-Device OCR (CPU bound)")
+        withContext(Dispatchers.Default) {
             // localLibrary.process(card.bitmap)
         }
     }

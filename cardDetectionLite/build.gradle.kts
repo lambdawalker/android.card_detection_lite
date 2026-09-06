@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.LibraryExtension
+import com.android.build.gradle.BaseExtension
 
 plugins {
     alias(libs.plugins.android.library)
@@ -8,21 +9,33 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.36.0"
 }
 
-extensions.configure<LibraryExtension>  {
+extensions.configure<LibraryExtension> {
     namespace = "com.apexfission.android.carddetectionlite"
     compileSdk = 36
 
     defaultConfig {
         minSdk = 26
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         consumerProguardFiles("consumer-rules.pro")
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+        testInstrumentationRunnerArguments["useTestStorageService"] = "true"
+        if (project.hasProperty("imageTestsOnly")) {
+            testInstrumentationRunnerArguments["annotation"] = "com.apexfission.android.carddetectionlite.GenerateImage"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+
+        debug {
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
     }
 
@@ -34,6 +47,8 @@ extensions.configure<LibraryExtension>  {
     buildFeatures {
         compose = true
     }
+
+
 }
 
 kotlin {
@@ -41,6 +56,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":coordinates"))
+
     implementation(libs.androidx.compose.material.icons.extended)
 
     /* -------------------- CameraX -------------------- */
@@ -48,12 +65,20 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.junit.ktx)
+
+    implementation("androidx.media3:media3-inspector:1.11.0")
+    implementation("androidx.media3:media3-inspector-frame:1.11.0")
 
     /* ---------------- TensorFlow Lite ---------------- */
     implementation(libs.litert.gpu)
-    implementation(libs.litert.support){
+    implementation(libs.litert.support) {
         exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
     }
+
+    /* -------------------- ExoPlayer -------------------- */
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
 
     implementation(libs.text.recognition)
     implementation(libs.accompanist.permissions)
@@ -70,14 +95,54 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
+    androidTestImplementation(project(":tfmodel"))
+    androidTestImplementation("androidx.test.services:storage:1.4.2")
+    androidTestUtil("androidx.test.services:test-services:1.4.2")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 }
+
+
+
+
+tasks.register<Copy>("runTestsAndExtractImages") {
+    description = "Runs UI tests, copies generated images to the project, and cleans the device."
+    group = "verification"
+
+    dependsOn("connectedDebugAndroidTest")
+    from(layout.buildDirectory.dir("outputs/connected_android_test_additional_output"))
+    include("**/*.png")
+    includeEmptyDirs = false
+
+    // Intercept the path and strip the first 3 folders
+    // (e.g. debugAndroidTest/connected/emulator_name/)
+    eachFile {
+        val segments = relativePath.segments
+        if (segments.size > 3) {
+            // Drops the top 3 directories and joins the rest back together
+            path = segments.drop(3).joinToString("/")
+        }
+    }
+
+    into(layout.projectDirectory.dir("test/results/detection"))
+
+    doLast {
+        // Asks the Android Gradle Plugin for the exact path to adb.exe
+        val adbPath = project.extensions.getByType<BaseExtension>().adbExecutable.absolutePath
+
+        ProcessBuilder(adbPath, "shell", "rm", "-rf", "/sdcard/googletest/test_outputfiles/*").start().waitFor()
+
+        println("Cleaned up test images from the device.")
+    }
+}
+
+
 
 mavenPublishing {
     publishToMavenCentral()
@@ -86,16 +151,14 @@ mavenPublishing {
 
 mavenPublishing {
     coordinates(
-        "com.apexfission.android.carddetectionlite",
-        "core",
-        "0.1.0-B2"
+        "com.apexfission.android.carddetectionlite", "core", "0.1.0-B2"
     )
 
     pom {
         name.set("Card Detection Lite")
         description.set("Card Detection Lite is a high-performance Android module for real-time ID detection using Sentinel-Card and TFLite. Built with Jetpack Compose and CameraX, it leverages GPU acceleration for rapid inference. Key features include an auto-cutout tool, a lock-on process, and intelligent auto-focus.")
         inceptionYear.set("2026")
-        url.set("https://github.com/lambdawalker/android.card_detection_lite")
+        url.set("https.github.com/lambdawalker/android.card_detection_lite")
 
         licenses {
             license {
@@ -120,3 +183,5 @@ mavenPublishing {
         }
     }
 }
+
+

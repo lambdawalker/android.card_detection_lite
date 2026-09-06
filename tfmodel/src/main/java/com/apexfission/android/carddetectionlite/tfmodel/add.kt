@@ -25,7 +25,7 @@ val ModelCatalog.TfLite.Companion.classes: Map<Int, String>
         8 to "qrcode"
     )
 
-val ModelCatalog.TfLite.Companion.cardClasses: List<Int>
-    get() = listOf(0, 1, 2)
+val ModelCatalog.TfLite.Companion.cardClasses: Set<Int>
+    get() = setOf(0, 1, 2)
 
 

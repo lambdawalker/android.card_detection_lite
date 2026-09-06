@@ -1,7 +1,8 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
-import com.apexfission.android.carddetectionlite.domain.tflite.model.RawDetection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
 import kotlin.math.max
 import kotlin.math.min
 
@@ -59,48 +60,28 @@ class YoloPostProcessor(
      * Executes the entire post-processing pipeline on the raw output from the TFLite interpreter.
      *
      * @param output The flattened `FloatArray` directly from the TFLite model's output tensor.
-     * @param contextWidth The width of the image after any initial cropping, but before letterboxing.
-     *                     This is the coordinate space the decoded detections will be relative to first.
-     * @param contextHeight The height of the image after any initial cropping.
-     * @param lbScale The scale factor that was applied to the cropped image to fit it into the
-     *                letterbox canvas.
-     * @param padX The horizontal padding (on one side) added during letterboxing.
-     * @param padY The vertical padding (on one side) added during letterboxing.
-     * @param originalWidth The width of the original, full-sized camera image.
-     * @param originalHeight The height of the original, full-sized camera image.
-     * @return A final, clean list of [Detection] objects with coordinates normalized to the `originalWidth`
-     *         and `originalHeight`.
      */
     fun process(
-        output: FloatArray, contextWidth: Int, contextHeight: Int, lbScale: Float, padX: Float, padY: Float, originalWidth: Int, originalHeight: Int
+        output: FloatArray, letterboxResult: LetterboxResult
     ): List<Detection> {
-        // Step 1: Decode the flat float array into detections, removing the letterbox padding.
-        // The coordinates are now relative to the 'context' (cropped) image.
-        val raw = decodeToCropNormalized(output, contextWidth, contextHeight, lbScale, padX, padY)
+        val rawDetections = decodeDetections(
+            output = output, lbScale = letterboxResult.scale, padX = letterboxResult.padX, padY = letterboxResult.padY
+        )
 
-        // Step 2: Remap coordinates from the 'context' space to the 'original' full image space.
-        val processed = if (contextWidth == originalWidth && contextHeight == originalHeight) {
-            // If there was no initial crop, the context and original are the same.
-            raw.map {
-                Detection(it.x1Pct, it.y1Pct, it.x2Pct, it.y2Pct, it.x1Pct, it.y1Pct, it.x2Pct, it.y2Pct, it.confidence, it.classId)
-            }
-        } else {
-            mapFromCropToOriginal(raw, contextWidth, contextHeight, originalWidth, originalHeight)
-        }
-
-        // Step 3: Apply Non-Max Suppression to eliminate duplicate detections.
-        return nms(processed)
+        return nms(rawDetections)
     }
 
     /** Decodes the raw model output, reversing the letterboxing transformation. */
-    private fun decodeToCropNormalized(
-        output: FloatArray, cropW: Int, cropH: Int, lbScale: Float, padX: Float, padY: Float
-    ): List<RawDetection> {
-        val detections = ArrayList<RawDetection>(128)
+    private fun decodeDetections(
+        output: FloatArray, lbScale: Float, padX: Float, padY: Float
+    ): ArrayList<Detection> {
+        val detections = ArrayList<Detection>(128)
+
         val isBoxesFirst = outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES
         val strideBox = if (isBoxesFirst) 1 else outAttrs
         val strideAttr = if (isBoxesFirst) outBoxes else 1
-        val scale = if (outputScalingMode == OutputScalingMode.NONE) 1f else inputImageWidth.toFloat()
+
+        val modelInputImageWidth = if (outputScalingMode == OutputScalingMode.NONE) 1f else inputImageWidth.toFloat()
 
         for (i in 0 until outBoxes) {
             val bIdx = i * strideBox
@@ -119,62 +100,46 @@ class YoloPostProcessor(
             if (maxClassScore < scoreThreshold) continue
 
             // Extract coordinates.
-            val cxI = output[bIdx]
-            val cyI = output[bIdx + strideAttr]
-            val wI = output[bIdx + 2 * strideAttr]
-            val hI = output[bIdx + 3 * strideAttr]
-            val halfW = (wI * scale) / 2f
-            val halfH = (hI * scale) / 2f
+
+            //centerPoint
+            val cx = output[bIdx]
+            val cy = output[bIdx + strideAttr]
+
+            //size
+            val w = output[bIdx + 2 * strideAttr]
+            val h = output[bIdx + 3 * strideAttr]
+
+            val halfW = (w * modelInputImageWidth) / 2f
+            val halfH = (h * modelInputImageWidth) / 2f
 
             // Reverse the letterbox transformation: remove padding and apply inverse scale.
-            val x1C = ((cxI * scale - halfW) - padX) / lbScale
-            val y1C = ((cyI * scale - halfH) - padY) / lbScale
-            val x2C = ((cxI * scale + halfW) - padX) / lbScale
-            val y2C = ((cyI * scale + halfH) - padY) / lbScale
+            val x1 = ((cx * modelInputImageWidth - halfW) - padX) / lbScale
+            val y1 = ((cy * modelInputImageWidth - halfH) - padY) / lbScale
+            val x2 = ((cx * modelInputImageWidth + halfW) - padX) / lbScale
+            val y2 = ((cy * modelInputImageWidth + halfH) - padY) / lbScale
 
             // Normalize coordinates to the cropped image dimensions and store.
-            detections += RawDetection(
-                (x1C / cropW).coerceIn(0f, 1f),
-                (y1C / cropH).coerceIn(0f, 1f),
-                (x2C / cropW).coerceIn(0f, 1f),
-                (y2C / cropH).coerceIn(0f, 1f),
-                maxClassScore,
-                bestCls
+            detections += Detection(
+                ImageBox.from2P(
+                    x1 = x1.toUInt(), y1 = y1.toUInt(), x2 = x2.toUInt(), y2 = y2.toUInt()
+                ), maxClassScore, bestCls
             )
         }
+
         return detections
     }
 
-    /** Translates coordinates from a centered crop/ROI back to the full original image space. */
-    private fun mapFromCropToOriginal(
-        detections: List<RawDetection>, width: Int, height: Int, originalWidth: Int, originalHeight: Int
-    ): List<Detection> {
-        val xFactor = width.toFloat() / originalWidth
-        val yFactor = height.toFloat() / originalHeight
-        val xOffset = (1f - xFactor) / 2f
-        val yOffset = (1f - yFactor) / 2f
-        return detections.map {
-            Detection(
-                it.x1Pct * xFactor + xOffset,
-                it.y1Pct * yFactor + yOffset,
-                it.x2Pct * xFactor + xOffset,
-                it.y2Pct * yFactor + yOffset,
-                it.x1Pct,
-                it.y1Pct,
-                it.x2Pct,
-                it.y2Pct,
-                it.confidence,
-                it.classId
-            )
-        }
-    }
-
     /** An optimized Non-Max Suppression algorithm. */
-    private fun nms(detections: List<Detection>): List<Detection> {
+    private fun nms(detections: ArrayList<Detection>): List<Detection> {
         if (detections.isEmpty()) return emptyList()
         val sorted = detections.sortedByDescending { it.confidence }
         val size = sorted.size
-        val areas = FloatArray(size) { i -> (sorted[i].x2Pct - sorted[i].x1Pct) * (sorted[i].y2Pct - sorted[i].y1Pct) }
+
+        val areas = FloatArray(size) { i ->
+            val box = sorted[i].box
+            ((box.x2 - box.x) * (box.y2 - box.y)).toFloat()
+        }
+
         val suppressed = BooleanArray(size)
         val keep = ArrayList<Detection>(min(size, maxNmsCandidates))
 
@@ -187,20 +152,27 @@ class YoloPostProcessor(
             for (j in i + 1 until size) {
                 if (suppressed[j]) continue
                 val next = sorted[j]
-                if (next.classId == best.classId && calculateIoU(best, areas[i], next, areas[j]) > iouThreshold) {
+
+                val isSameClass = next.classId == best.classId
+                if (!isSameClass) continue
+
+                val iou = calculateIoU(best.box, areas[i], next.box, areas[j])
+                if (iou > iouThreshold) {
                     suppressed[j] = true
                 }
             }
         }
+
         return keep
     }
 
     /** Calculates the Intersection over Union of two detections. */
-    private fun calculateIoU(a: Detection, areaA: Float, b: Detection, areaB: Float): Float {
-        if (a.x1Pct > b.x2Pct || a.x2Pct < b.x1Pct || a.y1Pct > b.y2Pct || a.y2Pct < b.y1Pct) return 0f
-        val interW = max(0f, min(a.x2Pct, b.x2Pct) - max(a.x1Pct, b.x1Pct))
-        val interH = max(0f, min(a.y2Pct, b.y2Pct) - max(a.y1Pct, b.y1Pct))
+    private fun calculateIoU(a: ImageBox, areaA: Float, b: ImageBox, areaB: Float): Float {
+        if (a.x > b.x2 || a.x2 < b.x || a.y > b.y2 || a.y2 < b.y) return 0f
+
+        val interW = max(0u, min(a.x2, b.x2) - max(a.x, b.x)).toFloat()
+        val interH = max(0u, min(a.y2, b.y2) - max(a.y, b.y)).toFloat()
         val inter = interW * interH
-        return inter / (areaA + areaB - inter + 1e-6f)
+        return (inter / (areaA + areaB - inter + 1e-6f))
     }
 }

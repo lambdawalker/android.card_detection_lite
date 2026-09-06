@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.CAMERA" />
+
     <uses-feature android:name="android.hardware.camera" />
 
     <application
@@ -13,9 +14,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CardDetectionTest">
+        <activity
+            android:name=".CardDetectionSimulationActivity"
+            android:exported="true"
+            android:label="@string/demo"
+            android:theme="@style/Theme.CardDetectionTest" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".CardDetectionActivity"
             android:exported="true"
             android:label="@string/demo"
             android:theme="@style/Theme.CardDetectionTest">

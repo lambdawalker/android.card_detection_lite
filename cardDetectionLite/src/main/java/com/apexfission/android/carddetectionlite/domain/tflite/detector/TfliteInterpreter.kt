@@ -246,9 +246,9 @@ class TfliteInterpreter(
     @Synchronized
     override fun close() {
         if (isClosed) return
-        isClosed = true
         interpreter.close()
         gpuDelegate?.close()
         gpuDelegate = null
+        isClosed = true
     }
 }
