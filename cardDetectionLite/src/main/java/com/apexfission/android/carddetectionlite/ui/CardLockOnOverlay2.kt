@@ -1,7 +1,5 @@
 package com.apexfission.android.carddetectionlite.ui
 
-import android.graphics.BlurMaskFilter
-
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -17,20 +15,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.asAndroidPath
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import kotlin.math.hypot
-import kotlin.math.max
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
 import kotlin.math.min
 
 /**
@@ -47,11 +38,11 @@ import kotlin.math.min
  *                    to the absolute pixel coordinates of the screen.
  */
 @Composable
-fun CardLockOnOverlay(
-    activeDetection: CardDetection?, scalingInfo: PreviewScalingInfo
+fun CardLockOnOverlay2(
+    activeDetection: CardDetection2?, imageSpaceChain: ImageSpaceChain
 ) {
     val card = activeDetection?.card ?: return
-    val det = card.detection
+    val box = card.box.toChildSpace(imageSpaceChain)
     val lockOnProgress = activeDetection.lockOnProgress
 
     val tweenSpec = tween<Float>(durationMillis = 200, easing = FastOutSlowInEasing)
@@ -60,10 +51,10 @@ fun CardLockOnOverlay(
         stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy
     )
 
-    val smoothX1 by animateFloatAsState(det.x1Pct, tweenSpec, label = "x1")
-    val smoothY1 by animateFloatAsState(det.y1Pct, tweenSpec, label = "y1")
-    val smoothX2 by animateFloatAsState(det.x2Pct, tweenSpec, label = "x2")
-    val smoothY2 by animateFloatAsState(det.y2Pct, tweenSpec, label = "y2")
+    val smoothX1 by animateFloatAsState(box.x.toFloat(), tweenSpec, label = "x1")
+    val smoothY1 by animateFloatAsState(box.y.toFloat(), tweenSpec, label = "y1")
+    val smoothX2 by animateFloatAsState(box.x2.toFloat(), tweenSpec, label = "x2")
+    val smoothY2 by animateFloatAsState(box.y2.toFloat(), tweenSpec, label = "y2")
     val smoothProgress by animateFloatAsState(
         targetValue = lockOnProgress.coerceIn(0f, 1f), animationSpec = progressSpring, label = "progress"
     )
@@ -83,26 +74,14 @@ fun CardLockOnOverlay(
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val screenW = size.width
-        val screenH = size.height
-
-        val scale = max(screenW / scalingInfo.fullW, screenH / scalingInfo.fullH)
-        val offsetX = (screenW - scalingInfo.fullW * scale) / 2f
-        val offsetY = (screenH - scalingInfo.fullH * scale) / 2f
-
-        val x1 = (smoothX1 * scalingInfo.cropW) * scale + offsetX
-        val y1 = (smoothY1 * scalingInfo.cropH) * scale + offsetY
-        val x2 = (smoothX2 * scalingInfo.cropW) * scale + offsetX
-        val y2 = (smoothY2 * scalingInfo.cropH) * scale + offsetY
-
         val idlePadding = 28.dp.toPx()
         val lockedPadding = 4.dp.toPx()
         val currentPadding = lerpF(idlePadding, lockedPadding, smoothProgress)
 
-        val left = x1 - currentPadding
-        val top = y1 - currentPadding
-        val right = x2 + currentPadding
-        val bottom = y2 + currentPadding
+        val left = smoothX1 - currentPadding
+        val top = smoothY1 - currentPadding
+        val right = smoothX2 + currentPadding
+        val bottom = smoothY2 + currentPadding
 
         val frameWidth = (right - left).coerceAtLeast(1f)
         val frameHeight = (bottom - top).coerceAtLeast(1f)
@@ -235,126 +214,3 @@ fun CardLockOnOverlay(
     }
 }
 
-data class RoundedSegment(
-    val points: List<Pair<Float, Float>>, val rounded: Boolean, val isCorner: Boolean
-)
-
-fun DrawScope.drawBlurredPath(
-    points: List<Pair<Float, Float>>,
-    blurRadius: Float,
-    color: Color,
-    strokeWidth: Float,
-    blurStyle: BlurMaskFilter.Blur = BlurMaskFilter.Blur.NORMAL,
-    rounded: Boolean = false,
-    cornerRadius: Float = 0f
-) {
-    if (points.size < 2) return
-
-    val path = if (rounded && points.size >= 3) {
-        buildRoundedPolylinePath(points, cornerRadius.coerceAtLeast(strokeWidth * 0.75f))
-    } else {
-        Path().apply {
-            val (startX, startY) = points.first()
-            moveTo(startX, startY)
-
-            for (i in 1 until points.size) {
-                val (x, y) = points[i]
-                lineTo(x, y)
-            }
-        }
-    }
-
-    drawIntoCanvas { canvas ->
-        val paint = Paint().asFrameworkPaint().apply {
-            isAntiAlias = true
-            style = android.graphics.Paint.Style.STROKE
-            this.strokeWidth = strokeWidth
-            this.color = color.toArgb()
-            strokeCap = android.graphics.Paint.Cap.ROUND
-            strokeJoin = android.graphics.Paint.Join.ROUND
-
-            if (blurRadius > 0f) {
-                maskFilter = BlurMaskFilter(blurRadius, blurStyle)
-            }
-        }
-
-        canvas.nativeCanvas.drawPath(path.asAndroidPath(), paint)
-    }
-}
-
-fun DrawScope.drawGlowPath(
-    points: List<Pair<Float, Float>>,
-    blurRadius: Float,
-    color: Color,
-    strokeWidth: Float,
-    rounded: Boolean = false,
-    cornerRadius: Float = 0f,
-) {
-    drawBlurredPath(
-        points = points, blurRadius = blurRadius, color = color, strokeWidth = strokeWidth, rounded = rounded, cornerRadius = cornerRadius
-    )
-
-    drawBlurredPath(
-        points = points,
-        blurRadius = blurRadius / 2f,
-        color = Color.White.copy(alpha = 0.65f),
-        strokeWidth = strokeWidth * 0.75f,
-        rounded = rounded,
-        cornerRadius = cornerRadius
-    )
-
-    drawBlurredPath(
-        points = points, blurRadius = 0f, color = color, strokeWidth = strokeWidth, rounded = rounded, cornerRadius = cornerRadius
-    )
-}
-
-private fun buildRoundedPolylinePath(
-    points: List<Pair<Float, Float>>, radius: Float
-): Path {
-    val result = Path()
-    if (points.size < 2) return result
-
-    val pts = points.map { Offset(it.first, it.second) }
-    result.moveTo(pts.first().x, pts.first().y)
-
-    if (pts.size == 2) {
-        result.lineTo(pts[1].x, pts[1].y)
-        return result
-    }
-
-    for (i in 1 until pts.lastIndex) {
-        val prev = pts[i - 1]
-        val curr = pts[i]
-        val next = pts[i + 1]
-
-        val v1x = curr.x - prev.x
-        val v1y = curr.y - prev.y
-        val v2x = next.x - curr.x
-        val v2y = next.y - curr.y
-
-        val len1 = hypot(v1x.toDouble(), v1y.toDouble()).toFloat()
-        val len2 = hypot(v2x.toDouble(), v2y.toDouble()).toFloat()
-
-        if (len1 <= 0.001f || len2 <= 0.001f) {
-            result.lineTo(curr.x, curr.y)
-            continue
-        }
-
-        val cut = min(radius, min(len1 / 2f, len2 / 2f))
-
-        val startX = curr.x - (v1x / len1) * cut
-        val startY = curr.y - (v1y / len1) * cut
-        val endX = curr.x + (v2x / len2) * cut
-        val endY = curr.y + (v2y / len2) * cut
-
-        result.lineTo(startX, startY)
-        result.quadraticBezierTo(curr.x, curr.y, endX, endY)
-    }
-
-    result.lineTo(pts.last().x, pts.last().y)
-    return result
-}
-
-fun lerpF(start: Float, stop: Float, fraction: Float): Float {
-    return start + (stop - start) * fraction.coerceIn(0f, 1f)
-}

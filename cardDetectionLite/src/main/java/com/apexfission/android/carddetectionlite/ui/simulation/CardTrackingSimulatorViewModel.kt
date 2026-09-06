@@ -3,7 +3,6 @@ package com.apexfission.android.carddetectionlite.ui.simulation
 import android.app.Application
 import android.graphics.Bitmap
 import android.os.SystemClock
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
@@ -26,7 +25,7 @@ class CardTrackingSimulatorViewModel(
     cardFilters: List<CardValidator2>,
     private val inferenceIntervalMs: Long,
     lockOnThreshold: Int,
-    noDetectionCountLimit:Int,
+    noDetectionCountLimit: Int,
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
@@ -70,18 +69,15 @@ class CardTrackingSimulatorViewModel(
                 val card: CardDetection2? = detector.track(bitmap)
 
                 if (card == null) {
-                    Log.d("CardTrackingSimulatorViewModel", "Card detection failed")
                     _cardDetection.value = null
                     return@launch
                 }
 
                 _cardDetection.value = card
-
-                Log.d("CardTrackingSimulatorViewModel", "Calling onDetection with: $card")
                 onDetection(card)
 
-            } catch (t: Throwable) {
-                Log.e("CardTrackingSimulatorViewModel", "Inference failed", t)
+            } catch (_: Throwable) {
+
             }
         }
     }

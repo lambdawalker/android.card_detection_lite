@@ -45,7 +45,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         scoreThreshold = 0.3f,
                         showBoundingBoxes = true,
                         showClassNames = true,
-                        showLockOnProgress = false,
+                        showLockOnProgress = true,
                         isDetectionEnabled = isDetectionEnabled,
                         onCardDetection = mainViewModel::onDetection2,
                         cardFilters = listOf(
