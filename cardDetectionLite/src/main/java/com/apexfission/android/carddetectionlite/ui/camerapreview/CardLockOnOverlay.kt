@@ -1,7 +1,6 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import android.graphics.BlurMaskFilter
-
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -28,30 +27,24 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
 import kotlin.math.hypot
-import kotlin.math.max
 import kotlin.math.min
 
 /**
  * A highly stylized and animated overlay that provides visual feedback for the card detection "lock-on" process.
  *
- * This Composable draws a futuristic, glowing frame around the detected card. The frame's appearance
- * and animations change dynamically based on the `lockOnProgress` of the detection, creating a rich
- * user experience that communicates the state of the detection process.
- *
- * @param activeDetection The current [CardDetection] from the ViewModel. The overlay uses this object's
- *                        `lockOnProgress` to drive its animations and its card's coordinates to position
- *                        the frame. If this is `null`, the overlay will not be drawn.
- * @param scalingInfo The [PreviewScalingInfo] necessary to map the detection's normalized coordinates
- *                    to the absolute pixel coordinates of the screen.
+ * @param activeDetection The current [CardDetection2] from the ViewModel.
+ * @param imageSpaceChain The [ImageSpaceChain] used to map the detection coordinates to screen space.
  */
 @Composable
 fun CardLockOnOverlay(
-    activeDetection: CardDetection?, scalingInfo: PreviewScalingInfo
+    activeDetection: CardDetection2?, imageSpaceChain: ImageSpaceChain
 ) {
     val card = activeDetection?.card ?: return
-    val det = card.detection
+    val box = card.box.toChildSpace(imageSpaceChain)
     val lockOnProgress = activeDetection.lockOnProgress
 
     val tweenSpec = tween<Float>(durationMillis = 200, easing = FastOutSlowInEasing)
@@ -60,10 +53,10 @@ fun CardLockOnOverlay(
         stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy
     )
 
-    val smoothX1 by animateFloatAsState(det.x1Pct, tweenSpec, label = "x1")
-    val smoothY1 by animateFloatAsState(det.y1Pct, tweenSpec, label = "y1")
-    val smoothX2 by animateFloatAsState(det.x2Pct, tweenSpec, label = "x2")
-    val smoothY2 by animateFloatAsState(det.y2Pct, tweenSpec, label = "y2")
+    val smoothX1 by animateFloatAsState(box.x.toFloat(), tweenSpec, label = "x1")
+    val smoothY1 by animateFloatAsState(box.y.toFloat(), tweenSpec, label = "y1")
+    val smoothX2 by animateFloatAsState(box.x2.toFloat(), tweenSpec, label = "x2")
+    val smoothY2 by animateFloatAsState(box.y2.toFloat(), tweenSpec, label = "y2")
     val smoothProgress by animateFloatAsState(
         targetValue = lockOnProgress.coerceIn(0f, 1f), animationSpec = progressSpring, label = "progress"
     )
@@ -83,26 +76,14 @@ fun CardLockOnOverlay(
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val screenW = size.width
-        val screenH = size.height
-
-        val scale = max(screenW / scalingInfo.fullW, screenH / scalingInfo.fullH)
-        val offsetX = (screenW - scalingInfo.fullW * scale) / 2f
-        val offsetY = (screenH - scalingInfo.fullH * scale) / 2f
-
-        val x1 = (smoothX1 * scalingInfo.cropW) * scale + offsetX
-        val y1 = (smoothY1 * scalingInfo.cropH) * scale + offsetY
-        val x2 = (smoothX2 * scalingInfo.cropW) * scale + offsetX
-        val y2 = (smoothY2 * scalingInfo.cropH) * scale + offsetY
-
         val idlePadding = 28.dp.toPx()
         val lockedPadding = 4.dp.toPx()
         val currentPadding = lerpF(idlePadding, lockedPadding, smoothProgress)
 
-        val left = x1 - currentPadding
-        val top = y1 - currentPadding
-        val right = x2 + currentPadding
-        val bottom = y2 + currentPadding
+        val left = smoothX1 - currentPadding
+        val top = smoothY1 - currentPadding
+        val right = smoothX2 + currentPadding
+        val bottom = smoothY2 + currentPadding
 
         val frameWidth = (right - left).coerceAtLeast(1f)
         val frameHeight = (bottom - top).coerceAtLeast(1f)
@@ -126,7 +107,7 @@ fun CardLockOnOverlay(
 
         val cornerLen = lerpF(18.dp.toPx(), 24.dp.toPx(), smoothProgress)
         val tickLen = lerpF(7.dp.toPx(), 9.dp.toPx(), smoothProgress)
-        3.dp.toPx()
+
         val midY = (top + bottom) / 2f
         val inset = radius * 0.45f
 
@@ -235,11 +216,11 @@ fun CardLockOnOverlay(
     }
 }
 
-data class RoundedSegment(
+internal data class RoundedSegment(
     val points: List<Pair<Float, Float>>, val rounded: Boolean, val isCorner: Boolean
 )
 
-fun DrawScope.drawBlurredPath(
+internal fun DrawScope.drawBlurredPath(
     points: List<Pair<Float, Float>>,
     blurRadius: Float,
     color: Color,
@@ -282,7 +263,7 @@ fun DrawScope.drawBlurredPath(
     }
 }
 
-fun DrawScope.drawGlowPath(
+internal fun DrawScope.drawGlowPath(
     points: List<Pair<Float, Float>>,
     blurRadius: Float,
     color: Color,
@@ -355,6 +336,6 @@ private fun buildRoundedPolylinePath(
     return result
 }
 
-fun lerpF(start: Float, stop: Float, fraction: Float): Float {
+internal fun lerpF(start: Float, stop: Float, fraction: Float): Float {
     return start + (stop - start) * fraction.coerceIn(0f, 1f)
 }

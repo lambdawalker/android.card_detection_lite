@@ -6,8 +6,8 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector2
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator2
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.util.concurrent.atomic.AtomicLong
@@ -22,7 +22,7 @@ class CardTrackingSimulatorViewModel(
     cardClasses: Set<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,
-    cardFilters: List<CardValidator2>,
+    cardFilters: List<CardValidator>,
     private val inferenceIntervalMs: Long,
     lockOnThreshold: Int,
     noDetectionCountLimit: Int,
@@ -33,7 +33,7 @@ class CardTrackingSimulatorViewModel(
     val cardDetection = _cardDetection.asStateFlow()
 
     private val detector = CardTracker(
-        yoloDetector = YoloDetector2(
+        yoloDetector = YoloDetector(
             context = application,
             modelPath = modelPath,
             scoreThreshold = scoreThreshold,

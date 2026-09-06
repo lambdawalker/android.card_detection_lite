@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import android.graphics.PointF
 import android.util.Log
@@ -39,50 +39,36 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.ui.simulation.createPreviewImageSpaceChain
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 
 /**
  * Encapsulates the CameraX lifecycle and provides a live camera feed.
  *
- * This component is responsible for setting up the camera, managing its lifecycle, displaying the
- * preview, and providing a stream of images for analysis. It also incorporates advanced features
- * like tap-to-focus and an intelligent auto-focus mechanism that reacts to object detection events.
- *
- * @param onFrame A high-frequency callback that provides frames from the camera for analysis.
- *                **Important:** The consumer of this callback *must* call `imageProxy.close()` on
- *                each frame to release it and allow the camera to produce the next one. Failure
- *                to do so will halt the image stream.
- * @param onFocusEvent A callback invoked when the user taps on the preview. It provides the
- *                     [CameraControl] and the tapped [MeteringPoint], allowing the caller to
- *                     initiate a focus and metering action.
- * @param lifecycleOwner The [LifecycleOwner] (typically a Composable's local lifecycle owner)
- *                       to which the CameraX lifecycle will be bound.
- * @param flashlightEnabled A boolean state that directly controls the camera's torch (flashlight).
- *                          Changes to this state will toggle the torch on or off.
- * @param analysisTargetResolution The desired resolution for the image analysis stream. Higher
- *                                 resolutions can improve detection accuracy but may impact
- *                                 performance. The specified size is a target; CameraX will
- *                                 choose the closest available resolution.
- * @param focusOn When a [CardDetection] object is passed to this parameter, it triggers a
- *                smart auto-focus and auto-exposure routine. The routine uses heuristics
- *                (size, position, cooldown) to avoid excessive focus hunting and intelligently
- *                adjusts the camera to keep the detected card sharp and well-exposed.
+ * @param onFrame A high-frequency callback that provides frames from the camera and the corresponding [ImageSpaceChain].
+ * @param onFocusEvent A callback invoked when the user taps on the preview.
+ * @param lifecycleOwner The [LifecycleOwner] to which the CameraX lifecycle will be bound.
+ * @param flashlightEnabled A boolean state that directly controls the camera's torch.
+ * @param analysisTargetResolution The desired resolution for the image analysis stream.
+ * @param focusOn When a [CardDetection2] object is passed to this parameter, it triggers a smart auto-focus routine.
  * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
  * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
  * @param showFocusIndicator A boolean flag to enable or disable the focus indicator.
  */
 @Composable
 fun CameraPreview(
-    onFrame: (ImageProxy) -> Unit,
+    onFrame: (ImageProxy, ImageSpaceChain) -> Unit,
     onFocusEvent: (CameraControl, MeteringPoint) -> Unit,
     lifecycleOwner: LifecycleOwner,
     flashlightEnabled: Boolean,
-    analysisTargetResolution: Size = Size(2048, 1080), // 2k
-    focusOn: CardDetection?,
+    analysisTargetResolution: Size = Size(2048, 1080),
+    focusOn: CardDetection2?,
     tapToFocusEnabled: Boolean = true,
     focusOnCardEnabled: Boolean = true,
     showFocusIndicator: Boolean = true,
@@ -105,7 +91,7 @@ fun CameraPreview(
 
             LaunchedEffect(currentFocusPoint) {
                 isVisible = true
-                delay(2000)
+                delay(2000.milliseconds)
                 isVisible = false
             }
 
@@ -129,8 +115,6 @@ fun CameraPreview(
         }
     }
 
-
-    // DisposableEffect manages the camera's setup and teardown, binding it to the lifecycle.
     DisposableEffect(lifecycleOwner, flashlightEnabled, tapToFocusEnabled) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
@@ -150,12 +134,29 @@ fun CameraPreview(
                     .setTargetRotation(previewView.display.rotation).setResolutionSelector(resolutionSelector)
                     .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
 
-
             val analysisUseCase = analysisUseCaseBuilder.build()
 
             analysisUseCase.setAnalyzer(analysisExecutor) { imageProxy ->
                 try {
-                    onFrameState.value(imageProxy)
+                    val rotation = imageProxy.imageInfo.rotationDegrees
+                    val uprightWidth = if (rotation % 180 == 0) imageProxy.width else imageProxy.height
+                    val uprightHeight = if (rotation % 180 == 0) imageProxy.height else imageProxy.width
+
+                    val viewWidth = previewView.width
+                    val viewHeight = previewView.height
+
+                    val spaceChain = if (viewWidth > 0 && viewHeight > 0) {
+                        createPreviewImageSpaceChain(
+                            videoWidth = uprightWidth,
+                            videoHeight = uprightHeight,
+                            viewWidth = viewWidth,
+                            viewHeight = viewHeight
+                        )
+                    } else {
+                        emptyList()
+                    }
+
+                    onFrameState.value(imageProxy, spaceChain)
                 } catch (_: Throwable) {
                     imageProxy.close()
                 }
@@ -177,8 +178,6 @@ fun CameraPreview(
                         return true
                     })
                 }
-
-
             } catch (e: Exception) {
                 Log.e("CAM", "Camera bind failed", e)
             }
@@ -192,93 +191,56 @@ fun CameraPreview(
 
     // --- Smart Auto-Focus Logic ---
     var lastFocusCenter by remember { mutableStateOf<PointF?>(null) }
-    var lastFocusArea by remember { mutableFloatStateOf(0f) } // Track the area
+    var lastFocusArea by remember { mutableFloatStateOf(0f) }
     var lastFocusTimestamp by remember { mutableLongStateOf(0L) }
     var lastCardCoordinates by remember { mutableStateOf<PointF>(PointF(-1000f, -1000f)) }
 
-    // This effect runs whenever a new `focusOn` detection is received.
     LaunchedEffect(focusOn) {
         if (!focusOnCardEnabled) return@LaunchedEffect
         val control = cameraControl ?: return@LaunchedEffect
-        val detection: CardDetection = focusOn ?: return@LaunchedEffect
+        val detection: CardDetection2 = focusOn ?: return@LaunchedEffect
 
-        val cardCoordinates = detection.card.sensorCoordinates
-        val originalSize = detection.sourceSize
-        val detContextSize = detection.contextSize
-
-        val currentArea = cardCoordinates.width().toFloat() * cardCoordinates.height()
-        val totalArea = detContextSize.width().toFloat() * detContextSize.height()
-
-        val centerX = cardCoordinates.centerX().toFloat()
-        val centerY = cardCoordinates.centerY().toFloat()
-
-        // Heuristic 1: Ignore very small detections to prevent focusing on noise.
-        if ((currentArea / totalArea) < 0.02f) return@LaunchedEffect
+        val cardBox = detection.card.box
+        val centerX = (cardBox.x + cardBox.x2).toFloat() / 2f
+        val centerY = (cardBox.y + cardBox.y2).toFloat() / 2f
+        val currentArea = cardBox.width.toFloat() * cardBox.height.toFloat()
 
         val currentTime = System.currentTimeMillis()
         val cooldownMs = 500L
-
-        // Heuristic 2: Enforce a cooldown to prevent rapid, unnecessary focus changes.
         val isCooldownOver = (currentTime - lastFocusTimestamp) >= cooldownMs
 
-        // Heuristic 3: Trigger focus if the card's position has shifted significantly.
-        val deltaX = abs(lastCardCoordinates.x - centerX) / originalSize.width().toFloat()
-        val deltaY = abs(lastCardCoordinates.y - centerY) / originalSize.height().toFloat()
+        val deltaX = abs(lastCardCoordinates.x - centerX)
+        val deltaY = abs(lastCardCoordinates.y - centerY)
         lastCardCoordinates = PointF(centerX, centerY)
 
-        val hasMovedSignificantly = deltaX > 0.05f || deltaY > 0.05f
-
-        // Heuristic 4: Trigger focus if the card's size has changed, indicating movement
-        // towards or away from the camera.
+        val hasMovedSignificantly = deltaX > 50f || deltaY > 50f
         val hasScaleChanged = lastFocusArea.let { lastArea ->
             if (lastArea == 0f) true
             else {
                 val areaChange = abs(currentArea - lastArea) / lastArea
-                areaChange > 0.10f // 10% threshold
+                areaChange > 0.10f
             }
         }
 
-        // Only trigger focus if the cooldown is over AND there's a good reason to.
         if (isCooldownOver && (hasMovedSignificantly || hasScaleChanged)) {
-            Log.d("CAM-LOG", "auto-focus $hasMovedSignificantly $hasScaleChanged")
             val viewWidth = previewView.width.toFloat()
             val viewHeight = previewView.height.toFloat()
+            if (viewWidth > 0f && viewHeight > 0f) {
+                focusPoint = PointF(centerX, centerY)
+                val factory = previewView.meteringPointFactory
+                val point = factory.createPoint(centerX, centerY)
 
-            val analysisWidth = originalSize.width().toFloat()
-            val analysisHeight = originalSize.height().toFloat()
+                val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE)
+                    .setAutoCancelDuration(3, TimeUnit.SECONDS).build()
 
-            // Avoid division by zero if view or analysis dimensions are not ready.
-            if (viewWidth == 0f || viewHeight == 0f || analysisWidth == 0f || analysisHeight == 0f) {
-                return@LaunchedEffect
-            }
-
-            val scaleFactor = maxOf(viewWidth / analysisWidth, viewHeight / analysisHeight)
-            val scaledWidth = analysisWidth * scaleFactor
-            val scaledHeight = analysisHeight * scaleFactor
-
-            // The offset to center the scaled image within the view.
-            val offsetX = (viewWidth - scaledWidth) / 2f
-            val offsetY = (viewHeight - scaledHeight) / 2f
-
-            // Apply the scale and offset to find the point in the view's coordinates.
-            val viewX = centerX * scaleFactor + offsetX
-            val viewY = centerY * scaleFactor + offsetY
-            focusPoint = PointF(viewX, viewY)
-
-            val factory = previewView.meteringPointFactory
-            val point = factory.createPoint(viewX, viewY)
-
-            val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE)
-                .setAutoCancelDuration(3, TimeUnit.SECONDS).build()
-
-            try {
-                control.startFocusAndMetering(action)
-                // Update state for the next check.
-                lastFocusCenter = focusPoint
-                lastFocusArea = currentArea
-                lastFocusTimestamp = currentTime
-            } catch (e: Exception) {
-                Log.e("CAM", "Smart auto-focus failed", e)
+                try {
+                    control.startFocusAndMetering(action)
+                    lastFocusCenter = focusPoint
+                    lastFocusArea = currentArea
+                    lastFocusTimestamp = currentTime
+                } catch (e: Exception) {
+                    Log.e("CAM", "Smart auto-focus failed", e)
+                }
             }
         }
     }

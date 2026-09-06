@@ -8,7 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector2
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHash
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
@@ -58,7 +58,7 @@ class CardTrackerTest {
     }
 
     private fun createCardTracker(context: Context): CardTracker {
-        val yoloDetector = YoloDetector2(
+        val yoloDetector = YoloDetector(
             context = context,
             modelPath = ModelCatalog.TfLite.modelPath,
             scoreThreshold = 0.3f,

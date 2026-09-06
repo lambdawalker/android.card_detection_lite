@@ -4,9 +4,9 @@ import android.graphics.Bitmap
 import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator2
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator2
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator2
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHashFromRegion
 import com.apexfission.android.carddetectionlite.domain.tflite.image.isVisuallySimilar
@@ -18,7 +18,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStat
 import java.io.Closeable
 
 /**
- * Higher-level card detector built on top of [YoloDetector2].
+ * Higher-level card detector built on top of [YoloDetector].
  *
  * Responsibilities:
  * - Runs YOLO detection.
@@ -43,10 +43,10 @@ import java.io.Closeable
  * frame. When false, frames are compared against the first frame of the current candidate.
  */
 class CardTracker(
-    private val yoloDetector: YoloDetector2,
-    private val cardValidators: List<CardValidator2> = listOf(
-        AspectRatioValidator2(),
-        MarginValidator2()
+    private val yoloDetector: YoloDetector,
+    private val cardValidators: List<CardValidator> = listOf(
+        AspectRatioValidator(),
+        MarginValidator()
     ),
     private val cardClasses: Set<Int>,
     private val lockOnThreshold: Int = 5,
@@ -337,7 +337,7 @@ class CardTracker(
     }
 
     /**
-     * Controls the enabled state of the underlying [YoloDetector2].
+     * Controls the enabled state of the underlying [YoloDetector].
      */
     var enabled: Boolean
         get() = yoloDetector.enabled

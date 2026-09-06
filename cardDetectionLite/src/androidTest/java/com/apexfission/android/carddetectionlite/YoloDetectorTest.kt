@@ -4,7 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector2
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.NumThreads
@@ -15,17 +15,17 @@ import org.junit.runner.RunWith
 
 
 /**
- * Instrumented test for [YoloDetector2] using test images and ground truth annotations
+ * Instrumented test for [YoloDetector] using test images and ground truth annotations
  * from assets (`test/images/`).
  */
 @RunWith(AndroidJUnit4::class)
-class YoloDetector2Test {
+class YoloDetectorTest {
     @Test
     @GenerateImage
     fun testDetectSingleImage() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-        val detector = YoloDetector2(
+        val detector = YoloDetector(
             context = context,
             modelPath = ModelCatalog.TfLite.modelPath,
             scoreThreshold = 0.3f,

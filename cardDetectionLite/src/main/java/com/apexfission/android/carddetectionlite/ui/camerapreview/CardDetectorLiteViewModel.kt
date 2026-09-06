@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import android.app.Application
 import android.os.SystemClock
@@ -7,15 +7,13 @@ import androidx.camera.core.CameraControl
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.MeteringPoint
-import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloCardDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.image.rotateRectToUpright
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
+import com.apexfission.android.carddetectionlite.ui.NumThreads
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,31 +22,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Holds critical metadata for mapping coordinates from the model's analysis space to the UI's
- * screen space.
- *
- * @property cropW The width, in pixels, of the image that was actually analyzed by the model
- *                 (after any initial cropping but before letterboxing).
- * @property cropH The height, in pixels, of the analyzed image.
- * @property fullW The width, in pixels, of the entire camera buffer after being rotated to an
- *                 upright orientation.
- * @property fullH The height, in pixels, of the upright camera buffer.
- */
-data class PreviewScalingInfo(
-    val cropW: Float = 0f, val cropH: Float = 0f, val fullW: Float = 0f, val fullH: Float = 0f
-)
-
-/**
  * The central ViewModel for the [CardDetectorLite] screen, orchestrating the entire detection process.
  *
  * This class serves as the bridge between the UI Composables and the underlying detection engine.
- * Its responsibilities include:
- * - Initializing and owning the `YoloCardDetector`.
- * - Receiving image frames from the `CameraPreview`.
- * - Throttling inference to maintain a stable frame rate.
- * - Launching the detection logic on a background thread.
- * - Exposing the results and other UI-related state via `StateFlow`s.
- * - Handling user interactions like tap-to-focus and toggling the flashlight.
  *
  * @param application The application instance, required by `AndroidViewModel`.
  * @param modelPath The asset path for the TFLite model.
@@ -56,45 +32,44 @@ data class PreviewScalingInfo(
  * @param useGpu A flag to enable or disable the GPU delegate for TFLite.
  * @param scoreThreshold The minimum confidence for a raw detection to be considered.
  * @param cardFilters A list of [CardValidator]s to apply to potential card detections.
- * @param canvasSize A `StateFlow` from the UI that provides the current size of the composable,
- *                   used for aspect-ratio calculations.
- * @param imageMode The [InputShape] configuration for image preprocessing.
  * @param inferenceIntervalMs The minimum interval, in milliseconds, between consecutive inferences.
  * @param lockOnThreshold The number of consecutive frames a card must be detected and visually
  *                        similar before it is considered "locked on."
+ * @param noDetectionCountLimit Number of consecutive missing detections allowed before reset.
  * @param numThreads The number of threads to use for inference on the CPU.
  */
 class CardDetectorLiteViewModel(
-    application: Application, modelPath: String, cardClasses: Set<Int>, useGpu: Boolean,
-    scoreThreshold: Float, cardFilters: List<CardValidator>, canvasSize: MutableStateFlow<IntSize>,
-    imageMode: InputShape, private val inferenceIntervalMs: Long, lockOnThreshold: Int,
+    application: Application,
+    modelPath: String,
+    cardClasses: Set<Int>,
+    useGpu: Boolean,
+    scoreThreshold: Float,
+    cardFilters: List<CardValidator>,
+    private val inferenceIntervalMs: Long,
+    lockOnThreshold: Int,
+    noDetectionCountLimit: Int,
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
-    private val _cardDetection = MutableStateFlow<CardDetection?>(null)
-    val cardDetection: StateFlow<CardDetection?> = _cardDetection.asStateFlow()
-
-    private val _scalingInfo = MutableStateFlow(PreviewScalingInfo())
-    val scalingInfo: StateFlow<PreviewScalingInfo> = _scalingInfo.asStateFlow()
-
+    private val _cardDetection = MutableStateFlow<CardDetection2?>(null)
+    val cardDetection: StateFlow<CardDetection2?> = _cardDetection.asStateFlow()
 
     private val _flashlightEnabled = MutableStateFlow(false)
     val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
 
-    private val detector = YoloCardDetector(
+    private val detector = CardTracker(
         yoloDetector = YoloDetector(
             context = application,
             modelPath = modelPath,
             scoreThreshold = scoreThreshold,
             iouThreshold = 0.45f,
             useGpu = useGpu,
-            canvasSize = canvasSize,
-            imageMode = imageMode,
             numThreads = numThreads
         ),
         cardValidators = cardFilters,
         cardClasses = cardClasses,
-        lockOnThreshold = lockOnThreshold
+        lockOnThreshold = lockOnThreshold,
+        noDetectionCountLimit = noDetectionCountLimit
     )
 
     private val lastInferenceMs = AtomicLong(0L)
@@ -121,15 +96,10 @@ class CardDetectorLiteViewModel(
     /**
      * The main entry point for processing a camera frame.
      *
-     * This function is designed to be called rapidly from the `CameraPreview`. It contains logic
-     * to throttle the rate of inference, preventing the system from being overloaded. It then
-     * calculates the necessary coordinate scaling information, dispatches the detection work to a
-     * background thread, and updates the public state flows with the results.
-     *
      * @param imageProxy The frame from the camera to be processed.
-     * @param onDetection A callback that will be invoked on a stable card detection.
+     * @param onDetection A callback that will be invoked on a card detection.
      */
-    fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection) -> Unit) {
+    fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection2) -> Unit) {
         if (!detector.enabled) return
 
         viewModelScope.launch(Dispatchers.Default) {
@@ -139,21 +109,7 @@ class CardDetectorLiteViewModel(
                 if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
                 lastInferenceMs.set(now)
 
-                val rotation = imageProxy.imageInfo.rotationDegrees
-                val uprightCrop = rotateRectToUpright(
-                    rect = imageProxy.cropRect, srcW = imageProxy.width, srcH = imageProxy.height, rotationDegrees = rotation
-                )
-
-                // Update scaling info: the dimensions of the crop vs the full upright buffer
-                val is90or270 = rotation % 180 != 0
-                val fullW = if (is90or270) imageProxy.height.toFloat() else imageProxy.width.toFloat()
-                val fullH = if (is90or270) imageProxy.width.toFloat() else imageProxy.height.toFloat()
-
-                _scalingInfo.value = PreviewScalingInfo(
-                    cropW = uprightCrop.width().toFloat(), cropH = uprightCrop.height().toFloat(), fullW = fullW, fullH = fullH
-                )
-
-                val card = detector.extractCard(imageProxy)
+                val card = detector.track(imageProxy)
 
                 if (card == null) {
                     _cardDetection.value = null

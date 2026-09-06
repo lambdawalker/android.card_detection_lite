@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator2
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator2
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
 import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
@@ -47,9 +47,9 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         showClassNames = true,
                         showLockOnProgress = true,
                         isDetectionEnabled = isDetectionEnabled,
-                        onCardDetection = mainViewModel::onDetection2,
+                        onCardDetection = mainViewModel::onDetection,
                         cardFilters = listOf(
-                            MarginValidator2(), AspectRatioValidator2()
+                            MarginValidator(), AspectRatioValidator()
                         ),
                         inferenceIntervalMs = 33L,
                         lockOnThreshold = 5,

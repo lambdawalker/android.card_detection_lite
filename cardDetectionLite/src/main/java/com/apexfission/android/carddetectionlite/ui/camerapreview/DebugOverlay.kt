@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +17,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
+import com.apexfission.android.carddetectionlite.ui.NumThreads
 
 @Composable
 fun DebugOverlay(

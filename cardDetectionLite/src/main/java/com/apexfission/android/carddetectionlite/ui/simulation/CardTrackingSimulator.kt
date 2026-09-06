@@ -18,12 +18,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator2
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator2
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator2
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection2
-import com.apexfission.android.carddetectionlite.ui.CardLockOnOverlay2
-import com.apexfission.android.carddetectionlite.ui.DebugOverlay
+import com.apexfission.android.carddetectionlite.ui.camerapreview.CardLockOnOverlay
+import com.apexfission.android.carddetectionlite.ui.camerapreview.DebugOverlay
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -42,8 +42,8 @@ fun CardTrackingSimulator(
     showLockOnProgress: Boolean = true,
     showDebugOverlay: Boolean = true,
     scoreThreshold: Float = 0.65f,
-    cardFilters: List<CardValidator2> = listOf(
-        MarginValidator2(), AspectRatioValidator2()
+    cardFilters: List<CardValidator> = listOf(
+        MarginValidator(), AspectRatioValidator()
     ),
     onCardDetection: (CardDetection2) -> Unit,
     inferenceIntervalMs: Long = 33L,
@@ -106,7 +106,7 @@ fun CardTrackingSimulator(
 
 
             if (isDetectionEnabled && showLockOnProgress) {
-                CardLockOnOverlay2(
+                CardLockOnOverlay(
                     activeDetection = cardDetection, imageSpaceChain = space
                 )
             }
