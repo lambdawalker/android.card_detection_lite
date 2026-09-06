@@ -41,7 +41,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         modelPath = ModelCatalog.TfLite.modelPath,
                         classLabels = ModelCatalog.TfLite.classes,
                         cardClasses = ModelCatalog.TfLite.cardClasses,
-                        useGpu = true,
+                        useGpu = false,
                         scoreThreshold = 0.3f,
                         showBoundingBoxes = true,
                         showClassNames = true,
@@ -51,8 +51,9 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         cardFilters = listOf(
                             MarginValidator2(), AspectRatioValidator2()
                         ),
-                        inferenceIntervalMs = 10L,
-                        lockOnThreshold = 4,
+                        inferenceIntervalMs = 33L,
+                        lockOnThreshold = 5,
+                        noDetectionCountLimit = 8
                     )
                 }
             }

@@ -30,21 +30,23 @@ fun DebugOverlay(
     focusOnCardEnabled: Boolean,
     lockOnThreshold: Int,
     numThreads: NumThreads,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    noDetectionCountLimit: Int,
 ) {
     data class DebugItem(val name: String, val value: Any?)
 
     val debugItems = listOf(
-        DebugItem("Detection", isDetectionEnabled),
+        DebugItem("Detection Enabled", isDetectionEnabled),
         DebugItem("GPU", useGpu),
         DebugItem("BBoxes", showBoundingBoxes),
-        DebugItem("LockOn", showLockOnProgress),
-        DebugItem("TapFocus", tapToFocusEnabled),
-        DebugItem("CardFocus", focusOnCardEnabled),
-        DebugItem("Interval", inferenceIntervalMs),
-        DebugItem("LockThresh", lockOnThreshold),
+        DebugItem("Show LockOn", showLockOnProgress),
+        DebugItem("Tap to focus", tapToFocusEnabled),
+        DebugItem("Card to focus", focusOnCardEnabled),
+        DebugItem("Inference interval", inferenceIntervalMs),
+        DebugItem("Lock on threshold", lockOnThreshold),
         DebugItem("Threads", numThreads),
-        DebugItem("Input", imageMode)
+        DebugItem("Input", imageMode),
+        DebugItem("No Detection Limit", noDetectionCountLimit)
     )
 
     Column(
