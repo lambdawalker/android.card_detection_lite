@@ -32,13 +32,19 @@ fun ImageSpace.scale(x: Float, y: Float): ImageSpace =
 fun ImageSpace.scale(f: Float): ImageSpace = scale(f, f)
 
 fun ImageSpace.crop(width: UInt, height: UInt, xOffset: UInt, yOffset: UInt): ImageSpace {
+    val clampedXOffset = xOffset.coerceAtMost(this.width)
+    val clampedYOffset = yOffset.coerceAtMost(this.height)
+
+    val clampedWidth = width.coerceAtMost(this.width - clampedXOffset)
+    val clampedHeight = height.coerceAtMost(this.height - clampedYOffset)
+
     return ImageSpace(
-        width = width,
-        height = height,
+        width = clampedWidth,
+        height = clampedHeight,
         xScale = 1f,
         yScale = 1f,
-        xOffset = xOffset,
-        yOffset = yOffset
+        xOffset = clampedXOffset,
+        yOffset = clampedYOffset
     )
 }
 

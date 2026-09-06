@@ -51,6 +51,72 @@ class PointTransformationsTest {
         assertEquals(expected, result2)
     }
 
+    @Test
+    fun testImagePointToParentSpaceWithSingleChain() {
+        val chain = listOf(parentSpace, childSpace)
+        val point = ImagePoint(20U, 20U)
+        val expected = ImagePoint(110U, 110U)
+
+        val result = point.toParentSpace(chain)
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testImagePointToParentSpaceWithMultiLevelChain() {
+        val grandParentSpace = ImageSpace(width = 1000U, height = 1000U)
+        val midParentSpace = ImageSpace(
+            width = 600U,
+            height = 600U,
+            xOffset = 200U,
+            yOffset = 200U,
+            xScale = 1.0F,
+            yScale = 1.0F
+        )
+        val leafChildSpace = ImageSpace(
+            width = 300U,
+            height = 300U,
+            xOffset = 50U,
+            yOffset = 50U,
+            xScale = 2.0F,
+            yScale = 2.0F
+        )
+
+        val chain = listOf(grandParentSpace, midParentSpace, leafChildSpace)
+        val point = ImagePoint(20U, 20U)
+        val expected = ImagePoint(260U, 260U)
+
+        val result = point.toParentSpace(chain)
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testImagePointToChildSpaceWithMultiLevelChain() {
+        val grandParentSpace = ImageSpace(width = 1000U, height = 1000U)
+        val midParentSpace = ImageSpace(
+            width = 600U,
+            height = 600U,
+            xOffset = 200U,
+            yOffset = 200U,
+            xScale = 1.0F,
+            yScale = 1.0F
+        )
+        val leafChildSpace = ImageSpace(
+            width = 300U,
+            height = 300U,
+            xOffset = 50U,
+            yOffset = 50U,
+            xScale = 2.0F,
+            yScale = 2.0F
+        )
+
+        val chain = listOf(grandParentSpace, midParentSpace, leafChildSpace)
+        val point = ImagePoint(260U, 260U)
+        val expected = ImagePoint(20U, 20U)
+
+        val result = point.toChildSpace(chain)
+        assertEquals(expected, result)
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun testPointToParentSpaceOutOfBoundsThrowsException() {
         pointToParentSpace(2000U, 2000U, childSpace, parentSpace)

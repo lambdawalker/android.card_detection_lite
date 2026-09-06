@@ -54,7 +54,7 @@ class ModelsTest {
     }
 
     @Test
-    fun testImageBoxFromPS() {
+    fun testImageBoxFromPSWithUInts() {
         val box = ImageBox.fromPS(x = 5U, y = 10U, width = 45U, height = 50U)
         assertEquals(5U, box.x)
         assertEquals(10U, box.y)
@@ -62,6 +62,39 @@ class ModelsTest {
         assertEquals(60U, box.y2)
         assertEquals(45U, box.width)
         assertEquals(50U, box.height)
+    }
+
+    @Test
+    fun testImageBoxFromPSWithInts() {
+        val box = ImageBox.fromPS(x = 10, y = 20, width = 100, height = 150)
+        assertEquals(10U, box.x)
+        assertEquals(20U, box.y)
+        assertEquals(110U, box.x2)
+        assertEquals(170U, box.y2)
+        assertEquals(100U, box.width)
+        assertEquals(150U, box.height)
+    }
+
+    @Test
+    fun testImageBoxFromPSWithNegativeInts() {
+        val box = ImageBox.fromPS(x = -10, y = -20, width = -100, height = -150)
+        assertEquals(0U, box.x)
+        assertEquals(0U, box.y)
+        assertEquals(0U, box.x2)
+        assertEquals(0U, box.y2)
+        assertEquals(0U, box.width)
+        assertEquals(0U, box.height)
+    }
+
+    @Test
+    fun testImageBoxFromPSWithMixedInts() {
+        val box = ImageBox.fromPS(x = -5, y = 15, width = 30, height = -10)
+        assertEquals(0U, box.x)
+        assertEquals(15U, box.y)
+        assertEquals(30U, box.x2)
+        assertEquals(15U, box.y2)
+        assertEquals(30U, box.width)
+        assertEquals(0U, box.height)
     }
 
     @Test

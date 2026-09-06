@@ -41,6 +41,9 @@ fun pointToChildSpace(x: UInt, y: UInt, parentSpace: ImageSpace, childSpace: Ima
     val childX = (x.toDouble() - childSpace.xOffset.toDouble()) * childSpace.xScale.toDouble()
     val childY = (y.toDouble() - childSpace.yOffset.toDouble()) * childSpace.yScale.toDouble()
 
+    require(x >= 0u && y >= 0u) { "InvalidCoordinatesError: Coordinates cannot be negative." }
+    require(x <= parentSpace.width && y <= parentSpace.height) { "InvalidCoordinatesError: Coordinates cannot exceed parent space dimensions." }
+
     return ImagePoint(
         x = childX.toUInt().coerceIn(0u, childSpace.width),
         y = childY.toUInt().coerceIn(0u, childSpace.height)

@@ -18,8 +18,8 @@ fun ImagePoint.toParentSpace(parentSpace: ImageSpace, childSpace: ImageSpace): I
 
 
 fun ImagePoint.toParentSpace(chain: ImageSpaceChain): ImagePoint =
-    chain.zipWithNext().fold(this) { point, (parent, child) ->
-        pointToParentSpace(point.x, point.y, parent, child)
+    chain.reversed().zipWithNext().fold(this) { point, (child, parent) ->
+        pointToParentSpace(point.x, point.y, child, parent)
     }
 
 /**
