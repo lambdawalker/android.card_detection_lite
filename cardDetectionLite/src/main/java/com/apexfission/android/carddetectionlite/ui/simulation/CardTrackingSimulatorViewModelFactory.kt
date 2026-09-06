@@ -3,7 +3,7 @@ package com.apexfission.android.carddetectionlite.ui.simulation
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator2
+import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.ui.NumThreads
 
 class CardTrackingSimulatorViewModelFactory(
@@ -12,7 +12,7 @@ class CardTrackingSimulatorViewModelFactory(
     private val cardClasses: Set<Int>,
     private val useGpu: Boolean,
     private val scoreThreshold: Float,
-    private val cardFilters: List<CardValidator2>,
+    private val cardFilters: List<CardValidator>,
     private val inferenceIntervalMs: Long,
     private val lockOnThreshold: Int,
     private val noDetectionCountLimit: Int,

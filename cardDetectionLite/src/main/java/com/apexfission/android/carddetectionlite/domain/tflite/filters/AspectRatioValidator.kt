@@ -1,6 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
-import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeature
+import android.graphics.Bitmap
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
 import kotlin.math.max
 import kotlin.math.min
 
@@ -13,35 +14,20 @@ import kotlin.math.min
  * of the bounding box by its shortest side.
  *
  * @property minAspectRatio The minimum acceptable ratio of the longest side to the shortest side.
- *                          For example, a value of 1.4 is suitable for standard ID cards.
+ *                          For example, a value of 1.28 is suitable for standard ID cards.
  * @property maxAspectRatio The maximum acceptable ratio of the longest side to the shortest side.
- *                          For example, a value of 1.8 accommodates for some perspective skew.
+ *                          For example, a value of 1.75 accommodates for some perspective skew.
  */
 class AspectRatioValidator(
-    private val minAspectRatio: Float = 1.4f,
-    private val maxAspectRatio: Float = 1.8f
+    private val minAspectRatio: Float = 1.28f,
+    private val maxAspectRatio: Float = 1.7f
 ) : CardValidator {
-    /**
-     * Validates that the aspect ratio of the [ExtractedFeature]'s bounding box falls
-     * within the configured `min` and `max` range.
-     *
-     * @param extractedFeature The feature whose bounding box will be evaluated.
-     * @param contextWidth (Not used by this validator)
-     * @param contextHeight (Not used by this validator)
-     * @param originalWidth (Not used by this validator)
-     * @param originalHeight (Not used by this validator)
-     * @return `true` if the aspect ratio is within the valid range, `false` otherwise. Returns
-     *         `false` if the feature has a non-positive width or height.
-     */
+
     override fun isValid(
-        extractedFeature: ExtractedFeature,
-        contextWidth: Int,
-        contextHeight: Int,
-        originalWidth: Int,
-        originalHeight: Int
+        detection: Detection2, previousCardDetection: Detection2?, bitmap: Bitmap
     ): Boolean {
-        val width = extractedFeature.sensorCoordinates.width().toDouble()
-        val height = extractedFeature.sensorCoordinates.height().toDouble()
+        val width = (detection.box.x2 - detection.box.x).toFloat()
+        val height = (detection.box.y2 - detection.box.y).toFloat()
 
         if (width <= 0 || height <= 0) {
             return false
@@ -51,6 +37,6 @@ class AspectRatioValidator(
         val longestSide = max(width, height)
 
         val aspectRatio = longestSide / shortestSide
-        return aspectRatio >= minAspectRatio && aspectRatio <= maxAspectRatio
+        return aspectRatio in minAspectRatio..maxAspectRatio
     }
 }

@@ -1,6 +1,8 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
-import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeature
+import android.graphics.Bitmap
+
+import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection2
 
 /**
  * A [CardValidator] that checks if a detection is within a specified margin from the image edges.
@@ -11,37 +13,23 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFe
  *                  A detection is considered invalid if any of its sides are closer to the
  *                  corresponding image edge than this margin.
  */
-class MarginValidator(private val margin: Int = 20) : CardValidator {
-    /**
-     * Validates that the [com.apexfission.android.carddetectionlite.domain.tflite.model.ExtractedFeature] is within the specified margin.
-     *
-     * @param extractedFeature The feature to validate.
-     * @param contextWidth The width of the source image.
-     * @param contextHeight The height of the source image.
-     * @return `true` if the feature's bounding box is entirely within the defined margins, `false` otherwise.
-     */
+class MarginValidator(private val margin: UInt = 20u) : CardValidator {
     override fun isValid(
-        extractedFeature: ExtractedFeature,
-        contextWidth: Int,
-        contextHeight: Int,
-        originalWidth: Int,
-        originalHeight: Int
+        detection: Detection2, previousCardDetection: Detection2?, bitmap: Bitmap
     ): Boolean {
-        if (margin <= 0) return true
-
         // Use the dimensions that match the feature's coordinate space.
         // Assuming coordinates are scaled to contextWidth/Height here.
-        val w = contextWidth
-        val h = contextHeight
+        val w = bitmap.width.toUInt()
+        val h = bitmap.height.toUInt()
 
         // Defensive check: Ensure margin doesn't exceed image dimensions
-        if (margin * 2 >= w || margin * 2 >= h) return false
+        if (margin * 2u >= w || margin * 2u >= h) return false
 
-        val coordinates = extractedFeature.cropCoordinates
+        val box = detection.box
 
-        return coordinates.top >= margin &&
-            coordinates.left >= margin &&
-            coordinates.right <= (w - margin) &&
-            coordinates.bottom <= (h - margin)
+        return box.y >= margin &&
+            box.x >= margin &&
+            box.x2 <= (w - margin) &&
+            box.y2 <= (h - margin)
     }
 }
