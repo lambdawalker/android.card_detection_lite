@@ -26,6 +26,7 @@ class CardTrackingSimulatorViewModel(
     cardFilters: List<CardValidator2>,
     private val inferenceIntervalMs: Long,
     lockOnThreshold: Int,
+    noDetectionCountLimit:Int,
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
@@ -43,7 +44,8 @@ class CardTrackingSimulatorViewModel(
         ),
         cardValidators = cardFilters,
         cardClasses = cardClasses,
-        lockOnThreshold = lockOnThreshold
+        lockOnThreshold = lockOnThreshold,
+        noDetectionCountLimit = noDetectionCountLimit,
     )
 
     private val lastInferenceMs = AtomicLong(0L)

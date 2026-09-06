@@ -106,6 +106,7 @@ fun CardDetectorLite(
     tapToFocusEnabled: Boolean = true,
     focusOnCardEnabled: Boolean = true,
     lockOnThreshold: Int = 4,
+    noDetectionCountLimit: Int = 8,
     numThreads: NumThreads = NumThreads.Default
 ) {
     val context = LocalContext.current
@@ -194,6 +195,7 @@ fun CardDetectorLite(
                 tapToFocusEnabled = tapToFocusEnabled,
                 focusOnCardEnabled = focusOnCardEnabled,
                 lockOnThreshold = lockOnThreshold,
+                noDetectionCountLimit = noDetectionCountLimit,
                 numThreads = numThreads,
                 modifier = Modifier.align(Alignment.BottomStart)
             )

@@ -15,6 +15,7 @@ class CardTrackingSimulatorViewModelFactory(
     private val cardFilters: List<CardValidator2>,
     private val inferenceIntervalMs: Long,
     private val lockOnThreshold: Int,
+    private val noDetectionCountLimit: Int,
     private val numThreads: NumThreads,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -29,6 +30,7 @@ class CardTrackingSimulatorViewModelFactory(
                 cardFilters = cardFilters,
                 inferenceIntervalMs = inferenceIntervalMs,
                 lockOnThreshold = lockOnThreshold,
+                noDetectionCountLimit = noDetectionCountLimit,
                 numThreads = numThreads
             ) as T
         }

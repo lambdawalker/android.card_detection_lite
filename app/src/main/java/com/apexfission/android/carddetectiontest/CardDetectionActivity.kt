@@ -64,6 +64,7 @@ class CardDetectionActivity : ComponentActivity() {
                             tapToFocusEnabled = true,
                             focusOnCardEnabled = true,
                             lockOnThreshold = 4,
+                            noDetectionCountLimit = 8,
                             showDebugOverlay = true
                         )
                     }

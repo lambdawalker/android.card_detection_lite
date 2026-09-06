@@ -52,7 +52,7 @@ class CardTracker(
     private val lockOnThreshold: Int = 5,
     private val memoryDetectionTimeLimit: Long = 1000L,
     private val validateClassIdInLockOnProcess: Boolean = true,
-    private val noDetectionCountLimit: Int = 5,
+    private val noDetectionCountLimit: Int = 8,
     private val differenceHashDistanceLimit: Int = 25,
     private val allowTemporalDrift: Boolean = true
 ) : Closeable {
