@@ -93,7 +93,7 @@ data class CardDetectorPreset(
             noDetectionCountLimit = 8,
             inferenceIntervalMs = 33L,
             useGpu = true,
-            imageMode = InputShape.SquareCrop,
+            imageMode = InputShape.SquareCrop(),
             numThreads = NumThreads.Default
         )
 
@@ -108,7 +108,7 @@ data class CardDetectorPreset(
             noDetectionCountLimit = 6,
             inferenceIntervalMs = 100L,
             useGpu = false,
-            imageMode = InputShape.SquareCrop,
+            imageMode = InputShape.SquareCrop(),
             numThreads = NumThreads.CustomCount(2)
         )
     }

@@ -51,7 +51,7 @@ fun VideoPreviewWithFullFrameCapture(
 
     val onFrameRef = remember { AtomicReference(onFrame) }
     val imageSpaceChainRef = remember {
-        AtomicReference<ImageSpaceChain>(emptyList())
+        AtomicReference<ImageSpaceChain>(ImageSpaceChain.Empty)
     }
 
     var sourceSize by remember(videoUri) { mutableStateOf(IntSize.Zero) }
@@ -106,7 +106,7 @@ fun VideoPreviewWithFullFrameCapture(
 
     LaunchedEffect(sourceSize, viewSize) {
         if (sourceSize == IntSize.Zero || viewSize == IntSize.Zero) {
-            imageSpaceChainRef.set(emptyList())
+            imageSpaceChainRef.set(ImageSpaceChain.Empty)
             return@LaunchedEffect
         }
 

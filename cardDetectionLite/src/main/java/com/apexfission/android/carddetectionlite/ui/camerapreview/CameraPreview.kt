@@ -149,7 +149,7 @@ fun CameraPreview(
                             viewHeight = viewHeight
                         )
                     } else {
-                        emptyList()
+                        ImageSpaceChain.Empty
                     }
 
                     onFrameState.value(imageProxy, spaceChain)

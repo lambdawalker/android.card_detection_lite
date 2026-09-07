@@ -34,7 +34,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
 
-                    val videoUri = "android.resource://$packageName/raw/sim5".toUri()
+                    val videoUri = "android.resource://$packageName/raw/v000".toUri()
 
                     CardTrackingSimulator(
                         modifier = Modifier.padding(innerPadding),

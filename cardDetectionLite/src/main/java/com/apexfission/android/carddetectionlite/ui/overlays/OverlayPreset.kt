@@ -11,6 +11,7 @@ import androidx.compose.runtime.Immutable
  * @property showLockOnProgress When `true`, renders the animated lock-on progress frame overlay.
  * @property showDebugOverlay When `true`, displays a real-time panel with configuration state and performance metrics.
  * @property showFocusIndicator When `true`, displays a visual focus ring indicator when camera focus changes.
+ * @property showAreaOfInterest When `true`, displays the area of interest (cropping region) with background dimming.
  */
 @Immutable
 data class OverlayPreset(
@@ -19,7 +20,8 @@ data class OverlayPreset(
     val showFlashlightSwitch: Boolean = true,
     val showLockOnProgress: Boolean = true,
     val showDebugOverlay: Boolean = false,
-    val showFocusIndicator: Boolean = true
+    val showFocusIndicator: Boolean = true,
+    val showAreaOfInterest: Boolean = false
 ) {
     /**
      * Returns a copy of this [OverlayPreset] with the specified properties modified.
@@ -30,14 +32,16 @@ data class OverlayPreset(
         showFlashlightSwitch: Boolean = this.showFlashlightSwitch,
         showLockOnProgress: Boolean = this.showLockOnProgress,
         showDebugOverlay: Boolean = this.showDebugOverlay,
-        showFocusIndicator: Boolean = this.showFocusIndicator
+        showFocusIndicator: Boolean = this.showFocusIndicator,
+        showAreaOfInterest: Boolean = this.showAreaOfInterest
     ): OverlayPreset = copy(
         showBoundingBoxes = showBoundingBoxes,
         showClassNames = showClassNames,
         showFlashlightSwitch = showFlashlightSwitch,
         showLockOnProgress = showLockOnProgress,
         showDebugOverlay = showDebugOverlay,
-        showFocusIndicator = showFocusIndicator
+        showFocusIndicator = showFocusIndicator,
+        showAreaOfInterest = showAreaOfInterest
     )
 
     companion object {
@@ -50,7 +54,8 @@ data class OverlayPreset(
             showFlashlightSwitch = true,
             showLockOnProgress = true,
             showDebugOverlay = false,
-            showFocusIndicator = true
+            showFocusIndicator = true,
+            showAreaOfInterest = true
         )
 
         /**
@@ -62,7 +67,8 @@ data class OverlayPreset(
             showFlashlightSwitch = false,
             showLockOnProgress = true,
             showDebugOverlay = false,
-            showFocusIndicator = false
+            showFocusIndicator = false,
+            showAreaOfInterest = false
         )
 
         /**
@@ -74,7 +80,8 @@ data class OverlayPreset(
             showFlashlightSwitch = true,
             showLockOnProgress = true,
             showDebugOverlay = true,
-            showFocusIndicator = true
+            showFocusIndicator = true,
+            showAreaOfInterest = true
         )
     }
 }

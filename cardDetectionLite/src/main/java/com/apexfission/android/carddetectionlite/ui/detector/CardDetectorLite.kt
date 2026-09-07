@@ -27,6 +27,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginVal
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview
+import com.apexfission.android.carddetectionlite.ui.overlays.AreaOfInterest
 import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.DebugOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.DetectionOverlay
@@ -112,6 +113,13 @@ fun CardDetectorLite(
         )
 
         imageSpaceChain?.let { spaceChain ->
+            if (overlayPreset.showAreaOfInterest) {
+                AreaOfInterest(
+                    inputShape = detectorPreset.imageMode,
+                    imageSpaceChain = spaceChain
+                )
+            }
+
             if (isDetectionEnabled && overlayPreset.showBoundingBoxes) {
                 DetectionOverlay(
                     cardDetection = cardDetection,

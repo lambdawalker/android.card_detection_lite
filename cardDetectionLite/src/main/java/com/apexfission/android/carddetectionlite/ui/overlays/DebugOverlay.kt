@@ -88,7 +88,15 @@ fun DebugOverlay(
             items(debugItems) { item ->
                 val valueString = when (val value = item.value) {
                     is Long -> "${value}ms"
-                    is InputShape -> value.name
+                    is InputShape -> when (value) {
+                        is InputShape.FullImage -> "FullImage"
+                        is InputShape.CenterSquareCrop -> "CenterSquareCrop"
+                        is InputShape.SquareCrop -> "SquareCrop(top=${value.top})"
+                        is InputShape.CenterVisibleImage -> "CenterVisibleImage"
+                        is InputShape.VisibleImage -> "VisibleImage(top=${value.top})"
+                        is InputShape.CenterVisibleImageSquareCrop -> "CenterVisibleImageSquareCrop"
+                        is InputShape.VisibleImageSquareCrop -> "VisibleImageSquareCrop(top=${value.top})"
+                    }
                     is NumThreads -> value.toString()
                     null -> "Default"
                     else -> value.toString()
@@ -98,10 +106,10 @@ fun DebugOverlay(
                     is Boolean -> if (value) Color(0xFF8BC34A) else Color(0xFFE91E63)
                     is Number -> Color(0xFF2196F3)
                     is InputShape -> when (value) {
-                        InputShape.SquareCrop -> Color(0xFFFFC107)
-                        InputShape.FullImage -> Color(0xFF9C27B0)
-                        InputShape.VisibleImage -> Color(0xFF00BCD4)
-                        InputShape.VisibleImageSquareCrop -> Color(0xFFF44336)
+                        is InputShape.SquareCrop, is InputShape.CenterSquareCrop -> Color(0xFFFFC107)
+                        is InputShape.FullImage -> Color(0xFF9C27B0)
+                        is InputShape.VisibleImage, is InputShape.CenterVisibleImage -> Color(0xFF00BCD4)
+                        is InputShape.VisibleImageSquareCrop, is InputShape.CenterVisibleImageSquareCrop -> Color(0xFFF44336)
                     }
 
                     is NumThreads -> Color.White

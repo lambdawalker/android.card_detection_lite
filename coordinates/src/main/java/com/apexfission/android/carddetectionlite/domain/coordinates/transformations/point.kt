@@ -3,6 +3,8 @@ package com.apexfission.android.carddetectionlite.domain.coordinates.transformat
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.SpaceRelationship
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.toImageSpaceChain
 
 
 /**
@@ -17,10 +19,13 @@ fun ImagePoint.toParentSpace(parentSpace: ImageSpace, childSpace: ImageSpace): I
     pointToParentSpace(x = x, y = y, childSpace = childSpace, parentSpace = parentSpace)
 
 
-fun ImagePoint.toParentSpace(chain: ImageSpaceChain): ImagePoint =
-    chain.reversed().zipWithNext().fold(this) { point, (child, parent) ->
+fun ImagePoint.toParentSpace(spaces: List<ImageSpace>): ImagePoint {
+    return spaces.reversed().zipWithNext().fold(this) { point, (child, parent) ->
         pointToParentSpace(point.x, point.y, child, parent)
     }
+}
+
+fun ImagePoint.toParentSpace(chain: ImageSpaceChain): ImagePoint = translate(chain)
 
 /**
  * Extension function to transform this [ImagePoint] from a [parentSpace] frame to a [childSpace] frame.
@@ -33,7 +38,29 @@ fun ImagePoint.toParentSpace(chain: ImageSpaceChain): ImagePoint =
 fun ImagePoint.toChildSpace(parentSpace: ImageSpace, childSpace: ImageSpace): ImagePoint =
     pointToChildSpace(x = x, y = y, parentSpace = parentSpace, childSpace = childSpace)
 
-fun ImagePoint.toChildSpace(chain: ImageSpaceChain): ImagePoint =
-    chain.zipWithNext().fold(this) { point, (parent, child) ->
-        pointToChildSpace(point.x, point.y, parent, child)
+fun ImagePoint.toChildSpace(spaces: List<ImageSpace>): ImagePoint {
+    val chain = spaces.toImageSpaceChain()
+    return translate(chain)
+}
+
+fun ImagePoint.toChildSpace(chain: ImageSpaceChain): ImagePoint = translate(chain)
+
+/**
+ * Translates this [ImagePoint] through an [ImageSpaceChain] of connected spaces and relationships.
+ */
+fun ImagePoint.translate(chain: ImageSpaceChain): ImagePoint {
+    require(chain.isNotEmpty()) { "ImageSpaceChain cannot be empty" }
+    var currentPoint = this
+    var currentSpace = chain.first().space
+
+    for (i in 1 until chain.size) {
+        val node = chain[i]
+        val nextSpace = node.space
+        currentPoint = when (node.relationship) {
+            SpaceRelationship.Parent -> pointToParentSpace(currentPoint.x, currentPoint.y, currentSpace, nextSpace)
+            SpaceRelationship.Child -> pointToChildSpace(currentPoint.x, currentPoint.y, currentSpace, nextSpace)
+        }
+        currentSpace = nextSpace
     }
+    return currentPoint
+}

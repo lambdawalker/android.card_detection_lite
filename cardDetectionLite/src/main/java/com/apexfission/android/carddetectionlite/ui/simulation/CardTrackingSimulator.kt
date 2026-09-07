@@ -24,6 +24,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetecti
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
 import com.apexfission.android.carddetectionlite.ui.overlays.OverlayPreset
+import com.apexfission.android.carddetectionlite.ui.overlays.AreaOfInterest
 import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.DebugOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.DetectionOverlay
@@ -113,6 +114,13 @@ fun CardTrackingSimulator(
         val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
 
         imageSpaceChain?.let { space ->
+            if (overlayPreset.showAreaOfInterest) {
+                AreaOfInterest(
+                    inputShape = detectorPreset.imageMode,
+                    imageSpaceChain = space
+                )
+            }
+
             if (isDetectionEnabled && overlayPreset.showBoundingBoxes) {
                 DetectionOverlay(
                     cardDetection = cardDetection, imageSpaceChain = space, showClassNames = overlayPreset.showClassNames, classLabels = classLabels

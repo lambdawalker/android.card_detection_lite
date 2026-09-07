@@ -16,7 +16,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -75,7 +75,7 @@ fun DetectionOverlay(
         drawText(textLayoutResult = infoLogLayout, topLeft = Offset(10f, 108f))
 
         features.forEach { feature ->
-            val box = feature.box.toChildSpace(imageSpaceChain)
+            val box = feature.box.translate(imageSpaceChain)
 
             Log.d("DetectionOverlay2", "box: $box, classId: ${feature.classId}, confidence: ${feature.confidence}")
 

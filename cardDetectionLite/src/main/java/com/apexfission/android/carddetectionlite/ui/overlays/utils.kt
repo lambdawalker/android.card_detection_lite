@@ -2,6 +2,8 @@ package com.apexfission.android.carddetectionlite.ui.overlays
 
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.SpaceRelationship
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.chain
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.cropAtCenter
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.scale
 
@@ -37,5 +39,5 @@ fun createPreviewImageSpaceChain(
         viewHeight.toUInt()
     )
 
-    return listOf(source, scaled, cropped)
+    return source.chain(scaled, SpaceRelationship.Child).chain(cropped, SpaceRelationship.Child)
 }

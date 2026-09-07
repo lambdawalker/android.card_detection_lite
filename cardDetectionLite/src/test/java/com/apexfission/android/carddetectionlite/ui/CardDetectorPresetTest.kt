@@ -34,7 +34,7 @@ class CardDetectorPresetTest {
         assertEquals(8, preset.noDetectionCountLimit)
         assertEquals(33L, preset.inferenceIntervalMs)
         assertTrue(preset.useGpu)
-        assertEquals(InputShape.SquareCrop, preset.imageMode)
+        assertEquals(InputShape.SquareCrop(), preset.imageMode)
         assertEquals(NumThreads.Default, preset.numThreads)
     }
 
@@ -48,7 +48,7 @@ class CardDetectorPresetTest {
         assertEquals(6, preset.noDetectionCountLimit)
         assertEquals(100L, preset.inferenceIntervalMs)
         assertFalse(preset.useGpu)
-        assertEquals(InputShape.SquareCrop, preset.imageMode)
+        assertEquals(InputShape.SquareCrop(), preset.imageMode)
         assertEquals(NumThreads.CustomCount(2), preset.numThreads)
     }
 

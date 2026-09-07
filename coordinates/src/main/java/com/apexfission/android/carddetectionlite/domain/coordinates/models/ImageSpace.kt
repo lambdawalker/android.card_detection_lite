@@ -60,4 +60,50 @@ fun ImageSpace.cropAtCenter(width: UInt, height: UInt): ImageSpace {
     return crop(width, height, xOffset, yOffset)
 }
 
-typealias ImageSpaceChain = List<ImageSpace>
+/**
+ * Defines the directional relationship between connected [ImageSpace] nodes in a transformation chain.
+ */
+enum class SpaceRelationship {
+    Parent,
+    Child
+}
+
+/**
+ * A node in an [ImageSpaceChain] representing an [ImageSpace] and its relationship to the previous space.
+ */
+@Immutable
+data class ImageSpaceChainNode(
+    val space: ImageSpace,
+    val relationship: SpaceRelationship
+)
+
+/**
+ * Represents a transformation chain of connected [ImageSpaceChainNode]s.
+ */
+@Immutable
+data class ImageSpaceChain(
+    val nodes: List<ImageSpaceChainNode> = emptyList()
+) : List<ImageSpaceChainNode> by nodes {
+    companion object {
+        val Empty = ImageSpaceChain(emptyList())
+    }
+}
+
+fun ImageSpace.chain(nextSpace: ImageSpace, relationship: SpaceRelationship = SpaceRelationship.Child): ImageSpaceChain {
+    return ImageSpaceChain(
+        listOf(
+            ImageSpaceChainNode(this, SpaceRelationship.Child),
+            ImageSpaceChainNode(nextSpace, relationship)
+        )
+    )
+}
+
+fun ImageSpaceChain.chain(nextSpace: ImageSpace, relationship: SpaceRelationship = SpaceRelationship.Child): ImageSpaceChain {
+    return ImageSpaceChain(this.nodes + ImageSpaceChainNode(nextSpace, relationship))
+}
+
+fun List<ImageSpace>.toImageSpaceChain(): ImageSpaceChain {
+    return ImageSpaceChain(this.mapIndexed { index, space ->
+        ImageSpaceChainNode(space, SpaceRelationship.Child)
+    })
+}

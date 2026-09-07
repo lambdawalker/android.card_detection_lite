@@ -39,11 +39,11 @@ fun ImageBox.toChildSpace(parentSpace: ImageSpace, childSpace: ImageSpace): Imag
     )
 }
 
-fun ImageBox.toChildSpace(imageSpaceChain: ImageSpaceChain): ImageBox {
-    val pointA = ImagePoint(x, y).toChildSpace(imageSpaceChain)
-    val pointB = ImagePoint(x2, y2).toChildSpace(imageSpaceChain)
-
-    return ImageBox.from2P(
-        x1 = pointA.x, y1 = pointA.y, x2 = pointB.x, y2 = pointB.y
-    )
+/**
+ * Translates this [ImageBox] through an [ImageSpaceChain] of connected spaces and relationships.
+ */
+fun ImageBox.translate(chain: ImageSpaceChain): ImageBox {
+    val pointA = ImagePoint(x, y).translate(chain)
+    val pointB = ImagePoint(x2, y2).translate(chain)
+    return ImageBox.from2P(pointA.x, pointA.y, pointB.x, pointB.y)
 }

@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
+import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlin.math.hypot
 import kotlin.math.min
@@ -47,7 +47,7 @@ fun CardLockOnOverlay(
     activeDetection: CardDetection?, imageSpaceChain: ImageSpaceChain
 ) {
     val card = activeDetection?.card ?: return
-    val box = card.box.toChildSpace(imageSpaceChain)
+    val box = card.box.translate(imageSpaceChain)
     val lockOnProgress = activeDetection.lockOnProgress
 
     val tweenSpec = tween<Float>(durationMillis = 200, easing = FastOutSlowInEasing)
