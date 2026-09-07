@@ -3,6 +3,7 @@ package com.apexfission.android.carddetectionlite.ui.simulation
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 
@@ -23,6 +24,7 @@ class CardTrackingSimulatorViewModelFactory(
     private val validateClassIdInLockOnProcess: Boolean,
     private val differenceHashDistanceLimit: Int,
     private val allowTemporalDrift: Boolean,
+    private val preProcessingImageTransformation: PreProcessingImageTransformation,
     private val numThreads: NumThreads,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -42,6 +44,7 @@ class CardTrackingSimulatorViewModelFactory(
                 validateClassIdInLockOnProcess = validateClassIdInLockOnProcess,
                 differenceHashDistanceLimit = differenceHashDistanceLimit,
                 allowTemporalDrift = allowTemporalDrift,
+                preProcessingImageTransformation = preProcessingImageTransformation,
                 numThreads = numThreads
             ) as T
         }

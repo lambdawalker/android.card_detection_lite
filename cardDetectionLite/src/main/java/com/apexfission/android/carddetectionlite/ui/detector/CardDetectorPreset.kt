@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui.detector
 
 import androidx.compose.runtime.Immutable
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
 
 /**
  * Configuration preset for tuning card detection pipeline accuracy, performance, and power consumption.
@@ -16,7 +16,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputSha
  * @property allowTemporalDrift When true, each frame is compared to the immediately previous frame.
  * @property inferenceIntervalMs Minimum time interval in milliseconds between consecutive model inferences.
  * @property useGpu Whether to attempt GPU acceleration for TFLite inference.
- * @property imageMode Preprocessing strategy for input cropping ([InputShape]).
+ * @property preProcessingImageTransformation Preprocessing strategy for input cropping ([PreProcessingImageTransformation]).
  * @property numThreads CPU thread configuration using [NumThreads].
  */
 @Immutable
@@ -31,7 +31,7 @@ data class CardDetectorPreset(
     val allowTemporalDrift: Boolean = true,
     val inferenceIntervalMs: Long,
     val useGpu: Boolean,
-    val imageMode: InputShape,
+    val preProcessingImageTransformation: PreProcessingImageTransformation,
     val numThreads: NumThreads
 ) {
     /**
@@ -48,7 +48,7 @@ data class CardDetectorPreset(
         allowTemporalDrift: Boolean = this.allowTemporalDrift,
         inferenceIntervalMs: Long = this.inferenceIntervalMs,
         useGpu: Boolean = this.useGpu,
-        imageMode: InputShape = this.imageMode,
+        imageMode: PreProcessingImageTransformation = this.preProcessingImageTransformation,
         numThreads: NumThreads = this.numThreads
     ): CardDetectorPreset = copy(
         scoreThreshold = scoreThreshold,
@@ -61,14 +61,14 @@ data class CardDetectorPreset(
         allowTemporalDrift = allowTemporalDrift,
         inferenceIntervalMs = inferenceIntervalMs,
         useGpu = useGpu,
-        imageMode = imageMode,
+        preProcessingImageTransformation = imageMode,
         numThreads = numThreads
     )
 
     companion object {
         /**
          * Preset optimized for high detection accuracy.
-         * Uses a lower score threshold (0.35), full frame analysis ([InputShape.FullImage]),
+         * Uses a lower score threshold (0.35), full frame analysis ([PreProcessingImageTransformation.FullImage]),
          * and a higher lock-on threshold (6).
          */
         val HighAccuracy = CardDetectorPreset(
@@ -78,7 +78,7 @@ data class CardDetectorPreset(
             noDetectionCountLimit = 10,
             inferenceIntervalMs = 33L,
             useGpu = true,
-            imageMode = InputShape.FullImage,
+            preProcessingImageTransformation = PreProcessingImageTransformation.FullImage,
             numThreads = NumThreads.Default
         )
 
@@ -93,7 +93,7 @@ data class CardDetectorPreset(
             noDetectionCountLimit = 8,
             inferenceIntervalMs = 33L,
             useGpu = true,
-            imageMode = InputShape.SquareCrop(),
+            preProcessingImageTransformation = PreProcessingImageTransformation.SquareCrop(),
             numThreads = NumThreads.Default
         )
 
@@ -108,7 +108,7 @@ data class CardDetectorPreset(
             noDetectionCountLimit = 6,
             inferenceIntervalMs = 100L,
             useGpu = false,
-            imageMode = InputShape.SquareCrop(),
+            preProcessingImageTransformation = PreProcessingImageTransformation.SquareCrop(),
             numThreads = NumThreads.CustomCount(2)
         )
     }

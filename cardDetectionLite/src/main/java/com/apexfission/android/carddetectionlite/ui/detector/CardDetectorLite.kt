@@ -83,6 +83,7 @@ fun CardDetectorLite(
             validateClassIdInLockOnProcess = detectorPreset.validateClassIdInLockOnProcess,
             differenceHashDistanceLimit = detectorPreset.differenceHashDistanceLimit,
             allowTemporalDrift = detectorPreset.allowTemporalDrift,
+            preProcessingImageTransformation = detectorPreset.preProcessingImageTransformation,
             numThreads = detectorPreset.numThreads,
         )
     )
@@ -115,7 +116,7 @@ fun CardDetectorLite(
         imageSpaceChain?.let { spaceChain ->
             if (overlayPreset.showAreaOfInterest) {
                 AreaOfInterest(
-                    inputShape = detectorPreset.imageMode,
+                    preProcessingImageTransformation = detectorPreset.preProcessingImageTransformation,
                     imageSpaceChain = spaceChain
                 )
             }
@@ -140,7 +141,9 @@ fun CardDetectorLite(
         if (overlayPreset.showFlashlightSwitch) {
             IconButton(
                 onClick = viewModel::toggleFlashlight,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
             ) {
                 Icon(
                     imageVector = if (flashlightEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
@@ -155,7 +158,7 @@ fun CardDetectorLite(
                 useGpu = detectorPreset.useGpu,
                 showBoundingBoxes = overlayPreset.showBoundingBoxes,
                 showLockOnProgress = overlayPreset.showLockOnProgress,
-                imageMode = detectorPreset.imageMode,
+                imageMode = detectorPreset.preProcessingImageTransformation,
                 inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
                 tapToFocusEnabled = cameraPreset.tapToFocusEnabled,
                 focusOnCardEnabled = cameraPreset.focusOnCardEnabled,

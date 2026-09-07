@@ -13,14 +13,14 @@ import androidx.compose.ui.unit.dp
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
 import kotlin.math.roundToInt
 
 /**
- * An overlay Composable that renders the Area of Interest (ROI) corresponding to the [InputShape]
+ * An overlay Composable that renders the Area of Interest (ROI) corresponding to the [PreProcessingImageTransformation]
  * configuration, darkening the parts of the camera preview not included in the cropped region.
  *
- * @param inputShape The current [InputShape] cropping strategy.
+ * @param preProcessingImageTransformation The current [PreProcessingImageTransformation] cropping strategy.
  * @param imageSpaceChain Coordinate transformation chain mapping bitmap space to overlay/screen space.
  * @param scrimColor Color used to darken the inactive area outside the area of interest.
  * @param borderColor Color of the border surrounding the area of interest.
@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun AreaOfInterest(
-    inputShape: InputShape,
+    preProcessingImageTransformation: PreProcessingImageTransformation,
     imageSpaceChain: ImageSpaceChain,
     scrimColor: Color = Color.Black.copy(alpha = 0.5f),
     borderColor: Color = Color.White.copy(alpha = 0.0f),
@@ -44,35 +44,35 @@ fun AreaOfInterest(
         val canvasHeight = size.height.toInt()
         val density = android.content.res.Resources.getSystem().displayMetrics.density
 
-        val cropBitmapBox = when (inputShape) {
-            is InputShape.FullImage -> {
+        val cropBitmapBox = when (preProcessingImageTransformation) {
+            is PreProcessingImageTransformation.FullImage -> {
                 ImageBox.fromPS(0, 0, srcWidth, srcHeight)
             }
-            is InputShape.CenterSquareCrop -> {
+            is PreProcessingImageTransformation.CenterSquareCrop -> {
                 val cropSize = minOf(srcWidth, srcHeight)
                 val left = (srcWidth - cropSize) / 2
                 val top = (srcHeight - cropSize) / 2
                 ImageBox.fromPS(left, top, cropSize, cropSize)
             }
-            is InputShape.SquareCrop -> {
+            is PreProcessingImageTransformation.SquareCrop -> {
                 val cropSize = minOf(srcWidth, srcHeight)
                 val left = (srcWidth - cropSize) / 2
                 val defaultTop = (srcHeight - cropSize) / 2
-                val topPx = (inputShape.top.value * density).roundToInt()
+                val topPx = (preProcessingImageTransformation.top.value * density).roundToInt()
                 val finalTop = (defaultTop + topPx).coerceIn(0, (srcHeight - cropSize).coerceAtLeast(0))
                 ImageBox.fromPS(left, finalTop, cropSize, cropSize)
             }
-            is InputShape.CenterVisibleImage -> {
+            is PreProcessingImageTransformation.CenterVisibleImage -> {
                 getAspectRatioCropRect(srcWidth, srcHeight, canvasWidth, canvasHeight, square = false, top = 0.dp, density = density)
             }
-            is InputShape.VisibleImage -> {
-                getAspectRatioCropRect(srcWidth, srcHeight, canvasWidth, canvasHeight, square = false, top = inputShape.top, density = density)
+            is PreProcessingImageTransformation.VisibleImage -> {
+                getAspectRatioCropRect(srcWidth, srcHeight, canvasWidth, canvasHeight, square = false, top = preProcessingImageTransformation.top, density = density)
             }
-            is InputShape.CenterVisibleImageSquareCrop -> {
+            is PreProcessingImageTransformation.CenterVisibleImageSquareCrop -> {
                 getAspectRatioCropRect(srcWidth, srcHeight, canvasWidth, canvasHeight, square = true, top = 0.dp, density = density)
             }
-            is InputShape.VisibleImageSquareCrop -> {
-                getAspectRatioCropRect(srcWidth, srcHeight, canvasWidth, canvasHeight, square = true, top = inputShape.top, density = density)
+            is PreProcessingImageTransformation.VisibleImageSquareCrop -> {
+                getAspectRatioCropRect(srcWidth, srcHeight, canvasWidth, canvasHeight, square = true, top = preProcessingImageTransformation.top, density = density)
             }
         }
 

@@ -1,13 +1,16 @@
 package com.apexfission.android.carddetectionlite.ui.simulation
 
-import android.app.Application
 import android.graphics.Bitmap
 import android.os.SystemClock
+import android.util.Log
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import java.util.concurrent.atomic.AtomicLong
@@ -18,20 +21,9 @@ import kotlinx.coroutines.launch
 
 /**
  * ViewModel for [CardTrackingSimulator].
- *
- * @param application Application instance.
- * @param modelPath Asset path to TFLite model.
- * @param cardClasses Set of card class IDs.
- * @param useGpu Whether GPU inference is enabled.
- * @param scoreThreshold Score threshold for raw detections.
- * @param cardFilters List of card validators.
- * @param inferenceIntervalMs Minimum time interval between inferences.
- * @param lockOnThreshold Consistent frame threshold for lock-on.
- * @param noDetectionCountLimit Limit of missing frames before tracking resets.
- * @param numThreads CPU thread configuration.
  */
 class CardTrackingSimulatorViewModel(
-    application: Application,
+    application: android.app.Application,
     modelPath: String,
     cardClasses: Set<Int>,
     useGpu: Boolean,
@@ -44,6 +36,7 @@ class CardTrackingSimulatorViewModel(
     validateClassIdInLockOnProcess: Boolean,
     differenceHashDistanceLimit: Int,
     allowTemporalDrift: Boolean,
+    private val preProcessingImageTransformation: PreProcessingImageTransformation,
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
@@ -82,23 +75,44 @@ class CardTrackingSimulatorViewModel(
         if (!detector.enabled) return
 
         viewModelScope.launch(Dispatchers.Default) {
+            var croppedBitmap: Bitmap? = null
             try {
                 val now = SystemClock.uptimeMillis()
                 if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
                 lastInferenceMs.set(now)
 
-                val card: CardDetection? = detector.track(bitmap)
+                val croppedResult = cropWithOffset(
+                    preProcessingImageTransformation,
+                    bitmap,
+                    IntSize(bitmap.width, bitmap.height)
+                )
+                croppedBitmap = croppedResult.bitmap
 
-                if (card == null) {
+                val card: CardDetection? = detector.track(croppedBitmap)
+
+                val adjustedCard = card?.let { detection ->
+                    val adjustedBox = detection.card.box.offset(croppedResult.xOffset, croppedResult.yOffset)
+                    val adjustedFeatures = detection.features.map { it.copy(box = it.box.offset(croppedResult.xOffset, croppedResult.yOffset)) }
+                    detection.copy(
+                        card = detection.card.copy(box = adjustedBox),
+                        features = adjustedFeatures
+                    )
+                }
+
+                if (adjustedCard == null) {
                     _cardDetection.value = null
                     return@launch
                 }
 
-                _cardDetection.value = card
-                onDetection(card)
+                _cardDetection.value = adjustedCard
+                onDetection(adjustedCard)
 
-            } catch (_: Throwable) {
-
+            } catch (t: Throwable) {
+                Log.e("Simulation", "Processing failed", t)
+            } finally {
+                if (croppedBitmap != null && croppedBitmap != bitmap) {
+                    croppedBitmap.recycle()
+                }
             }
         }
     }

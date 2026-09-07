@@ -22,6 +22,18 @@ data class ImageBox(
     val width: UInt,
     val height: UInt
 ) {
+    /**
+     * Returns a new [ImageBox] shifted by [dx] and [dy].
+     */
+    fun offset(dx: Int, dy: Int): ImageBox {
+        return from2P(
+            x1 = (x.toInt() + dx).coerceAtLeast(0),
+            y1 = (y.toInt() + dy).coerceAtLeast(0),
+            x2 = (x2.toInt() + dx).coerceAtLeast(0),
+            y2 = (y2.toInt() + dy).coerceAtLeast(0)
+        )
+    }
+
     companion object {
         /**
          * Constructs an [ImageBox] from two points: (x1, y1) and (x2, y2).

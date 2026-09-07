@@ -75,7 +75,14 @@ enum class SpaceRelationship {
 data class ImageSpaceChainNode(
     val space: ImageSpace,
     val relationship: SpaceRelationship
-)
+) {
+    val width: UInt get() = space.width
+    val height: UInt get() = space.height
+    val xScale: Float get() = space.xScale
+    val yScale: Float get() = space.yScale
+    val xOffset: UInt get() = space.xOffset
+    val yOffset: UInt get() = space.yOffset
+}
 
 /**
  * Represents a transformation chain of connected [ImageSpaceChainNode]s.

@@ -81,6 +81,7 @@ fun CardTrackingSimulator(
             validateClassIdInLockOnProcess = detectorPreset.validateClassIdInLockOnProcess,
             differenceHashDistanceLimit = detectorPreset.differenceHashDistanceLimit,
             allowTemporalDrift = detectorPreset.allowTemporalDrift,
+            preProcessingImageTransformation = detectorPreset.preProcessingImageTransformation,
             numThreads = detectorPreset.numThreads,
         )
     )
@@ -116,7 +117,7 @@ fun CardTrackingSimulator(
         imageSpaceChain?.let { space ->
             if (overlayPreset.showAreaOfInterest) {
                 AreaOfInterest(
-                    inputShape = detectorPreset.imageMode,
+                    preProcessingImageTransformation = detectorPreset.preProcessingImageTransformation,
                     imageSpaceChain = space
                 )
             }
@@ -140,7 +141,7 @@ fun CardTrackingSimulator(
                 useGpu = detectorPreset.useGpu,
                 showBoundingBoxes = overlayPreset.showBoundingBoxes,
                 showLockOnProgress = overlayPreset.showLockOnProgress,
-                imageMode = detectorPreset.imageMode,
+                imageMode = detectorPreset.preProcessingImageTransformation,
                 inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
                 tapToFocusEnabled = cameraPreset.tapToFocusEnabled,
                 focusOnCardEnabled = cameraPreset.focusOnCardEnabled,

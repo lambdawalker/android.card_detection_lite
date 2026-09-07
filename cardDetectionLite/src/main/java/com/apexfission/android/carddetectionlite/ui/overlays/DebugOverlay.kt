@@ -16,7 +16,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 
 /**
@@ -41,7 +41,7 @@ fun DebugOverlay(
     useGpu: Boolean,
     showBoundingBoxes: Boolean,
     showLockOnProgress: Boolean,
-    imageMode: InputShape,
+    imageMode: PreProcessingImageTransformation,
     inferenceIntervalMs: Long,
     tapToFocusEnabled: Boolean,
     focusOnCardEnabled: Boolean,
@@ -88,14 +88,14 @@ fun DebugOverlay(
             items(debugItems) { item ->
                 val valueString = when (val value = item.value) {
                     is Long -> "${value}ms"
-                    is InputShape -> when (value) {
-                        is InputShape.FullImage -> "FullImage"
-                        is InputShape.CenterSquareCrop -> "CenterSquareCrop"
-                        is InputShape.SquareCrop -> "SquareCrop(top=${value.top})"
-                        is InputShape.CenterVisibleImage -> "CenterVisibleImage"
-                        is InputShape.VisibleImage -> "VisibleImage(top=${value.top})"
-                        is InputShape.CenterVisibleImageSquareCrop -> "CenterVisibleImageSquareCrop"
-                        is InputShape.VisibleImageSquareCrop -> "VisibleImageSquareCrop(top=${value.top})"
+                    is PreProcessingImageTransformation -> when (value) {
+                        is PreProcessingImageTransformation.FullImage -> "FullImage"
+                        is PreProcessingImageTransformation.CenterSquareCrop -> "CenterSquareCrop"
+                        is PreProcessingImageTransformation.SquareCrop -> "SquareCrop(top=${value.top})"
+                        is PreProcessingImageTransformation.CenterVisibleImage -> "CenterVisibleImage"
+                        is PreProcessingImageTransformation.VisibleImage -> "VisibleImage(top=${value.top})"
+                        is PreProcessingImageTransformation.CenterVisibleImageSquareCrop -> "CenterVisibleImageSquareCrop"
+                        is PreProcessingImageTransformation.VisibleImageSquareCrop -> "VisibleImageSquareCrop(top=${value.top})"
                     }
                     is NumThreads -> value.toString()
                     null -> "Default"
@@ -105,11 +105,11 @@ fun DebugOverlay(
                 val valueColor = when (val value = item.value) {
                     is Boolean -> if (value) Color(0xFF8BC34A) else Color(0xFFE91E63)
                     is Number -> Color(0xFF2196F3)
-                    is InputShape -> when (value) {
-                        is InputShape.SquareCrop, is InputShape.CenterSquareCrop -> Color(0xFFFFC107)
-                        is InputShape.FullImage -> Color(0xFF9C27B0)
-                        is InputShape.VisibleImage, is InputShape.CenterVisibleImage -> Color(0xFF00BCD4)
-                        is InputShape.VisibleImageSquareCrop, is InputShape.CenterVisibleImageSquareCrop -> Color(0xFFF44336)
+                    is PreProcessingImageTransformation -> when (value) {
+                        is PreProcessingImageTransformation.SquareCrop, is PreProcessingImageTransformation.CenterSquareCrop -> Color(0xFFFFC107)
+                        is PreProcessingImageTransformation.FullImage -> Color(0xFF9C27B0)
+                        is PreProcessingImageTransformation.VisibleImage, is PreProcessingImageTransformation.CenterVisibleImage -> Color(0xFF00BCD4)
+                        is PreProcessingImageTransformation.VisibleImageSquareCrop, is PreProcessingImageTransformation.CenterVisibleImageSquareCrop -> Color(0xFFF44336)
                     }
 
                     is NumThreads -> Color.White
