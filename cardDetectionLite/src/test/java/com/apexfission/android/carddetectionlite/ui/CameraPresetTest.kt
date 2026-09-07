@@ -45,4 +45,14 @@ class CameraPresetTest {
         assertTrue(modified.tapToFocusEnabled)
         assertFalse(modified.focusOnCardEnabled)
     }
+
+    @Test
+    fun testCameraPresetChange() {
+        val original = CameraPreset.Default
+        val modified = original.change(focusOnCardEnabled = false)
+
+        assertEquals(original.analysisTargetResolution, modified.analysisTargetResolution)
+        assertTrue(modified.tapToFocusEnabled)
+        assertFalse(modified.focusOnCardEnabled)
+    }
 }

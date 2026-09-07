@@ -16,6 +16,19 @@ data class CameraPreset(
     val tapToFocusEnabled: Boolean = true,
     val focusOnCardEnabled: Boolean = true
 ) {
+    /**
+     * Returns a copy of this [CameraPreset] with the specified properties modified.
+     */
+    fun change(
+        analysisTargetResolution: Size = this.analysisTargetResolution,
+        tapToFocusEnabled: Boolean = this.tapToFocusEnabled,
+        focusOnCardEnabled: Boolean = this.focusOnCardEnabled
+    ): CameraPreset = copy(
+        analysisTargetResolution = analysisTargetResolution,
+        tapToFocusEnabled = tapToFocusEnabled,
+        focusOnCardEnabled = focusOnCardEnabled
+    )
+
     companion object {
         /**
          * Default camera preset configured with 2K analysis resolution and full focus capabilities enabled.

@@ -78,6 +78,10 @@ fun CardDetectorLite(
             inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
             lockOnThreshold = detectorPreset.lockOnThreshold,
             noDetectionCountLimit = detectorPreset.noDetectionCountLimit,
+            memoryDetectionTimeLimit = detectorPreset.memoryDetectionTimeLimit,
+            validateClassIdInLockOnProcess = detectorPreset.validateClassIdInLockOnProcess,
+            differenceHashDistanceLimit = detectorPreset.differenceHashDistanceLimit,
+            allowTemporalDrift = detectorPreset.allowTemporalDrift,
             numThreads = detectorPreset.numThreads,
         )
     )
@@ -149,6 +153,10 @@ fun CardDetectorLite(
                 focusOnCardEnabled = cameraPreset.focusOnCardEnabled,
                 lockOnThreshold = detectorPreset.lockOnThreshold,
                 noDetectionCountLimit = detectorPreset.noDetectionCountLimit,
+                memoryDetectionTimeLimit = detectorPreset.memoryDetectionTimeLimit,
+                validateClassIdInLockOnProcess = detectorPreset.validateClassIdInLockOnProcess,
+                differenceHashDistanceLimit = detectorPreset.differenceHashDistanceLimit,
+                allowTemporalDrift = detectorPreset.allowTemporalDrift,
                 numThreads = detectorPreset.numThreads,
                 modifier = Modifier.align(Alignment.BottomStart)
             )

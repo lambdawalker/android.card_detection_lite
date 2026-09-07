@@ -21,6 +21,25 @@ data class OverlayPreset(
     val showDebugOverlay: Boolean = false,
     val showFocusIndicator: Boolean = true
 ) {
+    /**
+     * Returns a copy of this [OverlayPreset] with the specified properties modified.
+     */
+    fun change(
+        showBoundingBoxes: Boolean = this.showBoundingBoxes,
+        showClassNames: Boolean = this.showClassNames,
+        showFlashlightSwitch: Boolean = this.showFlashlightSwitch,
+        showLockOnProgress: Boolean = this.showLockOnProgress,
+        showDebugOverlay: Boolean = this.showDebugOverlay,
+        showFocusIndicator: Boolean = this.showFocusIndicator
+    ): OverlayPreset = copy(
+        showBoundingBoxes = showBoundingBoxes,
+        showClassNames = showClassNames,
+        showFlashlightSwitch = showFlashlightSwitch,
+        showLockOnProgress = showLockOnProgress,
+        showDebugOverlay = showDebugOverlay,
+        showFocusIndicator = showFocusIndicator
+    )
+
     companion object {
         /**
          * Standard production view showing flashlight switch, lock-on progress overlay, and focus indicator.

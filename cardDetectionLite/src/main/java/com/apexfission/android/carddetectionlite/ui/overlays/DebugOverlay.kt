@@ -49,6 +49,10 @@ fun DebugOverlay(
     numThreads: NumThreads,
     modifier: Modifier = Modifier,
     noDetectionCountLimit: Int,
+    memoryDetectionTimeLimit: Long,
+    validateClassIdInLockOnProcess: Boolean,
+    differenceHashDistanceLimit: Int,
+    allowTemporalDrift: Boolean,
 ) {
     data class DebugItem(val name: String, val value: Any?)
 
@@ -61,9 +65,13 @@ fun DebugOverlay(
         DebugItem("Card to focus", focusOnCardEnabled),
         DebugItem("Inference interval", inferenceIntervalMs),
         DebugItem("Lock on threshold", lockOnThreshold),
+        DebugItem("No Detection Limit", noDetectionCountLimit),
+        DebugItem("Memory Time Limit", memoryDetectionTimeLimit),
+        DebugItem("Validate Class ID", validateClassIdInLockOnProcess),
+        DebugItem("dHash Limit", differenceHashDistanceLimit),
+        DebugItem("Temporal Drift", allowTemporalDrift),
         DebugItem("Threads", numThreads),
-        DebugItem("Input", imageMode),
-        DebugItem("No Detection Limit", noDetectionCountLimit)
+        DebugItem("Input", imageMode)
     )
 
     Column(

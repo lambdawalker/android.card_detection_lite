@@ -52,4 +52,14 @@ class OverlayPresetTest {
         assertTrue(modified.showDebugOverlay)
         assertTrue(modified.showLockOnProgress)
     }
+
+    @Test
+    fun testViewPresetChange() {
+        val original = OverlayPreset.Standard
+        val modified = original.change(showBoundingBoxes = true, showDebugOverlay = true)
+
+        assertTrue(modified.showBoundingBoxes)
+        assertTrue(modified.showDebugOverlay)
+        assertTrue(modified.showLockOnProgress)
+    }
 }

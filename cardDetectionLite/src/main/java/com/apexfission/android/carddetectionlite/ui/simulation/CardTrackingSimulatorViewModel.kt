@@ -40,6 +40,10 @@ class CardTrackingSimulatorViewModel(
     private val inferenceIntervalMs: Long,
     lockOnThreshold: Int,
     noDetectionCountLimit: Int,
+    memoryDetectionTimeLimit: Long,
+    validateClassIdInLockOnProcess: Boolean,
+    differenceHashDistanceLimit: Int,
+    allowTemporalDrift: Boolean,
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
@@ -59,6 +63,10 @@ class CardTrackingSimulatorViewModel(
         cardClasses = cardClasses,
         lockOnThreshold = lockOnThreshold,
         noDetectionCountLimit = noDetectionCountLimit,
+        memoryDetectionTimeLimit = memoryDetectionTimeLimit,
+        validateClassIdInLockOnProcess = validateClassIdInLockOnProcess,
+        differenceHashDistanceLimit = differenceHashDistanceLimit,
+        allowTemporalDrift = allowTemporalDrift
     )
 
     private val lastInferenceMs = AtomicLong(0L)

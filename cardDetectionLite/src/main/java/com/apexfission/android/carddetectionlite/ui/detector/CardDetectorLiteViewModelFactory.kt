@@ -29,6 +29,10 @@ class CardDetectorLiteViewModelFactory(
     private val inferenceIntervalMs: Long,
     private val lockOnThreshold: Int,
     private val noDetectionCountLimit: Int,
+    private val memoryDetectionTimeLimit: Long,
+    private val validateClassIdInLockOnProcess: Boolean,
+    private val differenceHashDistanceLimit: Int,
+    private val allowTemporalDrift: Boolean,
     private val numThreads: NumThreads,
 ) : ViewModelProvider.Factory {
 
@@ -45,6 +49,10 @@ class CardDetectorLiteViewModelFactory(
                 inferenceIntervalMs = inferenceIntervalMs,
                 lockOnThreshold = lockOnThreshold,
                 noDetectionCountLimit = noDetectionCountLimit,
+                memoryDetectionTimeLimit = memoryDetectionTimeLimit,
+                validateClassIdInLockOnProcess = validateClassIdInLockOnProcess,
+                differenceHashDistanceLimit = differenceHashDistanceLimit,
+                allowTemporalDrift = allowTemporalDrift,
                 numThreads = numThreads
             ) as T
         }

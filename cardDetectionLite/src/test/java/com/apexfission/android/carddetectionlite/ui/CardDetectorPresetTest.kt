@@ -61,4 +61,15 @@ class CardDetectorPresetTest {
         assertEquals(original.imageMode, modified.imageMode)
         assertEquals(original.useGpu, modified.useGpu)
     }
+
+    @Test
+    fun testPresetChange() {
+        val original = CardDetectorPreset.HighPerformance
+        val modified = original.change(scoreThreshold = 0.60f, lockOnThreshold = 5)
+
+        assertEquals(0.60f, modified.scoreThreshold, 0.001f)
+        assertEquals(5, modified.lockOnThreshold)
+        assertEquals(original.imageMode, modified.imageMode)
+        assertEquals(original.useGpu, modified.useGpu)
+    }
 }
