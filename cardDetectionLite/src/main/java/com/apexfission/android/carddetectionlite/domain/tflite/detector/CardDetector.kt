@@ -42,7 +42,7 @@ import java.io.Closeable
  * @param allowTemporalDrift When true, each frame is compared to the immediately previous
  * frame. When false, frames are compared against the first frame of the current candidate.
  */
-class CardTracker(
+class CardDetector(
     private val yoloDetector: YoloDetector,
     private val cardValidators: List<CardValidator> = listOf(
         AspectRatioValidator(),

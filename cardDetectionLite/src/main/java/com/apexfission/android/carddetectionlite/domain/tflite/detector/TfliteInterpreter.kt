@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.SystemClock
 import android.util.Log
-import com.apexfission.android.carddetectionlite.ui.NumThreads
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import java.io.Closeable
 import java.io.FileInputStream
 import java.nio.ByteBuffer

@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.detector
 
 import androidx.compose.runtime.Immutable
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape

@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.camerapreview
+package com.apexfission.android.carddetectionlite.ui.overlays
 
 import android.util.Log
 import androidx.compose.foundation.Canvas

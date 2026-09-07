@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.camerapreview
+package com.apexfission.android.carddetectionlite.ui.overlays
 
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain

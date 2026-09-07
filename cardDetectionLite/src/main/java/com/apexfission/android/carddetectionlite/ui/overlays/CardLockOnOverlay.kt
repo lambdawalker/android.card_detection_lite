@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.camerapreview
+package com.apexfission.android.carddetectionlite.ui.overlays
 
 import android.graphics.BlurMaskFilter
 import androidx.compose.animation.core.FastOutSlowInEasing

@@ -7,13 +7,13 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHash
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
-import com.apexfission.android.carddetectionlite.ui.NumThreads
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -21,11 +21,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Instrumented tests for [CardTracker] using test video asset `test/video/A/source.mp4`,
+ * Instrumented tests for [CardDetector] using test video asset `test/video/A/source.mp4`,
  * feature criteria `test/video/A/.feature`, and expected data `test/video/A/expected_data.txt`.
  */
 @RunWith(AndroidJUnit4::class)
-class CardTrackerTest {
+class CardDetectorTest {
 
     private fun extractFramesFromVideo(
         context: Context,
@@ -57,7 +57,7 @@ class CardTrackerTest {
         return frames
     }
 
-    private fun createCardTracker(context: Context): CardTracker {
+    private fun createCardTracker(context: Context): CardDetector {
         val yoloDetector = YoloDetector(
             context = context,
             modelPath = ModelCatalog.TfLite.modelPath,
@@ -67,7 +67,7 @@ class CardTrackerTest {
             numThreads = NumThreads.Default
         )
 
-        return CardTracker(
+        return CardDetector(
             yoloDetector = yoloDetector,
             cardValidators = emptyList(),
             cardClasses = ModelCatalog.TfLite.cardClasses.toSet(),

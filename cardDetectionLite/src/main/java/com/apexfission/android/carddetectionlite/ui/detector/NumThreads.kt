@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.detector
 
 /**
  * A sealed class for specifying the number of threads to be used by the TFLite interpreter.

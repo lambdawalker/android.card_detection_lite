@@ -7,7 +7,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.LetterboxBu
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
-import com.apexfission.android.carddetectionlite.ui.NumThreads
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import java.io.Closeable
 
 

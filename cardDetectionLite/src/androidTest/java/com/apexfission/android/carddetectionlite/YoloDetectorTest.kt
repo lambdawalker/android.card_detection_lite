@@ -7,7 +7,7 @@ import com.apexfission.android.carddetectionlite.domain.ModelCatalog
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
-import com.apexfission.android.carddetectionlite.ui.NumThreads
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -1,6 +1,8 @@
 package com.apexfission.android.carddetectionlite.ui
 
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
+import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

@@ -21,18 +21,18 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRat
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.ui.CameraPreset
-import com.apexfission.android.carddetectionlite.ui.CardDetectorPreset
-import com.apexfission.android.carddetectionlite.ui.ViewPreset
-import com.apexfission.android.carddetectionlite.ui.camerapreview.CardLockOnOverlay
-import com.apexfission.android.carddetectionlite.ui.camerapreview.DebugOverlay
-import com.apexfission.android.carddetectionlite.ui.camerapreview.DetectionOverlay
+import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
+import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
+import com.apexfission.android.carddetectionlite.ui.overlays.OverlayPreset
+import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.DebugOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.DetectionOverlay
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * A simulation composable that runs card tracking inference over video frames from a URI source.
  *
- * Configured via structured preset objects ([CardDetectorPreset], [ViewPreset], and [CameraPreset]).
+ * Configured via structured preset objects ([CardDetectorPreset], [OverlayPreset], and [CameraPreset]).
  *
  * @param modifier Composable modifier.
  * @param videoUri Source video URI.
@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param cardClasses Set of class IDs treated as cards.
  * @param isDetectionEnabled Whether detection is active.
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
- * @param viewPreset UI overlay display configuration preset ([ViewPreset]). Defaults to [ViewPreset.Debug].
+ * @param overlayPreset UI overlay display configuration preset ([OverlayPreset]). Defaults to [OverlayPreset.Debug].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters List of card validators.
  * @param onCardDetection Callback lambda on card detection events.
@@ -55,7 +55,7 @@ fun CardTrackingSimulator(
     cardClasses: Set<Int>,
     isDetectionEnabled: Boolean = true,
     detectorPreset: CardDetectorPreset = CardDetectorPreset.HighPerformance,
-    viewPreset: ViewPreset = ViewPreset.Debug,
+    overlayPreset: OverlayPreset = OverlayPreset.Debug,
     cameraPreset: CameraPreset = CameraPreset.Default,
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
@@ -109,25 +109,25 @@ fun CardTrackingSimulator(
         val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
 
         imageSpaceChain?.let { space ->
-            if (isDetectionEnabled && viewPreset.showBoundingBoxes) {
+            if (isDetectionEnabled && overlayPreset.showBoundingBoxes) {
                 DetectionOverlay(
-                    cardDetection = cardDetection, imageSpaceChain = space, showClassNames = viewPreset.showClassNames, classLabels = classLabels
+                    cardDetection = cardDetection, imageSpaceChain = space, showClassNames = overlayPreset.showClassNames, classLabels = classLabels
                 )
             }
 
-            if (isDetectionEnabled && viewPreset.showLockOnProgress) {
+            if (isDetectionEnabled && overlayPreset.showLockOnProgress) {
                 CardLockOnOverlay(
                     activeDetection = cardDetection, imageSpaceChain = space
                 )
             }
         }
 
-        if (viewPreset.showDebugOverlay) {
+        if (overlayPreset.showDebugOverlay) {
             DebugOverlay(
                 isDetectionEnabled = isDetectionEnabled,
                 useGpu = detectorPreset.useGpu,
-                showBoundingBoxes = viewPreset.showBoundingBoxes,
-                showLockOnProgress = viewPreset.showLockOnProgress,
+                showBoundingBoxes = overlayPreset.showBoundingBoxes,
+                showLockOnProgress = overlayPreset.showLockOnProgress,
                 imageMode = detectorPreset.imageMode,
                 inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
                 tapToFocusEnabled = cameraPreset.tapToFocusEnabled,

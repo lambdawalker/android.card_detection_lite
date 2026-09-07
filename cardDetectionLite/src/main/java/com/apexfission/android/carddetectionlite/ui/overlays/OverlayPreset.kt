@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.overlays
 
 import androidx.compose.runtime.Immutable
 
@@ -13,7 +13,7 @@ import androidx.compose.runtime.Immutable
  * @property showFocusIndicator When `true`, displays a visual focus ring indicator when camera focus changes.
  */
 @Immutable
-data class ViewPreset(
+data class OverlayPreset(
     val showBoundingBoxes: Boolean = false,
     val showClassNames: Boolean = false,
     val showFlashlightSwitch: Boolean = true,
@@ -25,7 +25,7 @@ data class ViewPreset(
         /**
          * Standard production view showing flashlight switch, lock-on progress overlay, and focus indicator.
          */
-        val Standard = ViewPreset(
+        val Standard = OverlayPreset(
             showBoundingBoxes = false,
             showClassNames = false,
             showFlashlightSwitch = true,
@@ -37,7 +37,7 @@ data class ViewPreset(
         /**
          * Minimalist view rendering only the lock-on progress overlay.
          */
-        val Minimal = ViewPreset(
+        val Minimal = OverlayPreset(
             showBoundingBoxes = false,
             showClassNames = false,
             showFlashlightSwitch = false,
@@ -49,7 +49,7 @@ data class ViewPreset(
         /**
          * Comprehensive debug view displaying bounding boxes, class names, lock-on progress, flashlight switch, and debug panel.
          */
-        val Debug = ViewPreset(
+        val Debug = OverlayPreset(
             showBoundingBoxes = true,
             showClassNames = true,
             showFlashlightSwitch = true,

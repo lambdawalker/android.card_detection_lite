@@ -5,11 +5,11 @@ import android.graphics.Bitmap
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.ui.NumThreads
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,7 +46,7 @@ class CardTrackingSimulatorViewModel(
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection = _cardDetection.asStateFlow()
 
-    private val detector = CardTracker(
+    private val detector = CardDetector(
         yoloDetector = YoloDetector(
             context = application,
             modelPath = modelPath,

@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.detector
 
 import android.app.Application
 import androidx.compose.foundation.layout.Box
@@ -25,16 +25,18 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRat
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview
-import com.apexfission.android.carddetectionlite.ui.camerapreview.CardLockOnOverlay
-import com.apexfission.android.carddetectionlite.ui.camerapreview.DebugOverlay
-import com.apexfission.android.carddetectionlite.ui.camerapreview.DetectionOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.DebugOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.DetectionOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.OverlayPreset
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * All-in-one Composable that provides a configurable in-camera-feed card detection and tracking solution.
  *
- * Configured via structured preset objects ([CardDetectorPreset], [ViewPreset], and [CameraPreset]).
+ * Configured via structured preset objects ([CardDetectorPreset], [OverlayPreset], and [CameraPreset]).
  *
  * @param modifier A [Modifier] applied to the root `Box` of this component.
  * @param modelPath The path to the `.tflite` model file within the application's `assets` directory.
@@ -42,7 +44,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param cardClasses A set of class IDs from the model that should be treated as primary targets for card detection.
  * @param isDetectionEnabled A boolean flag to dynamically start or stop the detection process.
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
- * @param viewPreset UI overlay display configuration preset ([ViewPreset]). Defaults to [ViewPreset.Standard].
+ * @param overlayPreset UI overlay display configuration preset ([OverlayPreset]). Defaults to [OverlayPreset.Standard].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters A list of [CardValidator] instances used to apply additional heuristic validation rules.
  * @param onCardDetection A callback lambda invoked when a card detection event occurs.
@@ -55,7 +57,7 @@ fun CardDetectorLite(
     cardClasses: Set<Int>,
     isDetectionEnabled: Boolean = true,
     detectorPreset: CardDetectorPreset = CardDetectorPreset.HighPerformance,
-    viewPreset: ViewPreset = ViewPreset.Standard,
+    overlayPreset: OverlayPreset = OverlayPreset.Standard,
     cameraPreset: CameraPreset = CameraPreset.Default,
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
@@ -102,20 +104,20 @@ fun CardDetectorLite(
             focusOn = cardDetection,
             tapToFocusEnabled = cameraPreset.tapToFocusEnabled,
             focusOnCardEnabled = cameraPreset.focusOnCardEnabled,
-            showFocusIndicator = viewPreset.showFocusIndicator
+            showFocusIndicator = overlayPreset.showFocusIndicator
         )
 
         imageSpaceChain?.let { spaceChain ->
-            if (isDetectionEnabled && viewPreset.showBoundingBoxes) {
+            if (isDetectionEnabled && overlayPreset.showBoundingBoxes) {
                 DetectionOverlay(
                     cardDetection = cardDetection,
                     imageSpaceChain = spaceChain,
-                    showClassNames = viewPreset.showClassNames,
+                    showClassNames = overlayPreset.showClassNames,
                     classLabels = classLabels
                 )
             }
 
-            if (isDetectionEnabled && viewPreset.showLockOnProgress) {
+            if (isDetectionEnabled && overlayPreset.showLockOnProgress) {
                 CardLockOnOverlay(
                     activeDetection = cardDetection,
                     imageSpaceChain = spaceChain
@@ -123,7 +125,7 @@ fun CardDetectorLite(
             }
         }
 
-        if (viewPreset.showFlashlightSwitch) {
+        if (overlayPreset.showFlashlightSwitch) {
             IconButton(
                 onClick = viewModel::toggleFlashlight,
                 modifier = Modifier.padding(16.dp)
@@ -135,12 +137,12 @@ fun CardDetectorLite(
             }
         }
 
-        if (viewPreset.showDebugOverlay) {
+        if (overlayPreset.showDebugOverlay) {
             DebugOverlay(
                 isDetectionEnabled = isDetectionEnabled,
                 useGpu = detectorPreset.useGpu,
-                showBoundingBoxes = viewPreset.showBoundingBoxes,
-                showLockOnProgress = viewPreset.showLockOnProgress,
+                showBoundingBoxes = overlayPreset.showBoundingBoxes,
+                showLockOnProgress = overlayPreset.showLockOnProgress,
                 imageMode = detectorPreset.imageMode,
                 inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
                 tapToFocusEnabled = cameraPreset.tapToFocusEnabled,

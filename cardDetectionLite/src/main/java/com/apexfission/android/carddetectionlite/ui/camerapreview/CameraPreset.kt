@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import android.util.Size
 import androidx.compose.runtime.Immutable

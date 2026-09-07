@@ -1,14 +1,15 @@
 package com.apexfission.android.carddetectionlite.ui
 
+import com.apexfission.android.carddetectionlite.ui.overlays.OverlayPreset
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ViewPresetTest {
+class OverlayPresetTest {
 
     @Test
     fun testStandardViewPreset() {
-        val preset = ViewPreset.Standard
+        val preset = OverlayPreset.Standard
 
         assertFalse(preset.showBoundingBoxes)
         assertFalse(preset.showClassNames)
@@ -20,7 +21,7 @@ class ViewPresetTest {
 
     @Test
     fun testMinimalViewPreset() {
-        val preset = ViewPreset.Minimal
+        val preset = OverlayPreset.Minimal
 
         assertFalse(preset.showBoundingBoxes)
         assertFalse(preset.showClassNames)
@@ -32,7 +33,7 @@ class ViewPresetTest {
 
     @Test
     fun testDebugViewPreset() {
-        val preset = ViewPreset.Debug
+        val preset = OverlayPreset.Debug
 
         assertTrue(preset.showBoundingBoxes)
         assertTrue(preset.showClassNames)
@@ -44,7 +45,7 @@ class ViewPresetTest {
 
     @Test
     fun testViewPresetCustomCopy() {
-        val original = ViewPreset.Standard
+        val original = OverlayPreset.Standard
         val modified = original.copy(showBoundingBoxes = true, showDebugOverlay = true)
 
         assertTrue(modified.showBoundingBoxes)

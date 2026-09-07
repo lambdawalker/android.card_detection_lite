@@ -1,5 +1,6 @@
 package com.apexfission.android.carddetectionlite.ui
 
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.detector
 
 import android.app.Application
 import androidx.lifecycle.ViewModel

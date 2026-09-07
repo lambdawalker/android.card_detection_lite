@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.camerapreview
+package com.apexfission.android.carddetectionlite.ui.overlays
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +17,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.InputShape
-import com.apexfission.android.carddetectionlite.ui.NumThreads
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 
 /**
  * A debug overlay composable that displays current runtime parameters and configuration states.

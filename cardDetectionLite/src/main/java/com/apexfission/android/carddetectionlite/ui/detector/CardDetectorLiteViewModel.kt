@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui
+package com.apexfission.android.carddetectionlite.ui.detector
 
 import android.app.Application
 import android.os.SystemClock
@@ -9,7 +9,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.MeteringPoint
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardTracker
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
@@ -23,9 +23,9 @@ import kotlinx.coroutines.launch
 /**
  * The central ViewModel for the [CardDetectorLite] screen, orchestrating the card tracking process.
  *
- * This class serves as the bridge between the UI Composables and the underlying [CardTracker].
+ * This class serves as the bridge between the UI Composables and the underlying [CardDetector].
  * Its responsibilities include:
- * - Owning and initializing [CardTracker] and [YoloDetector].
+ * - Owning and initializing [CardDetector] and [YoloDetector].
  * - Receiving image frames from [com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview].
  * - Throttling inference rate to maintain smooth UI performance.
  * - Dispatching inference work to background threads.
@@ -61,7 +61,7 @@ class CardDetectorLiteViewModel(
     private val _flashlightEnabled = MutableStateFlow(false)
     val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
 
-    private val detector = CardTracker(
+    private val detector = CardDetector(
         yoloDetector = YoloDetector(
             context = application,
             modelPath = modelPath,
