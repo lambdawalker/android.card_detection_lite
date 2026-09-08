@@ -13,7 +13,10 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetecti
  * @property top Top coordinate in overlay screen pixels.
  * @property right Right coordinate in overlay screen pixels.
  * @property bottom Bottom coordinate in overlay screen pixels.
- * @property lockOnProgress Current lock-on progress from 0.0f (locking) to 1.0f (locked).
+ * @property lockOnProgress Raw lock-on progress from 0.0f (locking) to 1.0f (locked).
+ * @property smoothProgress Spring-animated lock-on progress from 0.0f to 1.0f.
+ * @property breathe Oscillating pulse scale value between 0.96f and 1.04f for breathing animation.
+ * @property sweepPhase Continuous linear phase value between 0.0f and 1.0f for sweeping glow animation.
  * @property opacity Animated opacity level from 0.0f to 1.0f.
  * @property isTracking Whether a card is actively detected in the current stream.
  * @property activeDetection The active or last detected [CardDetection] instance.
@@ -25,6 +28,9 @@ data class AnimatedDetectionBounds(
     val right: Float,
     val bottom: Float,
     val lockOnProgress: Float = 0f,
+    val smoothProgress: Float = lockOnProgress,
+    val breathe: Float = 1f,
+    val sweepPhase: Float = 0f,
     val opacity: Float = 1f,
     val isTracking: Boolean = false,
     val activeDetection: CardDetection? = null

@@ -2,8 +2,15 @@ package com.apexfission.android.carddetectionlite.ui.overlays
 
 import android.graphics.RectF
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -40,7 +47,8 @@ class AnimatedDetectionScope(
 /**
  * Remembers and calculates real-time animated screen coordinates and tracking state for card overlays.
  *
- * Handles screen coordinate transformation, smooth bounds animations, fading, and reset timers.
+ * Handles screen coordinate transformation, smooth bounds animations, fading, lock-on spring progress,
+ * breathing pulse, sweep phase, and reset timers.
  */
 @Composable
 fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
@@ -148,12 +156,50 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         label = "guideBottom"
     )
 
+    // Smooth spring lock-on progress
+    val rawProgress = activeDetection?.lockOnProgress?.coerceIn(0f, 1f) ?: 0f
+    val smoothProgress by animateFloatAsState(
+        targetValue = rawProgress,
+        animationSpec = spring(
+            stiffness = Spring.StiffnessLow,
+            dampingRatio = Spring.DampingRatioNoBouncy
+        ),
+        label = "smoothProgress"
+    )
+
+    // Continuous breathing pulse
+    val infiniteTransition = rememberInfiniteTransition(label = "detection_bounds_infinite")
+
+    val breathe by infiniteTransition.animateFloat(
+        initialValue = 0.96f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "breathe"
+    )
+
+    // Continuous sweep phase
+    val sweepPhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "sweepPhase"
+    )
+
     return AnimatedDetectionBounds(
         left = animatedLeft,
         top = animatedTop,
         right = animatedRight,
         bottom = animatedBottom,
-        lockOnProgress = activeDetection?.lockOnProgress ?: 0f,
+        lockOnProgress = rawProgress,
+        smoothProgress = smoothProgress,
+        breathe = breathe,
+        sweepPhase = sweepPhase,
         opacity = animatedOpacity,
         isTracking = guideState == InternalGuideState.TRACKING,
         activeDetection = activeDetection

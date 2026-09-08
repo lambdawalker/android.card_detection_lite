@@ -1,19 +1,6 @@
 package com.apexfission.android.carddetectionlite.ui.overlays
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
@@ -23,7 +10,7 @@ import kotlin.math.min
 /**
  * Lock-on overlay using AnimatedDetectionCanvas.
  *
- * Progress is animated independently so padding smoothly contracts from 28dp to 4dp.
+ * Progress, breathe, and sweepPhase are automatically animated and exposed by AnimatedDetectionCanvas.
  * When detection disappears, the last progress is retained while the overlay fades out.
  */
 @Composable
@@ -35,47 +22,12 @@ fun CardDetectorOverlayScope.CardLockOnOverlay2(
         fadeAnimationDurationMs = 300
     )
 ) {
-    val smoothProgress = remember { Animatable(0f) }
-
-    LaunchedEffect(detectionState?.lockOnProgress) {
-        val target = detectionState?.lockOnProgress?.coerceIn(0f, 1f)
-            ?: return@LaunchedEffect
-
-        smoothProgress.animateTo(
-            targetValue = target,
-            animationSpec = spring(
-                stiffness = Spring.StiffnessLow,
-                dampingRatio = Spring.DampingRatioNoBouncy
-            )
-        )
-    }
-
-    val infinite = rememberInfiniteTransition(label = "lock_on_overlay")
-
-    val breathe by infinite.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.04f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "breathe"
-    )
-
-    val sweepPhase by infinite.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sweep"
-    )
-
     AnimatedDetectionCanvas(config = config) {
         if (bounds.opacity <= 0f) return@AnimatedDetectionCanvas
 
-        val progress = smoothProgress.value
+        val progress = bounds.smoothProgress
+        val breathe = bounds.breathe
+        val sweepPhase = bounds.sweepPhase
 
         val idlePadding = 28.dp.toPx()
         val lockedPadding = 4.dp.toPx()
