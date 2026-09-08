@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
@@ -33,8 +34,16 @@ class CardDetectionSimulationActivity : ComponentActivity() {
             CardDetectionTestTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
+                    val navigateBack by mainViewModel.navigateBack.collectAsStateWithLifecycle()
 
-                    val videoUri = "android.resource://$packageName/raw/v000".toUri()
+                    LaunchedEffect(navigateBack) {
+                        if (navigateBack) {
+                            finish()
+                            mainViewModel.onBackHandled()
+                        }
+                    }
+
+                    val videoUri = "android.resource://$packageName/raw/v002".toUri()
 
                     CardTrackingSimulator(
                         modifier = Modifier.padding(innerPadding),
@@ -46,6 +55,8 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         cameraPreset = CameraPreset.Default,
                         isDetectionEnabled = isDetectionEnabled,
                         onCardDetection = mainViewModel::onDetection,
+                        onCaptureRequested = mainViewModel::onCaptureRequested,
+                        onBackRequested = mainViewModel::onBackRequested,
                         controlOverlay = {
                             IdCaptureOverlay()
                         }

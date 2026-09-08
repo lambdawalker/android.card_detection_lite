@@ -57,6 +57,9 @@ fun CardTrackingSimulator(
         MarginValidator(), AspectRatioValidator()
     ),
     onCardDetection: (CardDetection) -> Unit,
+    onCaptureRequested: (CardDetection) -> Unit = {},
+    onBackRequested: () -> Unit = {},
+
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -115,7 +118,8 @@ fun CardTrackingSimulator(
             imageSpaceChain,
             detectorPreset,
             cameraPreset,
-            onCardDetection
+            onCardDetection,
+            onCaptureRequested
         ) {
             CardDetectorOverlayScopeImpl(
                 detectionState = cardDetection,
@@ -125,8 +129,10 @@ fun CardTrackingSimulator(
                 flashlightEnabled = false,
                 detectorPreset = detectorPreset,
                 cameraPreset = cameraPreset,
-                onCaptureRequested = {},
-                onBackRequested = {},
+                onCaptureRequested = {
+                    cardDetection?.let { onCaptureRequested(it) }
+                },
+                onBackRequested = onBackRequested,
                 onFlashlightToggleRequested = {}
             )
         }

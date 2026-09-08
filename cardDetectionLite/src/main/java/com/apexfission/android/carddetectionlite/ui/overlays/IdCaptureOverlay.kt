@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -74,78 +75,103 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
 
             val color = config.guideColor.copy(alpha = bounds.opacity)
 
-            val cornerLen = 28.dp.toPx()
+            val cornerLen = 15.dp.toPx()
             val strokeWidth = 3.dp.toPx()
+
+            // Padding to offset the corner brackets from the dashed line
+            val cornerPadding = 4.dp.toPx()
+            val pLeft = left - cornerPadding
+            val pTop = top - cornerPadding
+            val pRight = right + cornerPadding
+            val pBottom = bottom + cornerPadding
 
             // Outer dashed boundary line
             val dashedPath = Path().apply {
                 addRoundRect(
                     androidx.compose.ui.geometry.RoundRect(
-                        left = left,
-                        top = top,
-                        right = right,
-                        bottom = bottom,
-                        cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx())
+                        left = left, top = top, right = right, bottom = bottom, cornerRadius = CornerRadius(12.dp.toPx(), 10.dp.toPx())
                     )
                 )
             }
+
             drawPath(
-                path = dashedPath,
-                color = color,
-                style = Stroke(
-                    width = 2.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(16f, 12f))
+                path = dashedPath, color = color, style = Stroke(
+                    width = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(16f, 12f))
                 )
             )
 
             // Top-Left corner bracket
             drawPath(
                 path = Path().apply {
-                    moveTo(left, top + cornerLen)
-                    lineTo(left, top + 12.dp.toPx())
-                    quadraticBezierTo(left, top, left + 12.dp.toPx(), top)
-                    lineTo(left + cornerLen, top)
-                },
-                color = color,
-                style = Stroke(width = strokeWidth)
+                    moveTo(pLeft, pTop + cornerLen)
+                    lineTo(pLeft, pTop + 12.dp.toPx())
+                    quadraticBezierTo(pLeft, pTop, pLeft + 12.dp.toPx(), pTop)
+                    lineTo(pLeft + cornerLen, pTop)
+                }, color = color, style = Stroke(width = strokeWidth)
             )
 
             // Top-Right corner bracket
             drawPath(
                 path = Path().apply {
-                    moveTo(right - cornerLen, top)
-                    lineTo(right - 12.dp.toPx(), top)
-                    quadraticBezierTo(right, top, right, top + 12.dp.toPx())
-                    lineTo(right, top + cornerLen)
-                },
-                color = color,
-                style = Stroke(width = strokeWidth)
+                    moveTo(pRight - cornerLen, pTop)
+                    lineTo(pRight - 12.dp.toPx(), pTop)
+                    quadraticBezierTo(pRight, pTop, pRight, pTop + 12.dp.toPx())
+                    lineTo(pRight, pTop + cornerLen)
+                }, color = color, style = Stroke(width = strokeWidth)
             )
 
             // Bottom-Right corner bracket
             drawPath(
                 path = Path().apply {
-                    moveTo(right, bottom - cornerLen)
-                    lineTo(right, bottom - 12.dp.toPx())
-                    quadraticBezierTo(right, bottom, right - 12.dp.toPx(), bottom)
-                    lineTo(right - cornerLen, bottom)
-                },
-                color = color,
-                style = Stroke(width = strokeWidth)
+                    moveTo(pRight, pBottom - cornerLen)
+                    lineTo(pRight, pBottom - 12.dp.toPx())
+                    quadraticBezierTo(pRight, pBottom, pRight - 12.dp.toPx(), pBottom)
+                    lineTo(pRight - cornerLen, pBottom)
+                }, color = color, style = Stroke(width = strokeWidth)
             )
 
             // Bottom-Left corner bracket
             drawPath(
                 path = Path().apply {
-                    moveTo(left + cornerLen, bottom)
-                    lineTo(left + 12.dp.toPx(), bottom)
-                    quadraticBezierTo(left, bottom, left, bottom - 12.dp.toPx())
-                    lineTo(left, bottom - cornerLen)
-                },
-                color = color,
-                style = Stroke(width = strokeWidth)
+                    moveTo(pLeft + cornerLen, pBottom)
+                    lineTo(pLeft + 12.dp.toPx(), pBottom)
+                    quadraticBezierTo(pLeft, pBottom, pLeft, pBottom - 12.dp.toPx())
+                    lineTo(pLeft, pBottom - cornerLen)
+                }, color = color, style = Stroke(width = strokeWidth)
             )
         }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(180.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black,
+                            Color.Black.copy(alpha = 0.75f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(180.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.75f),
+                            Color.Black
+                        )
+                    )
+                )
+        )
 
         // Overlay UI layer (Header, instructions, controls)
         Column(modifier = Modifier.fillMaxSize()) {
@@ -153,25 +179,18 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(onClick = { goBack() }) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White
                     )
                 }
 
                 Text(
-                    text = config.title,
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center
+                    text = config.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center
                 )
 
                 // Spacer for top bar balance
@@ -184,30 +203,21 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = config.instructionTitle,
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    text = config.instructionTitle, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = config.instructionSubTitle,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center
+                    text = config.instructionSubTitle, color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, textAlign = TextAlign.Center
                 )
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Bottom controls section: Shutter and Flashlight
             val isCaptureEnabled = if (config.requiresCardDetectionForCapture) captureEnabled else true
 
             Row(
@@ -230,10 +240,7 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
                             enabled = isCaptureEnabled,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { capture() }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
+                            onClick = { capture() }), contentAlignment = Alignment.Center) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -246,11 +253,9 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
                     )
                 }
 
-                // Flashlight toggle button on bottom right (replaces camera-flip button)
                 if (flashlightAvailable) {
                     IconButton(
-                        onClick = { toggleFlashlight() },
-                        modifier = Modifier
+                        onClick = { toggleFlashlight() }, modifier = Modifier
                             .size(48.dp)
                             .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                     ) {

@@ -53,8 +53,8 @@ fun CardDetectorLite(
         MarginValidator(), AspectRatioValidator()
     ),
     onCardDetection: (CardDetection) -> Unit = {},
-    onBack: (() -> Unit)? = null,
-    onCapture: ((CardDetection?) -> Unit)? = null,
+    onBack: () -> Unit = {},
+    onCapture: (CardDetection) -> Unit = {},
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -129,12 +129,9 @@ fun CardDetectorLite(
                 detectorPreset = detectorPreset,
                 cameraPreset = cameraPreset,
                 onCaptureRequested = {
-                    val target = latestValidDetection
-                    onCapture?.invoke(target) ?: target?.let(onCardDetection)
+                    latestValidDetection?.let { onCapture(it) }
                 },
-                onBackRequested = {
-                    onBack?.invoke()
-                },
+                onBackRequested = onBack,
                 onFlashlightToggleRequested = viewModel::toggleFlashlight
             )
         }
