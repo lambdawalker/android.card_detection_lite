@@ -18,16 +18,31 @@ import androidx.compose.ui.unit.sp
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * A Composable that renders bounding boxes and labels for detected objects onto a `Canvas`.
+ * Scoped variant of [DetectionOverlay] using [CardDetectorOverlayScope].
  *
- * This overlay is designed to be drawn on top of the `CameraPreview`. Its primary responsibility
- * is to solve the complex coordinate transformation problem: converting the normalized,
- * model-space coordinates of a detection into the correct pixel-space coordinates on the screen.
- * It accounts for differences in aspect ratio and scaling between the camera's raw output and
- * the `PreviewView`'s `FILL_CENTER` display mode.
+ * @param showClassNames Whether to draw class names above bounding boxes.
+ * @param classLabels Map of class IDs to human-readable labels.
+ */
+@Composable
+fun CardDetectorOverlayScope.DetectionOverlay(
+    showClassNames: Boolean = false,
+    classLabels: Map<Int, String> = emptyMap()
+) {
+    val spaceChain = imageSpaceChain ?: return
+    DetectionOverlay(
+        cardDetection = detectionState,
+        imageSpaceChain = spaceChain,
+        showClassNames = showClassNames,
+        classLabels = classLabels
+    )
+}
+
+/**
+ * Standalone variant of [DetectionOverlay] taking explicit parameters.
  *
  * @param cardDetection The [CardDetection] result from the ViewModel.
  * @param showClassNames A boolean flag. If `true`, a text label with the object's class name and

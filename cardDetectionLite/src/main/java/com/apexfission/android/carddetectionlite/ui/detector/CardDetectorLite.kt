@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -20,18 +19,12 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginVal
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview
-import com.apexfission.android.carddetectionlite.ui.overlays.AreaOfInterest
-import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.DebugOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.DetectionOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.OverlayPreset
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * All-in-one Composable that provides a configurable in-camera-feed card detection and tracking solution.
  *
- * Configured via structured preset objects ([CardDetectorPreset], [OverlayPreset], and [CameraPreset]),
+ * Configured via structured preset objects ([CardDetectorPreset] and [CameraPreset]),
  * and extensible via a developer-customizable scoped slot API ([controlOverlay]).
  *
  * @param modifier A [Modifier] applied to the root `Box` of this component.
@@ -40,7 +33,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param cardClasses A set of class IDs from the model that should be treated as primary targets for card detection.
  * @param isDetectionEnabled A boolean flag to dynamically start or stop the detection process.
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
- * @param overlayPreset UI overlay display configuration preset ([OverlayPreset]). Defaults to [OverlayPreset.Standard].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters A list of [CardValidator] instances used to apply additional heuristic validation rules.
  * @param onCardDetection A callback lambda invoked when a card detection event occurs.
@@ -56,7 +48,6 @@ fun CardDetectorLite(
     cardClasses: Set<Int>,
     isDetectionEnabled: Boolean = true,
     detectorPreset: CardDetectorPreset = CardDetectorPreset.HighPerformance,
-    overlayPreset: OverlayPreset = OverlayPreset.Standard,
     cameraPreset: CameraPreset = CameraPreset.Default,
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
@@ -64,9 +55,7 @@ fun CardDetectorLite(
     onCardDetection: (CardDetection) -> Unit = {},
     onBack: (() -> Unit)? = null,
     onCapture: ((CardDetection?) -> Unit)? = null,
-    controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {
-        IdCaptureOverlay()
-    }
+    controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
     val imageSpaceChainFlow = remember { MutableStateFlow<ImageSpaceChain?>(null) }
@@ -116,54 +105,8 @@ fun CardDetectorLite(
             focusOn = cardDetection,
             tapToFocusEnabled = cameraPreset.tapToFocusEnabled,
             focusOnCardEnabled = cameraPreset.focusOnCardEnabled,
-            showFocusIndicator = overlayPreset.showFocusIndicator
+            showFocusIndicator = true
         )
-
-        imageSpaceChain?.let { spaceChain ->
-            if (overlayPreset.showAreaOfInterest) {
-                AreaOfInterest(
-                    preProcessingImageTransformation = detectorPreset.preProcessingImageTransformation,
-                    imageSpaceChain = spaceChain
-                )
-            }
-
-            if (isDetectionEnabled && overlayPreset.showBoundingBoxes) {
-                DetectionOverlay(
-                    cardDetection = cardDetection,
-                    imageSpaceChain = spaceChain,
-                    showClassNames = overlayPreset.showClassNames,
-                    classLabels = classLabels
-                )
-            }
-
-            if (isDetectionEnabled && overlayPreset.showLockOnProgress) {
-                CardLockOnOverlay(
-                    activeDetection = cardDetection,
-                    imageSpaceChain = spaceChain
-                )
-            }
-        }
-
-        if (overlayPreset.showDebugOverlay) {
-            DebugOverlay(
-                isDetectionEnabled = isDetectionEnabled,
-                useGpu = detectorPreset.useGpu,
-                showBoundingBoxes = overlayPreset.showBoundingBoxes,
-                showLockOnProgress = overlayPreset.showLockOnProgress,
-                imageMode = detectorPreset.preProcessingImageTransformation,
-                inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
-                tapToFocusEnabled = cameraPreset.tapToFocusEnabled,
-                focusOnCardEnabled = cameraPreset.focusOnCardEnabled,
-                lockOnThreshold = detectorPreset.lockOnThreshold,
-                noDetectionCountLimit = detectorPreset.noDetectionCountLimit,
-                memoryDetectionTimeLimit = detectorPreset.memoryDetectionTimeLimit,
-                validateClassIdInLockOnProcess = detectorPreset.validateClassIdInLockOnProcess,
-                differenceHashDistanceLimit = detectorPreset.differenceHashDistanceLimit,
-                allowTemporalDrift = detectorPreset.allowTemporalDrift,
-                numThreads = detectorPreset.numThreads,
-                modifier = Modifier.align(Alignment.BottomStart)
-            )
-        }
 
         val overlayScope = remember(
             cardDetection,
@@ -171,6 +114,8 @@ fun CardDetectorLite(
             imageSpaceChain,
             flashlightAvailable,
             flashlightEnabled,
+            detectorPreset,
+            cameraPreset,
             onCapture,
             onBack,
             onCardDetection
@@ -181,6 +126,8 @@ fun CardDetectorLite(
                 imageSpaceChain = imageSpaceChain,
                 flashlightAvailable = flashlightAvailable,
                 flashlightEnabled = flashlightEnabled,
+                detectorPreset = detectorPreset,
+                cameraPreset = cameraPreset,
                 onCaptureRequested = {
                     val target = latestValidDetection
                     onCapture?.invoke(target) ?: target?.let(onCardDetection)

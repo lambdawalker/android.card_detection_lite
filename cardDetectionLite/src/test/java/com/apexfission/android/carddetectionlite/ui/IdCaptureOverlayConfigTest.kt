@@ -17,7 +17,7 @@ class IdCaptureOverlayConfigTest {
         assertEquals(0.85f, config.detectedOpacity, 0.001f)
         assertEquals(2_000L, config.missingCardResetDelayMs)
         assertNull(config.maxConsecutiveMisses)
-        assertEquals(150, config.trackingAnimationDurationMs)
+        assertEquals(200, config.trackingAnimationDurationMs)
         assertEquals(300, config.resetAnimationDurationMs)
         assertEquals(1_000, config.fadeAnimationDurationMs)
         assertTrue(config.enableGuideSmoothing)

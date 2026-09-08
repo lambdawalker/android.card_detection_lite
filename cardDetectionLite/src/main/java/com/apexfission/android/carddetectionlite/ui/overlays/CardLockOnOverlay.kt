@@ -33,11 +33,25 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetecti
 import kotlin.math.hypot
 import kotlin.math.min
 
+import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
+
 /**
  * A stylized, animated overlay providing visual feedback during the card lock-on process.
  *
  * Renders a glowing, animated frame around the card whose progress and styling change dynamically
  * based on `activeDetection.lockOnProgress`. Coordinates are mapped to screen space using [imageSpaceChain].
+ */
+@Composable
+fun CardDetectorOverlayScope.CardLockOnOverlay() {
+    val spaceChain = imageSpaceChain ?: return
+    CardLockOnOverlay(
+        activeDetection = detectionState,
+        imageSpaceChain = spaceChain
+    )
+}
+
+/**
+ * Standalone variant of [CardLockOnOverlay] taking explicit parameters.
  *
  * @param activeDetection The current [CardDetection] from the ViewModel.
  * @param imageSpaceChain The [ImageSpaceChain] used to map detection coordinates to screen space.

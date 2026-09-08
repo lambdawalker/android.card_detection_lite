@@ -3,11 +3,12 @@ package com.apexfission.android.carddetectionlite.ui.detector
 import androidx.compose.runtime.Stable
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 
 /**
  * Scoped interface provided to custom control overlays in [CardDetectorLite].
  *
- * Exposes real-time detection state, flashlight state, and user actions without
+ * Exposes real-time detection state, flashlight state, presets, and user actions without
  * exposing underlying camera or detector implementation details.
  */
 @Stable
@@ -49,6 +50,16 @@ interface CardDetectorOverlayScope {
     val flashlightEnabled: Boolean
 
     /**
+     * The active ML pipeline configuration preset ([CardDetectorPreset]).
+     */
+    val detectorPreset: CardDetectorPreset
+
+    /**
+     * The active camera lens and focus configuration preset ([CameraPreset]).
+     */
+    val cameraPreset: CameraPreset
+
+    /**
      * Emits a user intent to capture the card detection or current frame.
      */
     fun capture()
@@ -73,6 +84,8 @@ internal class CardDetectorOverlayScopeImpl(
     override val imageSpaceChain: ImageSpaceChain?,
     override val flashlightAvailable: Boolean,
     override val flashlightEnabled: Boolean,
+    override val detectorPreset: CardDetectorPreset = CardDetectorPreset.HighPerformance,
+    override val cameraPreset: CameraPreset = CameraPreset.Default,
     private val onCaptureRequested: () -> Unit,
     private val onBackRequested: () -> Unit,
     private val onFlashlightToggleRequested: () -> Unit

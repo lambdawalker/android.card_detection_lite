@@ -18,7 +18,8 @@ import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
-import com.apexfission.android.carddetectionlite.ui.overlays.OverlayPreset
+import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureOverlay
 import com.apexfission.android.carddetectionlite.ui.simulation.CardTrackingSimulator
 import com.apexfission.android.carddetectiontest.ui.theme.CardDetectionTestTheme
 
@@ -43,10 +44,12 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         classLabels = ModelCatalog.TfLite.classes,
                         cardClasses = ModelCatalog.TfLite.cardClasses,
                         detectorPreset = CardDetectorPreset.BatterySaver.copy(scoreThreshold = 0.3f, lockOnThreshold = 5, noDetectionCountLimit = 8),
-                        overlayPreset = OverlayPreset.Debug,
                         cameraPreset = CameraPreset.Default,
                         isDetectionEnabled = isDetectionEnabled,
-                        onCardDetection = mainViewModel::onDetection
+                        onCardDetection = mainViewModel::onDetection,
+                        controlOverlay = {
+                            IdCaptureOverlay()
+                        }
                     )
                 }
             }

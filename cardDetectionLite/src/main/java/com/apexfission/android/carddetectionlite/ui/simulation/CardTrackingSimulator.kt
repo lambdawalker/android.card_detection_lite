@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -22,18 +21,15 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValid
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
+import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
+import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScopeImpl
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
-import com.apexfission.android.carddetectionlite.ui.overlays.OverlayPreset
-import com.apexfission.android.carddetectionlite.ui.overlays.AreaOfInterest
-import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.DebugOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.DetectionOverlay
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * A simulation composable that runs card tracking inference over video frames from a URI source.
  *
- * Configured via structured preset objects ([CardDetectorPreset], [OverlayPreset], and [CameraPreset]).
+ * Configured via structured preset objects ([CardDetectorPreset] and [CameraPreset]).
  *
  * @param modifier Composable modifier.
  * @param videoUri Source video URI.
@@ -42,10 +38,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param cardClasses Set of class IDs treated as cards.
  * @param isDetectionEnabled Whether detection is active.
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
- * @param overlayPreset UI overlay display configuration preset ([OverlayPreset]). Defaults to [OverlayPreset.Debug].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters List of card validators.
  * @param onCardDetection Callback lambda on card detection events.
+ * @param controlOverlay A scoped Compose slot allowing custom overlays via [CardDetectorOverlayScope].
  */
 @Composable
 fun CardTrackingSimulator(
@@ -56,12 +52,12 @@ fun CardTrackingSimulator(
     cardClasses: Set<Int>,
     isDetectionEnabled: Boolean = true,
     detectorPreset: CardDetectorPreset = CardDetectorPreset.HighPerformance,
-    overlayPreset: OverlayPreset = OverlayPreset.Debug,
     cameraPreset: CameraPreset = CameraPreset.Default,
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
     onCardDetection: (CardDetection) -> Unit,
+    controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
     val sizeInPixels = remember { MutableStateFlow(IntSize.Zero) }
@@ -114,46 +110,27 @@ fun CardTrackingSimulator(
 
         val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
 
-        imageSpaceChain?.let { space ->
-            if (overlayPreset.showAreaOfInterest) {
-                AreaOfInterest(
-                    preProcessingImageTransformation = detectorPreset.preProcessingImageTransformation,
-                    imageSpaceChain = space
-                )
-            }
-
-            if (isDetectionEnabled && overlayPreset.showBoundingBoxes) {
-                DetectionOverlay(
-                    cardDetection = cardDetection, imageSpaceChain = space, showClassNames = overlayPreset.showClassNames, classLabels = classLabels
-                )
-            }
-
-            if (isDetectionEnabled && overlayPreset.showLockOnProgress) {
-                CardLockOnOverlay(
-                    activeDetection = cardDetection, imageSpaceChain = space
-                )
-            }
-        }
-
-        if (overlayPreset.showDebugOverlay) {
-            DebugOverlay(
-                isDetectionEnabled = isDetectionEnabled,
-                useGpu = detectorPreset.useGpu,
-                showBoundingBoxes = overlayPreset.showBoundingBoxes,
-                showLockOnProgress = overlayPreset.showLockOnProgress,
-                imageMode = detectorPreset.preProcessingImageTransformation,
-                inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
-                tapToFocusEnabled = cameraPreset.tapToFocusEnabled,
-                focusOnCardEnabled = cameraPreset.focusOnCardEnabled,
-                lockOnThreshold = detectorPreset.lockOnThreshold,
-                noDetectionCountLimit = detectorPreset.noDetectionCountLimit,
-                memoryDetectionTimeLimit = detectorPreset.memoryDetectionTimeLimit,
-                validateClassIdInLockOnProcess = detectorPreset.validateClassIdInLockOnProcess,
-                differenceHashDistanceLimit = detectorPreset.differenceHashDistanceLimit,
-                allowTemporalDrift = detectorPreset.allowTemporalDrift,
-                numThreads = detectorPreset.numThreads,
-                modifier = Modifier.align(Alignment.BottomStart)
+        val overlayScope = remember(
+            cardDetection,
+            imageSpaceChain,
+            detectorPreset,
+            cameraPreset,
+            onCardDetection
+        ) {
+            CardDetectorOverlayScopeImpl(
+                detectionState = cardDetection,
+                latestValidDetection = cardDetection,
+                imageSpaceChain = imageSpaceChain,
+                flashlightAvailable = false,
+                flashlightEnabled = false,
+                detectorPreset = detectorPreset,
+                cameraPreset = cameraPreset,
+                onCaptureRequested = {},
+                onBackRequested = {},
+                onFlashlightToggleRequested = {}
             )
         }
+
+        overlayScope.controlOverlay()
     }
 }

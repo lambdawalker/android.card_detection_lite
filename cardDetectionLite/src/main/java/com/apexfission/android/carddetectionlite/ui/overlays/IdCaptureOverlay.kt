@@ -119,21 +119,11 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
                     rawBox.y2.toFloat()
                 )
 
-                val smoothedRect = if (config.enableGuideSmoothing && lastDetectedBoxScreen != null) {
-                    val factor = config.guideSmoothingFactor.coerceIn(0.01f, 1f)
-                    val prev = lastDetectedBoxScreen!!
-                    RectF(
-                        prev.left + (rectInScreen.left - prev.left) * factor,
-                        prev.top + (rectInScreen.top - prev.top) * factor,
-                        prev.right + (rectInScreen.right - prev.right) * factor,
-                        prev.bottom + (rectInScreen.bottom - prev.bottom) * factor
-                    )
-                } else {
-                    rectInScreen
-                }
-
-                lastDetectedBoxScreen = smoothedRect
-                targetBox = smoothedRect
+                // Match CardLockOnOverlay: feed the latest translated detection
+                // directly to animateFloatAsState. Avoid pre-interpolating the box,
+                // otherwise tracking is smoothed twice and visibly lags behind.
+                lastDetectedBoxScreen = rectInScreen
+                targetBox = rectInScreen
                 boundsDurationMs = config.trackingAnimationDurationMs
 
                 consecutiveMisses = 0
@@ -210,9 +200,6 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
             val top = animatedTop
             val right = animatedRight
             val bottom = animatedBottom
-
-            val width = (right - left).coerceAtLeast(1f)
-            val height = (bottom - top).coerceAtLeast(1f)
 
             val color = config.guideColor.copy(alpha = animatedOpacity)
 

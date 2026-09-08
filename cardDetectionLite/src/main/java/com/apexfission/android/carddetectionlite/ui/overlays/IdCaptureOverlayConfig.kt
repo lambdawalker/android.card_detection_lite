@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
  * @property detectedOpacity Opacity of the card guide when a card is detected. Defaults to 0.85f (85%).
  * @property missingCardResetDelayMs Time in milliseconds without a card detection before the guide resets to center. Defaults to 2,000ms.
  * @property maxConsecutiveMisses Optional threshold for consecutive frames without a detection before resetting to center.
- * @property trackingAnimationDurationMs Duration in milliseconds for guide position/size animation while tracking. Defaults to 150ms.
+ * @property trackingAnimationDurationMs Duration in milliseconds for guide position/size animation while tracking. Defaults to 200ms.
  * @property resetAnimationDurationMs Duration in milliseconds for guide reset animation back to center. Defaults to 300ms.
  * @property fadeAnimationDurationMs Duration in milliseconds for opacity fade animation when card is missing. Defaults to 1,000ms.
  * @property enableGuideSmoothing Whether to smooth bounding box coordinates to prevent jitter. Defaults to true.
@@ -30,7 +30,7 @@ data class IdCaptureOverlayConfig(
     val detectedOpacity: Float = 0.85f,
     val missingCardResetDelayMs: Long = 2_000L,
     val maxConsecutiveMisses: Int? = null,
-    val trackingAnimationDurationMs: Int = 150,
+    val trackingAnimationDurationMs: Int = 200,
     val resetAnimationDurationMs: Int = 300,
     val fadeAnimationDurationMs: Int = 1_000,
     val enableGuideSmoothing: Boolean = true,
