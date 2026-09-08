@@ -5,6 +5,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
+import com.apexfission.android.carddetectionlite.ui.overlays.draw.buildConnectors
+import com.apexfission.android.carddetectionlite.ui.overlays.draw.buildCorners
+import com.apexfission.android.carddetectionlite.ui.overlays.draw.drawGlowPath
+import com.apexfission.android.carddetectionlite.ui.overlays.draw.lerpF
 import kotlin.math.min
 
 /**
@@ -119,7 +123,7 @@ fun CardDetectorOverlayScope.CardLockOnOverlay(
                 val sweepPoints = listOf(startX to top, endX to top)
                 val sweepColor = Color.White.copy(alpha = 0.85f * sweepAlpha)
 
-                listOf(2,2,4).forEach {
+                listOf(2, 2, 4).forEach {
                     drawGlowPath(
                         points = sweepPoints,
                         blurRadius = blurRadius,
