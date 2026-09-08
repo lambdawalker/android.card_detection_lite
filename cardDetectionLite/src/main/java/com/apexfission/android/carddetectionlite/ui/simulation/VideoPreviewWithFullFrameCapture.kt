@@ -28,7 +28,7 @@ import androidx.media3.effect.ByteBufferGlEffect
 import androidx.media3.effect.Presentation
 import androidx.media3.exoplayer.ExoPlayer
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import com.apexfission.android.carddetectionlite.ui.overlays.createPreviewImageSpaceChain
+import com.apexfission.android.carddetectionlite.ui.camerapreview.createPreviewImageSpaceChain
 import java.util.concurrent.atomic.AtomicReference
 
 /**

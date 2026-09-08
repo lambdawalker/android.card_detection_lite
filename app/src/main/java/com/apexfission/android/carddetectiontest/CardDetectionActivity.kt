@@ -19,10 +19,6 @@ import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorLite
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
 import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay2
-import com.apexfission.android.carddetectionlite.ui.overlays.DebugOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.DetectionOverlay
-import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureOverlay
 import com.apexfission.android.carddetectiontest.ui.theme.CardDetectionTestTheme
 import com.apexfission.android.permissionscompose.HandleCameraPermission
 
@@ -37,10 +33,9 @@ class CardDetectionActivity : ComponentActivity() {
             CardDetectionTestTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
-                    HandleCameraPermission(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .fillMaxSize(), onBack = { finish() }, onNotNow = { finish() }) {
+                    HandleCameraPermission(modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize(), onBack = { finish() }, onNotNow = { finish() }) {
                         val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
 
                         CardDetectorLite(
@@ -48,19 +43,18 @@ class CardDetectionActivity : ComponentActivity() {
                             modelPath = ModelCatalog.TfLite.modelPath,
                             classLabels = ModelCatalog.TfLite.classes,
                             cardClasses = ModelCatalog.TfLite.cardClasses,
-                            detectorPreset = CardDetectorPreset.HighPerformance.copy(scoreThreshold = 0.8f),
+                            detectorPreset = CardDetectorPreset.HighPerformance.copy(scoreThreshold = 0.5f),
                             cameraPreset = CameraPreset.Default,
                             isDetectionEnabled = isDetectionEnabled,
                             onCardDetection = mainViewModel::onDetection,
                             onBack = { finish() },
                             controlOverlay = {
 //                                IdCaptureOverlay()
-                                //CardLockOnOverlay()
-                                CardLockOnOverlay2()
+
+                                CardLockOnOverlay()
 //                                DebugOverlay()
 //                                DetectionOverlay()
-                            }
-                        )
+                            })
                     }
                 }
             }

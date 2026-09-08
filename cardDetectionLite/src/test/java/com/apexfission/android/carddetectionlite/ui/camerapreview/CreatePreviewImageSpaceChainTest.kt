@@ -1,6 +1,5 @@
 package com.apexfission.android.carddetectionlite.ui.camerapreview
 
-import com.apexfission.android.carddetectionlite.ui.overlays.createPreviewImageSpaceChain
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
