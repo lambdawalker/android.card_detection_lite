@@ -3,12 +3,6 @@ package com.apexfission.android.carddetectionlite.ui.detector
 import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FlashOff
-import androidx.compose.material.icons.filled.FlashOn
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,13 +24,15 @@ import com.apexfission.android.carddetectionlite.ui.overlays.AreaOfInterest
 import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.DebugOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.DetectionOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.OverlayPreset
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * All-in-one Composable that provides a configurable in-camera-feed card detection and tracking solution.
  *
- * Configured via structured preset objects ([CardDetectorPreset], [OverlayPreset], and [CameraPreset]).
+ * Configured via structured preset objects ([CardDetectorPreset], [OverlayPreset], and [CameraPreset]),
+ * and extensible via a developer-customizable scoped slot API ([controlOverlay]).
  *
  * @param modifier A [Modifier] applied to the root `Box` of this component.
  * @param modelPath The path to the `.tflite` model file within the application's `assets` directory.
@@ -49,6 +44,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters A list of [CardValidator] instances used to apply additional heuristic validation rules.
  * @param onCardDetection A callback lambda invoked when a card detection event occurs.
+ * @param onBack An optional callback lambda invoked when the user taps the back button in the overlay.
+ * @param onCapture An optional callback lambda invoked when the user requests a capture action.
+ * @param controlOverlay A scoped Compose slot allowing developers to provide a custom overlay UI via [CardDetectorOverlayScope].
  */
 @Composable
 fun CardDetectorLite(
@@ -63,7 +61,12 @@ fun CardDetectorLite(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: (CardDetection) -> Unit,
+    onCardDetection: (CardDetection) -> Unit = {},
+    onBack: (() -> Unit)? = null,
+    onCapture: ((CardDetection?) -> Unit)? = null,
+    controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {
+        IdCaptureOverlay()
+    }
 ) {
     val context = LocalContext.current
     val imageSpaceChainFlow = remember { MutableStateFlow<ImageSpaceChain?>(null) }
@@ -93,7 +96,9 @@ fun CardDetectorLite(
     }
 
     val flashlightEnabled by viewModel.flashlightEnabled.collectAsStateWithLifecycle()
+    val flashlightAvailable by viewModel.flashlightAvailable.collectAsStateWithLifecycle()
     val cardDetection by viewModel.cardDetection.collectAsStateWithLifecycle()
+    val latestValidDetection by viewModel.latestValidDetection.collectAsStateWithLifecycle()
     val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -106,6 +111,7 @@ fun CardDetectorLite(
             },
             onFocusEvent = viewModel::onFocusEvent,
             flashlightEnabled = flashlightEnabled,
+            onFlashlightAvailabilityChanged = viewModel::setFlashlightAvailable,
             analysisTargetResolution = cameraPreset.analysisTargetResolution,
             focusOn = cardDetection,
             tapToFocusEnabled = cameraPreset.tapToFocusEnabled,
@@ -138,20 +144,6 @@ fun CardDetectorLite(
             }
         }
 
-        if (overlayPreset.showFlashlightSwitch) {
-            IconButton(
-                onClick = viewModel::toggleFlashlight,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-            ) {
-                Icon(
-                    imageVector = if (flashlightEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
-                    contentDescription = "Toggle Flashlight"
-                )
-            }
-        }
-
         if (overlayPreset.showDebugOverlay) {
             DebugOverlay(
                 isDetectionEnabled = isDetectionEnabled,
@@ -172,5 +164,34 @@ fun CardDetectorLite(
                 modifier = Modifier.align(Alignment.BottomStart)
             )
         }
+
+        val overlayScope = remember(
+            cardDetection,
+            latestValidDetection,
+            imageSpaceChain,
+            flashlightAvailable,
+            flashlightEnabled,
+            onCapture,
+            onBack,
+            onCardDetection
+        ) {
+            CardDetectorOverlayScopeImpl(
+                detectionState = cardDetection,
+                latestValidDetection = latestValidDetection,
+                imageSpaceChain = imageSpaceChain,
+                flashlightAvailable = flashlightAvailable,
+                flashlightEnabled = flashlightEnabled,
+                onCaptureRequested = {
+                    val target = latestValidDetection
+                    onCapture?.invoke(target) ?: target?.let(onCardDetection)
+                },
+                onBackRequested = {
+                    onBack?.invoke()
+                },
+                onFlashlightToggleRequested = viewModel::toggleFlashlight
+            )
+        }
+
+        overlayScope.controlOverlay()
     }
 }

@@ -63,6 +63,7 @@ fun CameraPreview(
     onFocusEvent: (CameraControl, MeteringPoint) -> Unit,
     lifecycleOwner: LifecycleOwner,
     flashlightEnabled: Boolean,
+    onFlashlightAvailabilityChanged: (Boolean) -> Unit = {},
     analysisTargetResolution: Size = Size(2048, 1080),
     focusOn: CardDetection?,
     tapToFocusEnabled: Boolean = true,
@@ -164,7 +165,11 @@ fun CameraPreview(
                     lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, previewUseCase, analysisUseCase
                 )
                 cameraControl = camera.cameraControl
-                camera.cameraControl.enableTorch(flashlightEnabled)
+                val hasFlashUnit = camera.cameraInfo.hasFlashUnit()
+                onFlashlightAvailabilityChanged(hasFlashUnit)
+                if (hasFlashUnit) {
+                    camera.cameraControl.enableTorch(flashlightEnabled)
+                }
                 if (tapToFocusEnabled) {
                     previewView.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
                         focusPoint = FocusPoint(event.x, event.y)
@@ -180,6 +185,7 @@ fun CameraPreview(
         }, mainExecutor)
 
         onDispose {
+            onFlashlightAvailabilityChanged(false)
             runCatching { cameraProviderFuture.get().unbindAll() }
             analysisExecutor.shutdown()
         }

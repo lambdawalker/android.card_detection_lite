@@ -49,8 +49,14 @@ class CardDetectorLiteViewModel(
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection: StateFlow<CardDetection?> = _cardDetection.asStateFlow()
 
+    private val _latestValidDetection = MutableStateFlow<CardDetection?>(null)
+    val latestValidDetection: StateFlow<CardDetection?> = _latestValidDetection.asStateFlow()
+
     private val _flashlightEnabled = MutableStateFlow(false)
     val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
+
+    private val _flashlightAvailable = MutableStateFlow(true)
+    val flashlightAvailable: StateFlow<Boolean> = _flashlightAvailable.asStateFlow()
 
     private val detector = CardDetector(
         yoloDetector = YoloDetector(
@@ -81,8 +87,17 @@ class CardDetectorLiteViewModel(
         }
     }
 
+    fun setFlashlightAvailable(available: Boolean) {
+        _flashlightAvailable.value = available
+        if (!available) {
+            _flashlightEnabled.value = false
+        }
+    }
+
     fun toggleFlashlight() {
-        _flashlightEnabled.value = !_flashlightEnabled.value
+        if (_flashlightAvailable.value) {
+            _flashlightEnabled.value = !_flashlightEnabled.value
+        }
     }
 
     fun onFocusEvent(cameraControl: CameraControl, meteringPoint: MeteringPoint) {
@@ -125,6 +140,7 @@ class CardDetectorLiteViewModel(
                 }
 
                 _cardDetection.value = adjustedCard
+                _latestValidDetection.value = adjustedCard
                 onDetection(adjustedCard)
             } catch (t: Throwable) {
                 Log.e("YOLO", "Inference failed", t)

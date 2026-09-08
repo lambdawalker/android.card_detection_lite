@@ -46,7 +46,12 @@ class CardDetectionActivity : ComponentActivity() {
                             cardClasses = ModelCatalog.TfLite.cardClasses,
                             detectorPreset = CardDetectorPreset.HighPerformance.copy(scoreThreshold = 0.6f),
                             overlayPreset = OverlayPreset.Standard.change(
-                                showBoundingBoxes = true
+                                showBoundingBoxes = false,
+                                showLockOnProgress = false,
+                                showAreaOfInterest = false,
+                                showDebugOverlay = false,
+                                showClassNames = false
+
                             ),
                             cameraPreset = CameraPreset.Default,
                             isDetectionEnabled = isDetectionEnabled,
