@@ -3,7 +3,6 @@ package com.apexfission.android.carddetectionlite.ui.camerapreview
 import android.util.Log
 import android.util.Size
 import android.view.MotionEvent
-import android.view.View
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
@@ -112,7 +111,10 @@ fun CameraPreview(
         }
     }
 
-    DisposableEffect(lifecycleOwner, flashlightEnabled, tapToFocusEnabled) {
+    val onFocusEventState = rememberUpdatedState(onFocusEvent)
+    val tapToFocusEnabledState = rememberUpdatedState(tapToFocusEnabled)
+
+    DisposableEffect(lifecycleOwner, analysisTargetResolution) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
@@ -126,12 +128,12 @@ fun CameraPreview(
 
             val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(resolutionStrategy).build()
 
-            val analysisUseCaseBuilder =
-                ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .setTargetRotation(previewView.display.rotation).setResolutionSelector(resolutionSelector)
-                    .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-
-            val analysisUseCase = analysisUseCaseBuilder.build()
+            val analysisUseCase = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setTargetRotation(previewView.display.rotation)
+                .setResolutionSelector(resolutionSelector)
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                .build()
 
             analysisUseCase.setAnalyzer(analysisExecutor) { imageProxy ->
                 try {
@@ -164,20 +166,22 @@ fun CameraPreview(
                 val camera = cameraProvider.bindToLifecycle(
                     lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, previewUseCase, analysisUseCase
                 )
-                cameraControl = camera.cameraControl
+                val control = camera.cameraControl
+                cameraControl = control
+
                 val hasFlashUnit = camera.cameraInfo.hasFlashUnit()
                 onFlashlightAvailabilityChanged(hasFlashUnit)
-                if (hasFlashUnit) {
-                    camera.cameraControl.enableTorch(flashlightEnabled)
-                }
-                if (tapToFocusEnabled) {
-                    previewView.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
+
+                previewView.setOnTouchListener { _, event ->
+                    if (tapToFocusEnabledState.value && event.action == MotionEvent.ACTION_DOWN) {
                         focusPoint = FocusPoint(event.x, event.y)
-                        onFocusEvent(
-                            camera.cameraControl, previewView.meteringPointFactory.createPoint(event.x, event.y)
+                        onFocusEventState.value(
+                            control, previewView.meteringPointFactory.createPoint(event.x, event.y)
                         )
-                        return true
-                    })
+                        true
+                    } else {
+                        false
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("CAM", "Camera bind failed", e)
@@ -188,6 +192,14 @@ fun CameraPreview(
             onFlashlightAvailabilityChanged(false)
             runCatching { cameraProviderFuture.get().unbindAll() }
             analysisExecutor.shutdown()
+        }
+    }
+
+    // Smart Torch / Flashlight control without rebinding CameraX
+    LaunchedEffect(cameraControl, flashlightEnabled) {
+        val control = cameraControl ?: return@LaunchedEffect
+        runCatching {
+            control.enableTorch(flashlightEnabled)
         }
     }
 

@@ -105,51 +105,55 @@ class CardDetectorLiteViewModel(
     }
 
     fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection) -> Unit) {
-        if (!detector.enabled) return
+        if (!detector.enabled) {
+            imageProxy.close()
+            return
+        }
 
         viewModelScope.launch(Dispatchers.Default) {
-            var uprightBitmap: Bitmap? = null
-            var croppedBitmap: Bitmap? = null
-            try {
-                val now = SystemClock.uptimeMillis()
-                if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
-                lastInferenceMs.set(now)
+            imageProxy.use { proxy ->
+                var uprightBitmap: Bitmap? = null
+                var croppedBitmap: Bitmap? = null
+                try {
+                    val now = SystemClock.uptimeMillis()
+                    if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
+                    lastInferenceMs.set(now)
 
-                uprightBitmap = imageProxy.toUprightBitmap()
-                val croppedResult = cropWithOffset(
-                    preProcessingImageTransformation,
-                    uprightBitmap,
-                    IntSize(uprightBitmap.width, uprightBitmap.height)
-                )
-                croppedBitmap = croppedResult.bitmap
-
-                val card = detector.track(croppedBitmap)
-
-                val adjustedCard = card?.let { detection ->
-                    val adjustedBox = detection.card.box.offset(croppedResult.xOffset, croppedResult.yOffset)
-                    val adjustedFeatures = detection.features.map { it.copy(box = it.box.offset(croppedResult.xOffset, croppedResult.yOffset)) }
-                    detection.copy(
-                        card = detection.card.copy(box = adjustedBox),
-                        features = adjustedFeatures
+                    uprightBitmap = proxy.toUprightBitmap()
+                    val croppedResult = cropWithOffset(
+                        preProcessingImageTransformation,
+                        uprightBitmap,
+                        IntSize(uprightBitmap.width, uprightBitmap.height)
                     )
-                }
+                    croppedBitmap = croppedResult.bitmap
 
-                if (adjustedCard == null) {
-                    _cardDetection.value = null
-                    return@launch
-                }
+                    val card = detector.track(croppedBitmap)
 
-                _cardDetection.value = adjustedCard
-                _latestValidDetection.value = adjustedCard
-                onDetection(adjustedCard)
-            } catch (t: Throwable) {
-                Log.e("YOLO", "Inference failed", t)
-            } finally {
-                if (croppedBitmap != null && croppedBitmap != uprightBitmap) {
-                    croppedBitmap.recycle()
+                    val adjustedCard = card?.let { detection ->
+                        val adjustedBox = detection.card.box.offset(croppedResult.xOffset, croppedResult.yOffset)
+                        val adjustedFeatures = detection.features.map { it.copy(box = it.box.offset(croppedResult.xOffset, croppedResult.yOffset)) }
+                        detection.copy(
+                            card = detection.card.copy(box = adjustedBox),
+                            features = adjustedFeatures
+                        )
+                    }
+
+                    if (adjustedCard == null) {
+                        _cardDetection.value = null
+                        return@launch
+                    }
+
+                    _cardDetection.value = adjustedCard
+                    _latestValidDetection.value = adjustedCard
+                    onDetection(adjustedCard)
+                } catch (t: Throwable) {
+                    Log.e("YOLO", "Inference failed", t)
+                } finally {
+                    if (croppedBitmap != null && croppedBitmap != uprightBitmap) {
+                        croppedBitmap.recycle()
+                    }
+                    uprightBitmap?.recycle()
                 }
-                uprightBitmap?.recycle()
-                imageProxy.close()
             }
         }
     }
