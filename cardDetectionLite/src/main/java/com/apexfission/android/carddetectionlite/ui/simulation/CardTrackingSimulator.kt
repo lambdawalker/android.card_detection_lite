@@ -90,6 +90,7 @@ fun CardTrackingSimulator(
     }
 
     val cardDetection by viewModel.cardDetection.collectAsStateWithLifecycle()
+    val lastCardDetection by viewModel.latestValidDetection.collectAsStateWithLifecycle()
     val imageSpaceChainFlow = remember { MutableStateFlow<ImageSpaceChain?>(null) }
 
     Box(
@@ -113,8 +114,11 @@ fun CardTrackingSimulator(
 
         val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
 
+
+
         val overlayScope = remember(
             cardDetection,
+            lastCardDetection,
             imageSpaceChain,
             detectorPreset,
             cameraPreset,
@@ -123,7 +127,7 @@ fun CardTrackingSimulator(
         ) {
             CardDetectorOverlayScopeImpl(
                 detectionState = cardDetection,
-                latestValidDetection = cardDetection,
+                latestValidDetection = lastCardDetection,
                 imageSpaceChain = imageSpaceChain,
                 flashlightAvailable = false,
                 flashlightEnabled = false,

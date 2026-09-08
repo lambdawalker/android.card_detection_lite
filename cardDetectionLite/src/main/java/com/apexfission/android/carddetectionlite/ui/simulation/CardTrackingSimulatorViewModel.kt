@@ -43,6 +43,9 @@ class CardTrackingSimulatorViewModel(
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection = _cardDetection.asStateFlow()
 
+    private val _latestValidDetection = MutableStateFlow<CardDetection?>(null)
+    val latestValidDetection = _latestValidDetection.asStateFlow()
+
     private val detector = CardDetector(
         yoloDetector = YoloDetector(
             context = application,
@@ -105,6 +108,7 @@ class CardTrackingSimulatorViewModel(
                 }
 
                 _cardDetection.value = adjustedCard
+                _latestValidDetection.value = adjustedCard
                 onDetection(adjustedCard)
 
             } catch (t: Throwable) {

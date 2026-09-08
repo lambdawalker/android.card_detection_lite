@@ -1,5 +1,11 @@
 package com.apexfission.android.carddetectionlite.ui.overlays
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -218,7 +225,29 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // Retain capture enabled state once at least one valid detection is stored in latestValidDetection
             val isCaptureEnabled = if (config.requiresCardDetectionForCapture) captureEnabled else true
+
+            val animatedShutterAlpha by animateFloatAsState(
+                targetValue = if (isCaptureEnabled) 1.0f else 0.4f,
+                animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                label = "shutterAlpha"
+            )
+
+            val animatedInnerSize by animateDpAsState(
+                targetValue = if (isCaptureEnabled) 64.dp else 52.dp,
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow,
+                    dampingRatio = Spring.DampingRatioMediumBouncy
+                ),
+                label = "shutterInnerSize"
+            )
+
+            val animatedBorderAlpha by animateFloatAsState(
+                targetValue = if (isCaptureEnabled) 1.0f else 0.5f,
+                animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                label = "shutterBorderAlpha"
+            )
 
             Row(
                 modifier = Modifier
@@ -235,7 +264,7 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
                 Box(
                     modifier = Modifier
                         .size(80.dp)
-                        .alpha(if (isCaptureEnabled) 1.0f else 0.4f)
+                        .alpha(animatedShutterAlpha)
                         .clickable(
                             enabled = isCaptureEnabled,
                             interactionSource = remember { MutableInteractionSource() },
@@ -244,12 +273,19 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .border(width = 4.dp, color = Color.White, shape = CircleShape)
+                            .border(
+                                width = 4.dp,
+                                color = Color.White.copy(alpha = animatedBorderAlpha),
+                                shape = CircleShape
+                            )
                     )
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
-                            .background(color = Color.White, shape = CircleShape)
+                            .size(animatedInnerSize)
+                            .background(
+                                color = Color.White.copy(alpha = animatedShutterAlpha),
+                                shape = CircleShape
+                            )
                     )
                 }
 
