@@ -47,5 +47,17 @@ class AnimatedDetectionBoundsTest {
         assertEquals(300, config.resetAnimationDurationMs)
         assertEquals(1_000, config.fadeAnimationDurationMs)
         assertTrue(config.enableGuideSmoothing)
+        assertTrue(config.resetPositionOnMissing)
+    }
+
+    @Test
+    fun testCustomDetectionAnimationConfig() {
+        val config = DetectionAnimationConfig(
+            resetPositionOnMissing = false,
+            idleOpacity = 0f
+        )
+
+        assertFalse(config.resetPositionOnMissing)
+        assertEquals(0f, config.idleOpacity, 0.001f)
     }
 }

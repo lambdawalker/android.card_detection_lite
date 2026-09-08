@@ -65,12 +65,13 @@ data class AnimatedDetectionBounds(
  *
  * @property idleOpacity Opacity level when no card is detected. Defaults to 0.35f (35%).
  * @property detectedOpacity Opacity level when a card is detected. Defaults to 0.85f (85%).
- * @property missingCardResetDelayMs Time in milliseconds without a card detection before resetting to center. Defaults to 2,000ms.
- * @property maxConsecutiveMisses Optional threshold for consecutive frames without a detection before resetting to center.
+ * @property missingCardResetDelayMs Time in milliseconds without a card detection before resetting. Defaults to 2,000ms.
+ * @property maxConsecutiveMisses Optional threshold for consecutive frames without a detection before resetting.
  * @property trackingAnimationDurationMs Duration in milliseconds for position/size animation while tracking. Defaults to 200ms.
  * @property resetAnimationDurationMs Duration in milliseconds for reset animation back to center. Defaults to 300ms.
  * @property fadeAnimationDurationMs Duration in milliseconds for opacity fade animation when card is missing. Defaults to 1,000ms.
  * @property enableGuideSmoothing Whether to enable coordinate transition smoothing. Defaults to true.
+ * @property resetPositionOnMissing Whether to animate bounds back to default center when missing (`true`), or leave bounds at last known detected position (`false`). Defaults to `true`.
  */
 @Immutable
 data class DetectionAnimationConfig(
@@ -81,5 +82,6 @@ data class DetectionAnimationConfig(
     val trackingAnimationDurationMs: Int = 200,
     val resetAnimationDurationMs: Int = 300,
     val fadeAnimationDurationMs: Int = 1_000,
-    val enableGuideSmoothing: Boolean = true
+    val enableGuideSmoothing: Boolean = true,
+    val resetPositionOnMissing: Boolean = true
 )

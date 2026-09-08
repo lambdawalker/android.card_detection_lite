@@ -97,7 +97,7 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
                 val maxMisses = config.maxConsecutiveMisses
                 if (maxMisses != null && consecutiveMisses >= maxMisses) {
                     guideState = InternalGuideState.RESETTING
-                    targetBox = defaultCenterBox
+                    targetBox = if (config.resetPositionOnMissing) defaultCenterBox else (lastDetectedBoxScreen ?: defaultCenterBox)
                     boundsDurationMs = config.resetAnimationDurationMs
                 }
             }
@@ -108,7 +108,7 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         if (guideState == InternalGuideState.FADING) {
             delay(config.missingCardResetDelayMs)
             guideState = InternalGuideState.RESETTING
-            targetBox = defaultCenterBox
+            targetBox = if (config.resetPositionOnMissing) defaultCenterBox else (lastDetectedBoxScreen ?: defaultCenterBox)
             boundsDurationMs = config.resetAnimationDurationMs
             targetOpacity = config.idleOpacity
         }
@@ -206,7 +206,7 @@ fun CardDetectorOverlayScope.AnimatedDetectionCanvas(
 
         val rawBounds = rememberAnimatedDetectionBounds(config = config)
 
-        val bounds = if (rawBounds.left == 0f && rawBounds.top == 0f && rawBounds.right == 0f && rawBounds.bottom == 0f) {
+        val bounds = if (config.resetPositionOnMissing && rawBounds.left == 0f && rawBounds.top == 0f && rawBounds.right == 0f && rawBounds.bottom == 0f) {
             rawBounds.copy(
                 left = defaultCenterBox.left,
                 top = defaultCenterBox.top,

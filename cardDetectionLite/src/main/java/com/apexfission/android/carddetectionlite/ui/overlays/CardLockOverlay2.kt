@@ -1,65 +1,54 @@
 package com.apexfission.android.carddetectionlite.ui.overlays
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import kotlin.math.min
 
 /**
- * Glowing animated frame around the detected card.
+ * Lock-on overlay using AnimatedDetectionCanvas.
+ *
+ * Progress is animated independently so padding smoothly contracts from 28dp to 4dp.
+ * When detection disappears, the last progress is retained while the overlay fades out.
  */
 @Composable
-fun CardDetectorOverlayScope.CardLockOnOverlay() {
-    val spaceChain = imageSpaceChain ?: return
-    CardLockOnOverlay(detectionState, spaceChain)
-}
-
-/**
- * Standalone lock-on overlay using explicit detection and coordinate mapping.
- */
-@Composable
-fun CardLockOnOverlay(
-    activeDetection: CardDetection?,
-    imageSpaceChain: ImageSpaceChain
+fun CardDetectorOverlayScope.CardLockOnOverlay2(
+    config: DetectionAnimationConfig = DetectionAnimationConfig(
+        idleOpacity = 0f,
+        detectedOpacity = 1f,
+        resetPositionOnMissing = false,
+        fadeAnimationDurationMs = 300
+    )
 ) {
-    val card = activeDetection?.card ?: return
-    val box = card.box.translate(imageSpaceChain)
-    val lockOnProgress = activeDetection.lockOnProgress
+    val smoothProgress = remember { Animatable(0f) }
 
-    val tweenSpec = tween<Float>(200, easing = FastOutSlowInEasing)
-    val progressSpring = spring<Float>(
-        stiffness = Spring.StiffnessLow,
-        dampingRatio = Spring.DampingRatioNoBouncy
-    )
+    LaunchedEffect(detectionState?.lockOnProgress) {
+        val target = detectionState?.lockOnProgress?.coerceIn(0f, 1f)
+            ?: return@LaunchedEffect
 
-    val smoothX1 by animateFloatAsState(box.x.toFloat(), tweenSpec, label = "x1")
-    val smoothY1 by animateFloatAsState(box.y.toFloat(), tweenSpec, label = "y1")
-    val smoothX2 by animateFloatAsState(box.x2.toFloat(), tweenSpec, label = "x2")
-    val smoothY2 by animateFloatAsState(box.y2.toFloat(), tweenSpec, label = "y2")
-    val smoothProgress by animateFloatAsState(
-        lockOnProgress.coerceIn(0f, 1f),
-        progressSpring,
-        label = "progress"
-    )
+        smoothProgress.animateTo(
+            targetValue = target,
+            animationSpec = spring(
+                stiffness = Spring.StiffnessLow,
+                dampingRatio = Spring.DampingRatioNoBouncy
+            )
+        )
+    }
 
     val infinite = rememberInfiniteTransition(label = "lock_on_overlay")
 
@@ -83,52 +72,58 @@ fun CardLockOnOverlay(
         label = "sweep"
     )
 
-    Canvas(Modifier.fillMaxSize()) {
-        val padding = lerpF(28.dp.toPx(), 4.dp.toPx(), smoothProgress)
+    AnimatedDetectionCanvas(config = config) {
+        if (bounds.opacity <= 0f) return@AnimatedDetectionCanvas
 
-        val left = smoothX1 - padding
-        val top = smoothY1 - padding
-        val right = smoothX2 + padding
-        val bottom = smoothY2 + padding
+        val progress = smoothProgress.value
+
+        val idlePadding = 28.dp.toPx()
+        val lockedPadding = 4.dp.toPx()
+        val padding = lerpF(idlePadding, lockedPadding, progress)
+
+        val left = bounds.left - padding
+        val top = bounds.top - padding
+        val right = bounds.right + padding
+        val bottom = bounds.bottom + padding
 
         val frameWidth = (right - left).coerceAtLeast(1f)
         val frameHeight = (bottom - top).coerceAtLeast(1f)
-        if (frameWidth < 2f || frameHeight < 2f) return@Canvas
+        if (frameWidth < 2f || frameHeight < 2f) return@AnimatedDetectionCanvas
 
         val radius = 22.dp.toPx()
         val strokeWidth = 0.8.dp.toPx()
 
-        val idleColor = Color.White.copy(alpha = 0.42f)
-        val trackingColor = Color(0xFF9BE7FF).copy(alpha = 0.95f)
-        val lockedColor = Color(0xFF4CFF98)
+        val idleColor = Color.White.copy(alpha = 0.42f * bounds.opacity)
+        val trackingColor = Color(0xFF9BE7FF).copy(alpha = 0.95f * bounds.opacity)
+        val lockedColor = Color(0xFF4CFF98).copy(alpha = bounds.opacity)
 
         val frameColor = when {
-            smoothProgress < 0.55f ->
-                lerp(idleColor, trackingColor, smoothProgress / 0.55f)
+            progress < 0.55f ->
+                lerp(idleColor, trackingColor, progress / 0.55f)
 
             else ->
-                lerp(
-                    trackingColor,
-                    lockedColor,
-                    (smoothProgress - 0.55f) / 0.45f
-                )
+                lerp(trackingColor, lockedColor, (progress - 0.55f) / 0.45f)
         }
 
         val glowColor = frameColor.copy(
-            alpha = lerpF(0.45f, 0.85f, smoothProgress)
+            alpha = lerpF(
+                0.45f * bounds.opacity,
+                0.85f * bounds.opacity,
+                progress
+            )
         )
 
-        val pulse = if (smoothProgress < 0.15f) breathe else 1f
-        val blurRadius = lerpF(6.dp.toPx(), 12.dp.toPx(), smoothProgress) * pulse
-        val cornerLen = lerpF(18.dp.toPx(), 24.dp.toPx(), smoothProgress)
-        val tickLen = lerpF(7.dp.toPx(), 9.dp.toPx(), smoothProgress)
+        val pulse = if (progress < 0.15f) breathe else 1f
+        val blurRadius = lerpF(6.dp.toPx(), 12.dp.toPx(), progress) * pulse
+        val cornerLen = lerpF(18.dp.toPx(), 24.dp.toPx(), progress)
+        val tickLen = lerpF(7.dp.toPx(), 9.dp.toPx(), progress)
 
         val midY = (top + bottom) / 2f
         val inset = radius * 0.45f
 
         val frameSegments = listOf(
             RoundedSegment(
-                listOf(
+                points = listOf(
                     left to (top + inset + cornerLen),
                     left to (top + inset),
                     (left + inset) to top,
@@ -138,7 +133,7 @@ fun CardLockOnOverlay(
                 isCorner = true
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     (left + inset + cornerLen) to top + strokeWidth,
                     (right - inset - cornerLen) to top + strokeWidth
                 ),
@@ -146,7 +141,7 @@ fun CardLockOnOverlay(
                 isCorner = false
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     (left + inset + cornerLen) to top - strokeWidth,
                     (right - inset - cornerLen) to top - strokeWidth
                 ),
@@ -154,7 +149,7 @@ fun CardLockOnOverlay(
                 isCorner = false
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     (right - inset - cornerLen) to top,
                     (right - inset) to top,
                     right to (top + inset),
@@ -164,7 +159,7 @@ fun CardLockOnOverlay(
                 isCorner = true
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     right to (top + inset + cornerLen),
                     right to (midY - tickLen)
                 ),
@@ -172,7 +167,7 @@ fun CardLockOnOverlay(
                 isCorner = false
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     right to (midY + tickLen),
                     right to (bottom - inset - cornerLen)
                 ),
@@ -180,7 +175,7 @@ fun CardLockOnOverlay(
                 isCorner = false
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     right to (bottom - inset - cornerLen),
                     right to (bottom - inset),
                     (right - inset) to bottom,
@@ -190,7 +185,7 @@ fun CardLockOnOverlay(
                 isCorner = true
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     (right - inset - cornerLen) to bottom,
                     (left + inset + cornerLen) to bottom
                 ),
@@ -198,7 +193,7 @@ fun CardLockOnOverlay(
                 isCorner = false
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     (left + inset + cornerLen) to bottom,
                     (left + inset) to bottom,
                     left to (bottom - inset),
@@ -208,7 +203,7 @@ fun CardLockOnOverlay(
                 isCorner = true
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     left to (bottom - inset - cornerLen),
                     left to (midY + tickLen)
                 ),
@@ -216,7 +211,7 @@ fun CardLockOnOverlay(
                 isCorner = false
             ),
             RoundedSegment(
-                listOf(
+                points = listOf(
                     left to (midY - tickLen),
                     left to (top + inset + cornerLen)
                 ),
@@ -227,6 +222,7 @@ fun CardLockOnOverlay(
 
         frameSegments.forEach { segment ->
             val segmentStroke = if (segment.isCorner) strokeWidth * 6f else strokeWidth
+            val cornerRadius = min(segmentStroke * 1.6f, 10.dp.toPx())
 
             drawGlowPath(
                 points = segment.points,
@@ -234,14 +230,17 @@ fun CardLockOnOverlay(
                 color = glowColor,
                 strokeWidth = segmentStroke,
                 rounded = segment.rounded,
-                cornerRadius = min(segmentStroke * 1.6f, 10.dp.toPx())
+                cornerRadius = cornerRadius
             )
         }
 
-        if (smoothProgress > 0.72f) {
-            val sweepAlpha = ((smoothProgress - 0.72f) / 0.28f).coerceIn(0f, 1f)
+        if (progress > 0.72f) {
+            val sweepAlpha =
+                ((progress - 0.72f) / 0.28f).coerceIn(0f, 1f) * bounds.opacity
+
             val sweepWidth = frameWidth * 0.005f
-            val sweepX = left + (frameWidth + sweepWidth) * sweepPhase - sweepWidth
+            val sweepX =
+                left + (frameWidth + sweepWidth) * sweepPhase - sweepWidth
 
             val startX = sweepX.coerceAtLeast(left + inset + cornerLen)
             val endX = (sweepX + sweepWidth).coerceAtMost(
@@ -276,4 +275,3 @@ fun CardLockOnOverlay(
         }
     }
 }
-
