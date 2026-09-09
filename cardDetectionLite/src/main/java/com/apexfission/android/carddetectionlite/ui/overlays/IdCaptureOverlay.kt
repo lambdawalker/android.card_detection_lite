@@ -42,11 +42,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
+import com.apexfission.android.carddetectionlite.ui.overlays.draw.lerpF
 
 /**
  * Built-in ID capture overlay following the standard ID verification UI layout.
@@ -80,10 +82,16 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
             val right = bounds.right
             val bottom = bounds.bottom
 
-            val color = config.guideColor.copy(alpha = bounds.opacity)
+            val progress = bounds.smoothProgress
 
-            val cornerLen = 15.dp.toPx()
-            val strokeWidth = 3.dp.toPx()
+            // Animate corner bracket thickness and length when an ID is detected
+            val cornerLen = lerpF(15.dp.toPx(), 22.dp.toPx(), progress)
+            val strokeWidth = lerpF(2.dp.toPx(), 6.dp.toPx(), progress)
+
+            // Transition guide color to bright electric blue on lock-on
+            val brightBlue = Color(0xFF00E5FF)
+            val activeColor = lerp(config.guideColor, brightBlue, progress)
+            val color = activeColor.copy(alpha = bounds.opacity)
 
             // Padding to offset the corner brackets from the dashed line
             val cornerPadding = 4.dp.toPx()
@@ -103,7 +111,8 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
 
             drawPath(
                 path = dashedPath, color = color, style = Stroke(
-                    width = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(16f, 12f))
+                    width = 2.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(16f, 12f))
                 )
             )
 

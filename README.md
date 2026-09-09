@@ -1,31 +1,45 @@
-# cardDetectionLite Module
+# CardDetectionLite
 
-## Overview
+`CardDetectionLite` is a real-time, GPU-accelerated Jetpack Compose module for detecting, tracking, and stabilizing ID cards (such as driver's licenses, passports, voter IDs, and national identity documents) directly from an Android camera feed or video feed.
 
-`cardDetectionLite` is a real-time Jetpack Compose module for detecting government-issued ID cards, such as driver’s licenses, voter IDs, and similar
-documents, directly from the camera feed.
+Powered by a custom YOLO v11 TensorFlow Lite (LiteRT) model and a multi-frame dHash perceptual similarity tracking engine, it isolates target cards, stabilizes detection against frame jitter, and extracts cropped card images along with subfeatures (photos, barcodes, PDF417, MRZ text, QR codes).
 
-It uses a YOLO-based TensorFlow Lite model to detect the card in view, stabilize the detection across frames, and return a cropped card image along
-with any detected subfeatures inside the card area.
+`CardDetectionLite` acts as **Stage 1** of an ID-processing or identity verification pipeline—focusing purely on **detection, stabilization, and extraction** before passing high-quality crops to downstream OCR, barcode parsing, or cloud verification services.
 
-This module is designed as the **first stage** of an ID-processing pipeline. It focuses on **detection and extraction only**.
+---
 
-> `cardDetectionLite` does **not** perform OCR.
->
-> Its role is to find the card, isolate it from the live camera stream, and return the cropped result so it can be passed to a separate OCR or
-> data-extraction component.
+## Key Capabilities
 
-The main entry point is the `CardDetectorLite` composable, which bundles camera preview, model inference, lock-on logic, and optional visual overlays
-into a single configurable UI component.
+- **Jetpack Compose Native (`CardDetectorLite`)**: All-in-one composable unifying live `CameraX` feed, TFLite inference, smart auto-focus, lock-on tracking, and extensible Compose overlay UI.
+- **Multi-Frame Lock-On Tracking (`CardTracker`)**: Evaluates temporal stability over consecutive frames using 64-bit perceptual difference hashing (`dHash`) and Hamming distance calculation to prevent false triggers.
+- **Smart Auto-Focus Engine (`AutoFocusPolicy`)**: Decouples camera focus/exposure from Compose re-renders using spatial movement, bounding box shift, and cooldown thresholds.
+- **Modular Presets**:
+  - **`CardDetectorPreset`**: Tunes ML pipeline thresholds (`HighPerformance`, `HighAccuracy`, `BatterySaver`).
+  - **`CameraPreset`**: Configures analysis resolution and focus behavior (`Default`, `HighResolution`, `FixedFocus`).
+- **Flexible Pre-processing (`PreProcessingImageTransformation`)**: Supports `FullImage`, `SquareCrop`, `VisibleImage`, and offset crop modes to optimize model input resolution.
+- **Customizable UI Slots**: Scoped slot API (`CardDetectorOverlayScope`) with built-in `IdCaptureOverlay`, animated guides, shutter controls, and flashlight toggles.
+- **Offline Video Simulator (`CardTrackingSimulator`)**: Replays detection logic over video URIs (`raw/video.mp4` or file URIs) for automated UI testing and offline verification without physical hardware.
+- **Multi-Module Workspace Architecture**: Clean separation between core detection, coordinate transformation chains, permissions, and model asset catalog.
+
+---
+
+## Workspace Modules
+
+| Module | Type | Description |
+| :--- | :--- | :--- |
+| **`:cardDetectionLite`** | Android Library | Core library providing `CardDetectorLite`, CameraX preview, TFLite engine, tracking state machine, overlays, and simulator. |
+| **`:tfmodel`** | Android Library | Model catalog extensions (`ModelCatalog.TfLite`), asset paths, class dictionaries, and card class ID groupings. |
+| **`:permissionsCompose`** | Android Library | Jetpack Compose camera permission gatekeeper (`HandleCameraPermission`, `PermissionScreen`). |
+| **`:coordinates`** | Kotlin/JVM | 2D coordinate space transformation engine (`ImageSpace`, `ImageBox`, `ImagePoint`, `ImageSpaceChain`). |
+| **`:app`** | Android App | Sample test bench demonstrating live camera card detection and offline video tracking simulation. |
 
 ---
 
 ## Getting Started
 
-### Dependencies
+### 1. Add Dependencies
 
-#### libs.versions.toml
-
+#### `gradle/libs.versions.toml`
 ```toml
 [versions]
 carddetectionlite = "0.1.0-B2"
@@ -38,109 +52,112 @@ af-cdl-sentinel = { module = "com.apexfission.android.carddetectionlite:sentinel
 af-permission-compose = { module = "com.apexfission.android.permissionscompose:core", version.ref = "permissioncompose" }
 ```
 
-#### app/build.gradle.kts
-
+#### `app/build.gradle.kts`
 ```kotlin
 dependencies {
-  implementation(libs.af.cdl.core)
-  implementation(libs.af.cdl.sentinel)
-  implementation(libs.af.permission.compose)
+    implementation(project(":cardDetectionLite"))
+    implementation(project(":tfmodel"))
+    implementation(project(":permissionsCompose"))
 }
+```
+
+### 2. Declare Camera Permissions
+
+In your `AndroidManifest.xml`:
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-feature android:name="android.hardware.camera" android:required="false" />
 ```
 
 ---
 
-## Basic Usage
+## Quick Start Guide
 
-### 1. Declare camera permission in `AndroidManifest.xml`
+### 1. ViewModel Integration (`MainViewModel`)
 
-```xml
-
-<uses-permission android:name="android.permission.CAMERA" />
-<uses-feature android:name="android.hardware.camera" />
-```
-
-### 2. Manage permission and detection state
-
-Since cardDetectionLite provides the cropped image, you should use a `ViewModel` to bridge the detection event to your chosen OCR provider.
+Manage detection pause/resume states and route card detections to your OCR or data processing pipeline:
 
 ```kotlin
-
 class MainViewModel : ViewModel() {
     private val _isDetectionEnabled = MutableStateFlow(true)
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
-    val useCloud: Boolean = false
 
-    fun onDetection(card: CardDetection) {
-        if (!card.isNewDetection && card.id == null) return
-        if (!_isDetectionEnabled.value) return
+    private val _navigateBack = MutableStateFlow(false)
+    val navigateBack = _navigateBack.asStateFlow()
 
+    fun onDetection(detection: CardDetection) {
+        // Handle new card detection or ongoing lock-on updates
+        if (detection.lockingStatus == LockingStatus.NewCard) {
+            // New card locked on! Perform haptic feedback, capture, or OCR
+            processCapturedCard(detection.card)
+        }
+    }
+
+    fun onCaptureRequested(detection: CardDetection) {
+        processCapturedCard(detection.card)
+    }
+
+    fun onBackRequested() {
+        _navigateBack.value = true
+    }
+
+    fun onBackHandled() {
+        _navigateBack.value = false
+    }
+
+    private fun processCapturedCard(cardFeature: Feature) {
         viewModelScope.launch {
+            _isDetectionEnabled.value = false
             try {
-                _isDetectionEnabled.value = false
-
-                // The ViewModel doesn't care about Dispatchers;
-                // it just calls the function and waits.
-                if (useCloud) {
-                    performCloudOcr(card)
-                } else {
-                    performOnDeviceOcr(card)
-                }
-
-            } catch (e: Exception) {
-                Log.e("OCR", "Error processing card", e)
+                // Pass cardFeature.image (Bitmap) to On-Device or Cloud OCR
             } finally {
                 _isDetectionEnabled.value = true
             }
         }
     }
-
-    // OPTION A: Cloud-based (Network/IO)
-    private suspend fun performCloudOcr(card: CardDetection) = withContext(Dispatchers.IO) {
-        Log.d("OCR", "Running Cloud OCR (Network bound)")
-        withContext(Dispatchers.IO) {
-            // api.uploadAndRecognize(card.image)
-        }
-    }
-
-    // OPTION B: On-Device (CPU/Math)
-    private suspend fun performOnDeviceOcr(card: CardDetection) = withContext(Dispatchers.Default) {
-        Log.d("OCR", "Running On-Device OCR (CPU bound)")
-        withContext(Dispatchers.Default) {
-            // localLibrary.process(card.bitmap)
-        }
-    }
 }
 ```
 
-> Threading Note: While the CardDetectorLite internal inference runs on its own background executor, you should always perform your OCR on
-> Dispatchers.Default (for on-device) or Dispatchers.IO (for cloud) to avoid blocking the Main thread or starving the detector's resources.
+### 2. Compose UI Integration (`CardDetectionActivity`)
 
-### 3. Add `CardDetectorLite` to your UI
-
-Optionally, Use the provided `HandleCameraPermission` composable to handle permissions. It is meant to be used as a wrapper for the CardDetectorLite
-Composable. Use collectAsStateWithLifecycle() to observe the enabled state and pass the detection result to your ViewModel.
+Wrap `CardDetectorLite` with `HandleCameraPermission` for seamless camera permission handling and live detection:
 
 ```kotlin
-class MainActivity : ComponentActivity() {
+class CardDetectionActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        val mainViewModel: MainViewModel by viewModels()
+
         setContent {
-            val mainViewModel: MainViewModel by viewModels()
+            CardDetectionTestTheme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
-            HandleCameraPermission { // Optional
-                val isDetectionEnabled by mainViewModel
-                    .isDetectionEnabled
-                    .collectAsStateWithLifecycle()
+                    HandleCameraPermission(
+                        modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                        onBack = { finish() },
+                        onNotNow = { finish() }
+                    ) {
+                        val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
 
-                // Minimum setup for CardDetectorLite
-                CardDetectorLite(
-                    modelPath = ModelCatalog.TfLite.modelPath,
-                    classLabels = ModelCatalog.TfLite.classes,
-                    cardClasses = ModelCatalog.TfLite.cardClasses,
-                    isDetectionEnabled = isDetectionEnabled,
-                    onCardDetection = mainViewModel::onDetection
-                )
+                        CardDetectorLite(
+                            modifier = Modifier.padding(innerPadding),
+                            modelPath = ModelCatalog.TfLite.modelPath,
+                            classLabels = ModelCatalog.TfLite.classes,
+                            cardClasses = ModelCatalog.TfLite.cardClasses,
+                            detectorPreset = CardDetectorPreset.HighPerformance,
+                            cameraPreset = CameraPreset.Default,
+                            isDetectionEnabled = isDetectionEnabled,
+                            onCardDetection = mainViewModel::onDetection,
+                            onBack = mainViewModel::onBackRequested,
+                            onCapture = mainViewModel::onCaptureRequested,
+                            controlOverlay = {
+                                IdCaptureOverlay()
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -149,201 +166,187 @@ class MainActivity : ComponentActivity() {
 
 ---
 
-## `CardDetection` Result
+## CardDetection Result Data Structure
 
-The `onCardDetection` callback returns a `CardDetection` object with the following properties:
+The `onCardDetection` callback returns a `CardDetection` object representing tracking and lock-on state:
 
-- **`id: Int?`**\
-  A unique identifier assigned when a card becomes stable enough to be considered locked on. This value is `null` until lock-on completes.
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `lockingStatus` | `LockingStatus` | Tracking lifecycle state (`LockingCard`, `NewCard`, `CardLocked`). |
+| `id` | `Long?` | Unique ID assigned when lock-on is achieved. `null` while evaluating. |
+| `lockOnProgress` | `Float` | Progress value from `0.0f` to `1.0f` towards lock-on confirmation. |
+| `card` | `Feature` | Main detected ID card containing bounding box, confidence score, class ID, and cropped `Bitmap`. |
+| `features` | `List<Feature>` | Sub-features detected within the card region (photos, barcodes, MRZ, QR codes). |
 
-- **`card: ExtractedFeature`**\
-  The primary detected card. It includes the bounding box, cropped `Bitmap`, and confidence score.
-
-- **`features: List<ExtractedFeature>`**\
-  Additional detected items found inside the main card region, such as photos, or barcodes.
-
-- **`lockOnProgress: Float`**\
-  A value from `0.0` to `1.0` representing how close the detection is to becoming stable. A value of `1.0` means the card is fully locked on.
-
-- **`isNewDetection: Boolean`**\
-  `true` only on the first frame where a stable lock-on is achieved. Useful for triggering one-time events such as sound, haptics, or navigation.
-
-- **`contextSize: Rect`**\
-  The dimensions of the analyzed image context. This is useful when translating detection coordinates to screen coordinates.
-
----
-
-## Model Details
-
-- **Architecture**: Modified YOLOv11 optimized for mobile TensorFlow Lite inference
-- **Training Data**: Synthetic dataset with more than 20,000 examples across multiple ID card types
-- **Model Size**: Approximately 5.3 MB
-
-This balance keeps the model lightweight enough for mobile use while still supporting real-time detection scenarios.
-
----
-
-## Configuration
-
-`CardDetectorLite` supports the following parameters:
-
-| Parameter                  | Type                      | Default                                             | Description                                                                          |
-|----------------------------|---------------------------|-----------------------------------------------------|--------------------------------------------------------------------------------------|
-| `modelPath`                | `String`                  | -                                                   | Path to the `.tflite` model inside the app assets.                                   |
-| `classLabels`              | `Map<Int, String>`        | -                                                   | Maps class IDs to human-readable labels.                                             |
-| `cardClasses`              | `List<Int>`               | -                                                   | Class IDs that should be treated as primary card targets.                            |
-| `isDetectionEnabled`       | `Boolean`                 | -                                                   | Enables or pauses detection dynamically.                                             |
-| `onCardDetection`          | `(CardDetection) -> Unit` | -                                                   | Called when a stable card lock-on is achieved.                                       |
-| `modifier`                 | `Modifier`                | `Modifier`                                          | Modifier applied to the root container.                                              |
-| `useGpu`                   | `Boolean`                 | `true`                                              | Enables TFLite GPU delegate when available.                                          |
-| `showBoundingBoxes`        | `Boolean`                 | `false`                                             | Draws bounding boxes for detected objects.                                           |
-| `showClassNames`           | `Boolean`                 | `false`                                             | Shows class labels and confidence values above boxes.                                |
-| `showFlashlightSwitch`     | `Boolean`                 | `true`                                              | Shows a built-in flashlight toggle button.                                           |
-| `showLockOnProgress`       | `Boolean`                 | `true`                                              | Displays visual feedback while lock-on stabilizes.                                   |
-| `showFocusIndicator`       | `Boolean`                 | `true`                                              | Shows a visual indicator when the camera focuses.                                    |
-| `scoreThreshold`           | `Float`                   | `0.65f`                                             | Minimum confidence required for a detection to be considered valid.                  |
-| `analysisTargetResolution` | `Size`                    | `Size(2048, 1080)`                                  | Resolution requested for the analysis stream.                                        |
-| `cardFilters`              | `List<CardValidator>`     | `listOf(MarginValidator(), AspectRatioValidator())` | Heuristic validators applied to candidate card detections.                           |
-| `imageMode`                | `InputShape`              | `InputShape.SquareCrop`                             | Defines how the camera image is prepared before inference.                           |
-| `inferenceIntervalMs`      | `Long`                    | `33L`                                               | Minimum interval between inference runs.                                             |
-| `tapToFocusEnabled`        | `Boolean`                 | `true`                                              | Enables tap-to-focus on the preview.                                                 |
-| `focusOnCardEnabled`       | `Boolean`                 | `true`                                              | Enables auto-focus behavior targeting the detected card.                             |
-| `lockOnThreshold`          | `Int`                     | `5`                                                 | Number of consistent frames required before lock-on succeeds.                        |
-| `numThreads`               | `NumThreads`              | `NumThreads.Default`                                | Number of CPU threads used for inference. See `NumThreads` sealed class for options. |
-
----
-
+### `Feature` Model
 ```kotlin
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            val mainViewModel: MainViewModel by viewModels()
-
-            HandleCameraPermission {
-                val isDetectionEnabled by mainViewModel
-                    .isDetectionEnabled
-                    .collectAsStateWithLifecycle()
-
-                CardDetectorLite(
-                    modifier = Modifier.padding(innerPadding),
-                    modelPath = ModelCatalog.TfLite.modelPath,
-                    classLabels = ModelCatalog.TfLite.classes,
-                    cardClasses = ModelCatalog.TfLite.cardClasses,
-                    useGpu = true,
-                    scoreThreshold = 0.6f,
-                    showBoundingBoxes = false,
-                    showClassNames = false,
-                    showLockOnProgress = true,
-                    showFocusIndicator = true,
-                    showFlashlightSwitch = true,
-                    analysisTargetResolution = Size(2048, 1080),
-                    isDetectionEnabled = isDetectionEnabled,
-                    onCardDetection = mainViewModel::onDetection,
-                    cardFilters = listOf(
-                        MarginValidator(), AspectRatioValidator(), CenterProximityValidator()
-                    ),
-                    imageMode = InputShape.SquareCrop,
-                    inferenceIntervalMs = 33L,
-                    tapToFocusEnabled = true,
-                    focusOnCardEnabled = true,
-                    lockOnThreshold = 4,
-                    showDebugOverlay = true
-                )
-            }
-        }
-    }
-}
+data class Feature(
+    val box: ImageBox,
+    val confidence: Float,
+    val classId: Int,
+    val image: Bitmap
+)
 ```
 
-## Understanding Output Card Resolution
+---
 
-The cropped card image returned through `onCardDetection` does **not** have a fixed resolution. Its quality depends on several factors:
+## Pipeline Configuration & Presets
 
-### 1. `analysisTargetResolution`
+### 1. `CardDetectorPreset` (ML Inference Options)
 
-This determines the resolution of the camera image used for inference and extraction. Higher values generally allow better card crops, but they also
-increase processing cost.
+| Preset | Score Threshold | Lock-On Frames | Pre-processing Mode | GPU Delegate | Throttle Interval | Threads |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`HighPerformance`** *(Default)* | `0.50f` | 4 frames | `SquareCrop()` | Enabled | 33ms (~30 FPS) | Default (3 max) |
+| **`HighAccuracy`** | `0.80f` | 6 frames | `FullImage` | Enabled | 33ms (~30 FPS) | Default (3 max) |
+| **`BatterySaver`** | `0.50f` | 4 frames | `SquareCrop()` | Disabled | 100ms (~10 FPS) | CustomCount(2) |
 
-### 2. Physical distance to the card
+Presets can be fine-tuned via `.copy(...)` or `.change(...)`:
+```kotlin
+val customPreset = CardDetectorPreset.HighPerformance.copy(
+    scoreThreshold = 0.60f,
+    lockOnThreshold = 5,
+    useGpu = true
+)
+```
 
-This is usually the biggest factor. A card that occupies more of the camera frame will produce a higher-resolution crop than one captured from farther
-away.
+### 2. `CameraPreset` (CameraX & Focus Options)
 
-### 3. `imageMode`
+| Preset | Target Resolution | Tap-To-Focus | Smart Auto-Focus |
+| :--- | :--- | :--- | :--- |
+| **`Default`** | 2048 x 1080 (2K) | `true` | `true` |
+| **`HighResolution`** | 3840 x 2160 (4K) | `true` | `true` |
+| **`FixedFocus`** | 1920 x 1080 (1080p) | `false` | `false` |
 
-The preprocessing mode determines which part of the camera frame is analyzed:
+### 3. Pre-processing Transformation Modes (`PreProcessingImageTransformation`)
 
-- With `FullImage`, the card may occupy a smaller portion of the analyzed frame but will be found throughout the whole image.
-- With crop-based modes such as `SquareCrop`, the card can fill more of the model input when centered properly, improving effective resolution.
+- **`FullImage`**: Analyzes the complete camera sensor frame. Best for detecting cards anywhere in view.
+- **`SquareCrop(top)` / `CenterSquareCrop`**: Center-crops the camera frame to a square. Offers higher effective card resolution when the user centers the card.
+- **`VisibleImage(top)` / `CenterVisibleImage`**: Limits inference strictly to the portion of the camera feed visible on screen.
+- **`VisibleImageSquareCrop(top)` / `CenterVisibleImageSquareCrop`**: Center-crops the user-visible preview region for maximum effective crop density.
 
-### Best-practice recommendation
+### 4. CPU Threading (`NumThreads`)
 
-For best crop quality:
+Select execution thread allocation strategy:
+- `NumThreads.Default` (Up to 3 cores)
+- `NumThreads.Quarter`, `NumThreads.Half`, `NumThreads.ThreeQuarters`
+- `NumThreads.CustomPercentage(0.6f)`
+- `NumThreads.CustomCount(2)`
 
-- ask users to bring the card as close to the camera as possible,
-- keep the card fully visible,
-- use a high enough `analysisTargetResolution`, and
-- choose an `imageMode` that matches the intended capture experience.
+### 5. Quality Validators (`CardValidator`)
+
+Filters out false candidate detections using geometric heuristics:
+- `MarginValidator`: Ensures the card is not cut off by sensor borders.
+- `AspectRatioValidator`: Validates aspect ratio matches target ID document standard (e.g. ID-1 ratio ~1.58).
 
 ---
 
-## Image Preprocessing Modes
+## Custom UI & Overlays (`CardDetectorOverlayScope`)
 
-The `imageMode` parameter controls how the incoming camera frame is prepared before inference.
+Customize the camera interface via the `controlOverlay` slot using `CardDetectorOverlayScope`:
 
-### `InputShape.FullImage`
+```kotlin
+CardDetectorLite(
+    modelPath = ModelCatalog.TfLite.modelPath,
+    classLabels = ModelCatalog.TfLite.classes,
+    cardClasses = ModelCatalog.TfLite.cardClasses,
+    controlOverlay = {
+        // Access scope variables & functions
+        val detection = detectionState
+        val hasValidCard = captureEnabled
 
-Uses the full camera image.
+        IdCaptureOverlay(
+            config = IdCaptureOverlayConfig(
+                title = "Document Verification",
+                instructionTitle = "Scan Front of ID Card",
+                instructionSubTitle = "Fit your ID card within the frame"
+            )
+        )
+    }
+)
+```
 
-- Best when the target can appear anywhere in the frame
-- Preserves the full visible scene
-- Uses letterboxing to fit the model input without distortion
-- Lower effective resolution for the card (the card occupies fewer pixels in the model input)
-
-### `InputShape.SquareCrop`
-
-Crops the center of the full camera image into a square.
-
-- Useful when the card is expected to be centered
-- Can improve focus on the main subject
-- Higher effective resolution for centered cards
-- No coverage outside the center region
-- Requires some user guidance (keep card centered)
-
-### `InputShape.VisibleImage`
-
-Uses only the portion of the camera feed that is actually visible in the preview.
-
-- Prevents detections from happening outside the user-visible preview
-- Letterboxes the visible region to the model input shape
-- Slightly reduced coverage compared to full sensor input
-- Better alignment between what the user sees and what the model analyzes
-- Moderate effective resolution depending on preview crop
-
-### `InputShape.VisibleImageSquareCrop`
-
-Crops the center of the visible preview area into a square.
-
-- Combines the benefits of `VisibleImage` and `SquareCrop`
-- Ideal when the user is guided to place the card in the center of the screen
-- Highest effective resolution for centered cards within the visible area
-- Lowest coverage (center-focused only)
+### `CardDetectorOverlayScope` Properties & Methods
+- **`detectionState` / `cardDetection`**: Current frame's `CardDetection` result.
+- **`latestValidDetection`**: Last valid `CardDetection` preserved across temporary missed frames.
+- **`imageSpaceChain`**: Transformation chain mapping image space coordinates to Compose canvas screen space.
+- **`captureEnabled`**: `true` when a valid detection is ready for capture.
+- **`flashlightAvailable` / `flashlightEnabled`**: Hardware flash state.
+- **`capture()` / `goBack()` / `toggleFlashlight()`**: Trigger user action callbacks.
 
 ---
 
-## Summary
+## Offline Video Simulation (`CardTrackingSimulator`)
 
-Use `cardDetectionLite` when you need a lightweight, real-time ID card detection component in a Jetpack Compose app.
+Test and verify detection pipelines offline without requiring active camera hardware or physical ID cards using `CardTrackingSimulator`:
 
-It is especially useful when you want to:
+```kotlin
+val videoUri = "android.resource://$packageName/raw/v002".toUri()
 
-- detect cards from a live camera feed,
-- wait for a stable lock-on before capturing,
-- extract a cropped card image for downstream processing, and
-- optionally identify subfeatures inside the detected card.
+CardTrackingSimulator(
+    videoUri = videoUri,
+    modelPath = ModelCatalog.TfLite.modelPath,
+    classLabels = ModelCatalog.TfLite.classes,
+    cardClasses = ModelCatalog.TfLite.cardClasses,
+    detectorPreset = CardDetectorPreset.BatterySaver.copy(scoreThreshold = 0.3f),
+    cameraPreset = CameraPreset.Default,
+    isDetectionEnabled = isDetectionEnabled,
+    onCardDetection = mainViewModel::onDetection,
+    onCaptureRequested = mainViewModel::onCaptureRequested,
+    onBackRequested = mainViewModel::onBackRequested,
+    controlOverlay = {
+        IdCaptureOverlay()
+    }
+)
+```
 
-For OCR, field parsing, or document classification beyond detection, pair this module with a separate recognition pipeline.
+---
 
+## Model Information
 
+- **Architecture**: Lightweight YOLO v11 modified for TensorFlow Lite (LiteRT) mobile inference.
+- **Target Classes**:
+  - `0`: `horizontal_card`
+  - `1`: `vertical_card`
+  - `2`: `horizontal_card_back`
+  - `3`: `photo`
+  - `4`: `slim-barcode`
+  - `5`: `pdf417`
+  - `6`: `mrz-text`
+  - `7`: `barcode`
+  - `8`: `qrcode`
+- **Asset Size**: ~5.3 MB
+- **Dataset**: Trained on 20,000+ synthetic and real ID document variations.
 
+---
+
+## Output Resolution Guidelines
+
+The cropped card image resolution returned in `CardDetection.card.image` depends on:
+1. **Analysis Target Resolution** (`CameraPreset.analysisTargetResolution`): Higher sensor streams (2K or 4K) yield crisper cropped pixels.
+2. **Physical Proximity**: Cards occupying a larger percentage of the camera field yield higher crop resolution.
+3. **Pre-processing Strategy**: Crop-based input modes (`SquareCrop` or `VisibleImageSquareCrop`) maximize effective model input density for centered cards.
+
+---
+
+## Building and Running
+
+### Build Debug APK
+```bash
+./gradlew :app:assembleDebug
+```
+
+### Run JVM Unit Tests
+```bash
+./gradlew :cardDetectionLite:testDebugUnitTest :coordinates:test
+```
+
+### Build Instrumented Android Test APK
+```bash
+./gradlew :cardDetectionLite:assembleDebugAndroidTest
+```
+
+---
+
+## License
+
+Copyright © ApexFission. All rights reserved.

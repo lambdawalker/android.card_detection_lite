@@ -47,31 +47,40 @@ fun CardDetectorOverlayScope.CardLockOnOverlay(
         if (frameWidth < 2f || frameHeight < 2f) return@AnimatedDetectionCanvas
 
         val radius = 22.dp.toPx()
-        val strokeWidth = 0.8.dp.toPx()
 
-        val idleColor = Color.White.copy(alpha = 0.42f * bounds.opacity)
-        val trackingColor = Color(0xFF9BE7FF).copy(alpha = 0.95f * bounds.opacity)
-        val lockedColor = Color(0xFF4CFF98).copy(alpha = bounds.opacity)
+        // Animate frame stroke thickness when an ID is detected/locked on
+        val idleConnectorStroke = 1.2.dp.toPx()
+        val lockedConnectorStroke = 4.5.dp.toPx()
+        val connectorStroke = lerpF(idleConnectorStroke, lockedConnectorStroke, progress)
+
+        val idleCornerStroke = 5.0.dp.toPx()
+        val lockedCornerStroke = 13.0.dp.toPx()
+        val cornerStroke = lerpF(idleCornerStroke, lockedCornerStroke, progress)
+
+        // Brighter electric blue color scheme for ID detection & lock-on
+        val idleColor = Color.White.copy(alpha = 0.45f * bounds.opacity)
+        val trackingColor = Color(0xFF40C4FF).copy(alpha = 0.95f * bounds.opacity) // Bright Electric Blue
+        val lockedColor = Color(0xFF00E5FF).copy(alpha = bounds.opacity)           // Brighter Neon Blue/Cyan
 
         val frameColor = when {
-            progress < 0.55f ->
-                lerp(idleColor, trackingColor, progress / 0.55f)
+            progress < 0.50f ->
+                lerp(idleColor, trackingColor, progress / 0.50f)
 
             else ->
-                lerp(trackingColor, lockedColor, (progress - 0.55f) / 0.45f)
+                lerp(trackingColor, lockedColor, (progress - 0.50f) / 0.50f)
         }
 
         val glowColor = frameColor.copy(
             alpha = lerpF(
-                0.45f * bounds.opacity,
-                0.85f * bounds.opacity,
+                0.50f * bounds.opacity,
+                0.95f * bounds.opacity,
                 progress
             )
         )
 
         val pulse = if (progress < 0.15f) breathe else 1f
-        val blurRadius = lerpF(6.dp.toPx(), 12.dp.toPx(), progress) * pulse
-        val cornerLen = lerpF(18.dp.toPx(), 24.dp.toPx(), progress)
+        val blurRadius = lerpF(8.dp.toPx(), 20.dp.toPx(), progress) * pulse
+        val cornerLen = lerpF(20.dp.toPx(), 32.dp.toPx(), progress)
 
         val inset = radius * 0.45f
 
@@ -89,12 +98,12 @@ fun CardDetectorOverlayScope.CardLockOnOverlay(
                 right = right,
                 bottom = bottom,
                 cornerLength = cornerLen,
-                gap = strokeWidth
+                gap = connectorStroke
             )
 
         frameSegments.forEach { segment ->
-            val segmentStroke = if (segment.isCorner) strokeWidth * 6f else strokeWidth
-            val cornerRadius = min(segmentStroke * 1.6f, 10.dp.toPx())
+            val segmentStroke = if (segment.isCorner) cornerStroke else connectorStroke
+            val cornerRadius = min(segmentStroke * 1.6f, 12.dp.toPx())
 
             drawGlowPath(
                 points = segment.points,
@@ -106,11 +115,11 @@ fun CardDetectorOverlayScope.CardLockOnOverlay(
             )
         }
 
-        if (progress > 0.72f) {
+        if (progress > 0.65f) {
             val sweepAlpha =
-                ((progress - 0.72f) / 0.28f).coerceIn(0f, 1f) * bounds.opacity
+                ((progress - 0.65f) / 0.35f).coerceIn(0f, 1f) * bounds.opacity
 
-            val sweepWidth = frameWidth * 0.005f
+            val sweepWidth = frameWidth * 0.008f
             val sweepX =
                 left + (frameWidth + sweepWidth) * sweepPhase - sweepWidth
 
@@ -121,14 +130,14 @@ fun CardDetectorOverlayScope.CardLockOnOverlay(
 
             if (endX > startX) {
                 val sweepPoints = listOf(startX to top, endX to top)
-                val sweepColor = Color.White.copy(alpha = 0.85f * sweepAlpha)
+                val sweepColor = Color(0xFFE0F7FA).copy(alpha = 0.9f * sweepAlpha)
 
-                listOf(2, 2, 4).forEach {
+                listOf(2, 3, 5).forEach { multiplier ->
                     drawGlowPath(
                         points = sweepPoints,
                         blurRadius = blurRadius,
                         color = sweepColor,
-                        strokeWidth = strokeWidth * it
+                        strokeWidth = connectorStroke * multiplier
                     )
                 }
             }
