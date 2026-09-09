@@ -43,7 +43,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         }
                     }
 
-                    val videoUri = "android.resource://$packageName/raw/v002".toUri()
+                    val videoUri = "android.resource://$packageName/raw/v2".toUri()
 
                     CardTrackingSimulator(
                         modifier = Modifier.padding(innerPadding),
@@ -51,7 +51,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         modelPath = ModelCatalog.TfLite.modelPath,
                         classLabels = ModelCatalog.TfLite.classes,
                         cardClasses = ModelCatalog.TfLite.cardClasses,
-                        detectorPreset = CardDetectorPreset.BatterySaver.copy(scoreThreshold = 0.3f, lockOnThreshold = 5, noDetectionCountLimit = 8),
+                        detectorPreset = CardDetectorPreset.HighPerformance.copy(scoreThreshold = 0.3f, lockOnThreshold = 5, noDetectionCountLimit = 8),
                         cameraPreset = CameraPreset.Default,
                         isDetectionEnabled = isDetectionEnabled,
                         onCardDetection = mainViewModel::onDetection,

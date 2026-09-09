@@ -126,6 +126,5 @@ fun VideoPreviewWithFullFrameCapture(
 
     AndroidView(
         factory = { textureView }, modifier = modifier
-            .border(0.5.dp, Color.Green)
             .onSizeChanged { viewSize = it })
 }

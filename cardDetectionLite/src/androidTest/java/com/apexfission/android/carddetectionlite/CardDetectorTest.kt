@@ -221,11 +221,13 @@ class CardDetectorTest {
                         assertEquals("ID at frame $index should be null", null, detection.id)
                         assertEquals("Status at frame $index should be LockingCard", LockingStatus.LockingCard, detection.lockingStatus)
                     }
+
                     4 -> {
                         assertEquals("Progress at frame 4 should be 1.0", 1.0f, detection.lockOnProgress, 0.01f)
                         assertEquals("ID at frame 4 should be 1", 1L, detection.id)
                         assertEquals("Status at frame 4 should be NewCard", LockingStatus.NewCard, detection.lockingStatus)
                     }
+
                     else -> {
                         assertEquals("Progress at frame $index should stay 1.0", 1.0f, detection.lockOnProgress, 0.01f)
                         assertEquals("ID at frame $index should stay 1", 1L, detection.id)
@@ -264,6 +266,59 @@ class CardDetectorTest {
                     assertEquals("Status should remain CardLocked for frame $index", LockingStatus.CardLocked, detection.lockingStatus)
                     assertEquals("Card ID should remain $lockedCardId for frame $index", lockedCardId, detection.id)
                     assertEquals("Lock progress should remain 1.0 for frame $index", 1.0f, detection.lockOnProgress, 0.01f)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun printDetectionLog() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+        val videoPath = "test/video/B/source.mp4"
+        Log.d("printDetectionLog", "Extracting frames from $videoPath")
+        val frames = extractFramesFromVideo(context, videoPath, frameIntervalMs = 10L, maxFrames = 100)
+        assertTrue("Expected to extract video frames from $videoPath", frames.isNotEmpty())
+
+        Log.d("printDetectionLog", "Loading Model")
+        val cardDetector = createCardTracker(context)
+
+        cardDetector.use { detector ->
+            Log.d(
+                "printDetectionLog",
+                "frame".padStart(6) + ",  " +
+                    "classId".padStart(3) + ",  " +
+                    "confidence".padStart(10) + ",  " +
+                    "id".padStart(4) + ",  " +
+                    "lock".padStart(4) + ",  " +
+                    "lockingStatus".padStart(12) + ",  " +
+                    "dHash".padStart(22) + ", " +
+                    "x".padStart(10) + ",  " +
+                    "y".padStart(10) + ",  " +
+                    "x2".padStart(10) + ",  " +
+                    "y2".padStart(10)
+            )
+
+            frames.withIndex().forEach { (index, frame) ->
+                val cardDetection = detector.track(frame)
+
+                if (cardDetection != null) {
+                    Log.d(
+                        "printDetectionLog",
+                        index.toString().padStart(6) + ",  " +
+                            cardDetection.card.classId.toString().padStart(7) + ",  " +
+                            "%.7f".format(cardDetection.card.confidence).padStart(10) + ",  " +
+                            (cardDetection.id?.toString() ?: "null").padStart(4) + ",  " +
+                            "%.1f".format(cardDetection.lockOnProgress).padStart(4) + ",  " +
+                            cardDetection.lockingStatus.toString().padStart(13) + ",  " +
+                            cardDetection.card.image.generateDHash().toString().padStart(22) + ", " +
+                            "%.7f".format(cardDetection.card.box.x.toFloat() / frame.width).padStart(10) + ",  " +
+                            "%.7f".format(cardDetection.card.box.y.toFloat() / frame.height).padStart(10) + ",  " +
+                            "%.7f".format(cardDetection.card.box.x2.toFloat() / frame.width).padStart(10) + ",  " +
+                            "%.7f".format(cardDetection.card.box.x2.toFloat() / frame.height).padStart(10)
+                    )
+                } else {
+                    Log.d("printDetectionLog", index.toString().padStart(6) + ",,,,,,,,,,")
                 }
             }
         }

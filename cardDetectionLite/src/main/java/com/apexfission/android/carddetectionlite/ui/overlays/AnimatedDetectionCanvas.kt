@@ -49,26 +49,51 @@ class AnimatedDetectionScope(
  *
  * Handles screen coordinate transformation, smooth bounds animations, fading, lock-on spring progress,
  * breathing pulse, sweep phase, and reset timers.
+ *
+ * @param defaultBox Optional default bounding box to use when no card is actively detected (e.g. centered guide frame).
+ * @param config Animation threshold and timing configuration.
  */
 @Composable
 fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
+    defaultBox: RectF? = null,
     config: DetectionAnimationConfig = DetectionAnimationConfig()
 ): AnimatedDetectionBounds {
     val activeDetection = detectionState
     val spaceChain = imageSpaceChain
 
-    var guideState by remember { mutableStateOf(InternalGuideState.IDLE) }
+    val fallbackCenterBox = remember(defaultBox) { defaultBox ?: RectF(0f, 0f, 0f, 0f) }
+
+    val initialTargetBox = remember(activeDetection, spaceChain, fallbackCenterBox) {
+        if (activeDetection != null && spaceChain != null) {
+            val rawBox = activeDetection.card.box.translate(spaceChain)
+            RectF(
+                rawBox.x.toFloat(),
+                rawBox.y.toFloat(),
+                rawBox.x2.toFloat(),
+                rawBox.y2.toFloat()
+            )
+        } else {
+            if (fallbackCenterBox.width() > 0f && fallbackCenterBox.height() > 0f) fallbackCenterBox else null
+        }
+    }
+
+    var guideState by remember {
+        mutableStateOf(
+            if (activeDetection != null && spaceChain != null) InternalGuideState.TRACKING else InternalGuideState.IDLE
+        )
+    }
     var detectionToken by remember { mutableLongStateOf(0L) }
     var consecutiveMisses by remember { mutableIntStateOf(0) }
+    var isFirstDetection by remember { mutableStateOf(true) }
 
-    var lastDetectedBoxScreen by remember { mutableStateOf<RectF?>(null) }
-    var targetBox by remember { mutableStateOf<RectF?>(null) }
+    var lastDetectedBoxScreen by remember { mutableStateOf<RectF?>(initialTargetBox) }
+    var targetBox by remember { mutableStateOf<RectF?>(initialTargetBox) }
 
-    var targetOpacity by remember { mutableStateOf(config.idleOpacity) }
+    var targetOpacity by remember {
+        mutableStateOf(if (activeDetection != null) config.detectedOpacity else config.idleOpacity)
+    }
     var opacityDurationMs by remember { mutableIntStateOf(config.fadeAnimationDurationMs) }
     var boundsDurationMs by remember { mutableIntStateOf(config.resetAnimationDurationMs) }
-
-    val defaultCenterBox = remember { RectF(0f, 0f, 0f, 0f) }
 
     LaunchedEffect(activeDetection, spaceChain) {
         if (activeDetection != null && spaceChain != null) {
@@ -82,8 +107,14 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
 
             lastDetectedBoxScreen = rectInScreen
             targetBox = rectInScreen
-            boundsDurationMs = config.trackingAnimationDurationMs
 
+            if (isFirstDetection && (defaultBox == null || defaultBox.isEmpty)) {
+                boundsDurationMs = 0
+            } else {
+                boundsDurationMs = config.trackingAnimationDurationMs
+            }
+
+            isFirstDetection = false
             consecutiveMisses = 0
             detectionToken++
             guideState = InternalGuideState.TRACKING
@@ -105,7 +136,7 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
                 val maxMisses = config.maxConsecutiveMisses
                 if (maxMisses != null && consecutiveMisses >= maxMisses) {
                     guideState = InternalGuideState.RESETTING
-                    targetBox = if (config.resetPositionOnMissing) defaultCenterBox else (lastDetectedBoxScreen ?: defaultCenterBox)
+                    targetBox = if (config.resetPositionOnMissing) fallbackCenterBox else (lastDetectedBoxScreen ?: fallbackCenterBox)
                     boundsDurationMs = config.resetAnimationDurationMs
                 }
             }
@@ -116,7 +147,7 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         if (guideState == InternalGuideState.FADING) {
             delay(config.missingCardResetDelayMs)
             guideState = InternalGuideState.RESETTING
-            targetBox = if (config.resetPositionOnMissing) defaultCenterBox else (lastDetectedBoxScreen ?: defaultCenterBox)
+            targetBox = if (config.resetPositionOnMissing) fallbackCenterBox else (lastDetectedBoxScreen ?: fallbackCenterBox)
             boundsDurationMs = config.resetAnimationDurationMs
             targetOpacity = config.idleOpacity
         }
@@ -128,31 +159,35 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         label = "guideOpacity"
     )
 
-    val activeTargetBox = targetBox ?: defaultCenterBox
+    val activeTargetBox = targetBox ?: fallbackCenterBox
 
     val trackingSpec = tween<Float>(durationMillis = config.trackingAnimationDurationMs, easing = FastOutSlowInEasing)
     val resetSpec = tween<Float>(durationMillis = config.resetAnimationDurationMs, easing = FastOutSlowInEasing)
 
-    val currentBoundsSpec = if (guideState == InternalGuideState.RESETTING) resetSpec else trackingSpec
+    val currentBoundsSpec = when {
+        boundsDurationMs == 0 || !config.enableGuideSmoothing -> snap()
+        guideState == InternalGuideState.RESETTING -> resetSpec
+        else -> trackingSpec
+    }
 
     val animatedLeft by animateFloatAsState(
         targetValue = activeTargetBox.left,
-        animationSpec = if (config.enableGuideSmoothing) currentBoundsSpec else snap(),
+        animationSpec = currentBoundsSpec,
         label = "guideLeft"
     )
     val animatedTop by animateFloatAsState(
         targetValue = activeTargetBox.top,
-        animationSpec = if (config.enableGuideSmoothing) currentBoundsSpec else snap(),
+        animationSpec = currentBoundsSpec,
         label = "guideTop"
     )
     val animatedRight by animateFloatAsState(
         targetValue = activeTargetBox.right,
-        animationSpec = if (config.enableGuideSmoothing) currentBoundsSpec else snap(),
+        animationSpec = currentBoundsSpec,
         label = "guideRight"
     )
     val animatedBottom by animateFloatAsState(
         targetValue = activeTargetBox.bottom,
-        animationSpec = if (config.enableGuideSmoothing) currentBoundsSpec else snap(),
+        animationSpec = currentBoundsSpec,
         label = "guideBottom"
     )
 
@@ -250,18 +285,10 @@ fun CardDetectorOverlayScope.AnimatedDetectionCanvas(
             RectF(left, top, left + width, top + height)
         }
 
-        val rawBounds = rememberAnimatedDetectionBounds(config = config)
-
-        val bounds = if (config.resetPositionOnMissing && rawBounds.left == 0f && rawBounds.top == 0f && rawBounds.right == 0f && rawBounds.bottom == 0f) {
-            rawBounds.copy(
-                left = defaultCenterBox.left,
-                top = defaultCenterBox.top,
-                right = defaultCenterBox.right,
-                bottom = defaultCenterBox.bottom
-            )
-        } else {
-            rawBounds
-        }
+        val bounds = rememberAnimatedDetectionBounds(
+            defaultBox = defaultCenterBox,
+            config = config
+        )
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             val scope = AnimatedDetectionScope(drawScope = this, bounds = bounds)
