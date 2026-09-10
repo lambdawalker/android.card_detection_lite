@@ -15,12 +15,14 @@ class CardDetectorOverlayScopeTest {
         var backCalled = false
         var flashlightToggleCalled = false
 
+        val testLabels = mapOf(0 to "horizontal_card")
         val scope = CardDetectorOverlayScopeImpl(
             detectionState = null,
             latestValidDetection = null,
             imageSpaceChain = null,
             flashlightAvailable = true,
             flashlightEnabled = false,
+            classLabels = testLabels,
             onCaptureRequested = { captureCalled = true },
             onBackRequested = { backCalled = true },
             onFlashlightToggleRequested = { flashlightToggleCalled = true }
@@ -33,6 +35,7 @@ class CardDetectorOverlayScopeTest {
         assertFalse(scope.captureEnabled)
         assertTrue(scope.flashlightAvailable)
         assertFalse(scope.flashlightEnabled)
+        assertEquals(testLabels, scope.classLabels)
 
         scope.capture()
         assertTrue(captureCalled)

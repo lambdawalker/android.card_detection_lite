@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 class CardTrackingSimulatorViewModel(
     application: android.app.Application,
     modelPath: String,
+    val classLabels: Map<Int, String> = emptyMap(),
     cardClasses: Set<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,

@@ -13,6 +13,7 @@ import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 class CardTrackingSimulatorViewModelFactory(
     private val application: Application,
     private val modelPath: String,
+    private val classLabels: Map<Int, String> = emptyMap(),
     private val cardClasses: Set<Int>,
     private val useGpu: Boolean,
     private val scoreThreshold: Float,
@@ -34,6 +35,7 @@ class CardTrackingSimulatorViewModelFactory(
             return CardTrackingSimulatorViewModel(
                 application = application,
                 modelPath = modelPath,
+                classLabels = classLabels,
                 cardClasses = cardClasses,
                 useGpu = useGpu,
                 scoreThreshold = scoreThreshold,

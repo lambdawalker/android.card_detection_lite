@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 class CardDetectorLiteViewModel(
     application: Application,
     modelPath: String,
+    val classLabels: Map<Int, String> = emptyMap(),
     cardClasses: Set<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,

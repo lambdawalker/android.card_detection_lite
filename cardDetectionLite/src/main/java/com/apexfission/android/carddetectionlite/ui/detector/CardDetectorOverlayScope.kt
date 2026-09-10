@@ -60,6 +60,11 @@ interface CardDetectorOverlayScope {
     val cameraPreset: CameraPreset
 
     /**
+     * Map translating integer class IDs from the model into human-readable string labels.
+     */
+    val classLabels: Map<Int, String>
+
+    /**
      * Emits a user intent to capture the card detection or current frame.
      */
     fun capture()
@@ -86,6 +91,7 @@ internal class CardDetectorOverlayScopeImpl(
     override val flashlightEnabled: Boolean,
     override val detectorPreset: CardDetectorPreset = CardDetectorPreset.HighPerformance,
     override val cameraPreset: CameraPreset = CameraPreset.Default,
+    override val classLabels: Map<Int, String> = emptyMap(),
     private val onCaptureRequested: () -> Unit,
     private val onBackRequested: () -> Unit,
     private val onFlashlightToggleRequested: () -> Unit

@@ -69,6 +69,7 @@ fun CardTrackingSimulator(
         factory = CardTrackingSimulatorViewModelFactory(
             application = context.applicationContext as Application,
             modelPath = modelPath,
+            classLabels = classLabels,
             cardClasses = cardClasses,
             useGpu = detectorPreset.useGpu,
             scoreThreshold = detectorPreset.scoreThreshold,
@@ -123,6 +124,7 @@ fun CardTrackingSimulator(
             imageSpaceChain,
             detectorPreset,
             cameraPreset,
+            classLabels,
             onCardDetection,
             onCaptureRequested
         ) {
@@ -134,6 +136,7 @@ fun CardTrackingSimulator(
                 flashlightEnabled = false,
                 detectorPreset = detectorPreset,
                 cameraPreset = cameraPreset,
+                classLabels = classLabels,
                 onCaptureRequested = {
                     cardDetection?.let { onCaptureRequested(it) }
                 },

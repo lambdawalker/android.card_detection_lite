@@ -12,6 +12,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValid
 class CardDetectorLiteViewModelFactory(
     private val application: Application,
     private val modelPath: String,
+    private val classLabels: Map<Int, String> = emptyMap(),
     private val useGpu: Boolean,
     private val scoreThreshold: Float,
     private val iouThreshold: Float,
@@ -34,6 +35,7 @@ class CardDetectorLiteViewModelFactory(
             return CardDetectorLiteViewModel(
                 application = application,
                 modelPath = modelPath,
+                classLabels = classLabels,
                 cardClasses = cardClasses,
                 useGpu = useGpu,
                 scoreThreshold = scoreThreshold,

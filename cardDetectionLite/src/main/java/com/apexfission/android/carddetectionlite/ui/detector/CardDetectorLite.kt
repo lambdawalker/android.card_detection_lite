@@ -64,6 +64,7 @@ fun CardDetectorLite(
         factory = CardDetectorLiteViewModelFactory(
             application = context.applicationContext as Application,
             modelPath = modelPath,
+            classLabels = classLabels,
             cardClasses = cardClasses,
             useGpu = detectorPreset.useGpu,
             scoreThreshold = detectorPreset.scoreThreshold,
@@ -117,6 +118,7 @@ fun CardDetectorLite(
             flashlightEnabled,
             detectorPreset,
             cameraPreset,
+            classLabels,
             onCapture,
             onBack,
             onCardDetection
@@ -129,6 +131,7 @@ fun CardDetectorLite(
                 flashlightEnabled = flashlightEnabled,
                 detectorPreset = detectorPreset,
                 cameraPreset = cameraPreset,
+                classLabels = classLabels,
                 onCaptureRequested = {
                     latestValidDetection?.let { onCapture(it) }
                 },
