@@ -67,6 +67,7 @@ fun CardDetectorLite(
             cardClasses = cardClasses,
             useGpu = detectorPreset.useGpu,
             scoreThreshold = detectorPreset.scoreThreshold,
+            iouThreshold = detectorPreset.iouThreshold,
             cardFilters = cardFilters,
             inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
             lockOnThreshold = detectorPreset.lockOnThreshold,

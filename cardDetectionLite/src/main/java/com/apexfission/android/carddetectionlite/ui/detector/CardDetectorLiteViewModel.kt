@@ -34,6 +34,7 @@ class CardDetectorLiteViewModel(
     cardClasses: Set<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,
+    iouThreshold: Float,
     cardFilters: List<CardValidator>,
     private val inferenceIntervalMs: Long,
     lockOnThreshold: Int,
@@ -63,7 +64,7 @@ class CardDetectorLiteViewModel(
             context = application,
             modelPath = modelPath,
             scoreThreshold = scoreThreshold,
-            iouThreshold = 0.45f,
+            iouThreshold = iouThreshold,
             useGpu = useGpu,
             numThreads = numThreads
         ),
