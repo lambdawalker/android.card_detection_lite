@@ -72,7 +72,7 @@ data class CardDetectorPreset(
          * and a higher lock-on threshold (6).
          */
         val HighAccuracy = CardDetectorPreset(
-            scoreThreshold = 0.80f,
+            scoreThreshold = 0.70f,
             iouThreshold = 0.45f,
             lockOnThreshold = 6,
             noDetectionCountLimit = 10,
@@ -89,12 +89,12 @@ data class CardDetectorPreset(
         val HighPerformance = CardDetectorPreset(
             scoreThreshold = 0.50f,
             iouThreshold = 0.45f,
-            lockOnThreshold = 4,
-            noDetectionCountLimit = 8,
-            inferenceIntervalMs = 33L,
+            lockOnThreshold = 5,
+            noDetectionCountLimit = 10,
+            inferenceIntervalMs = 15L,
             useGpu = true,
             preProcessingImageTransformation = PreProcessingImageTransformation.SquareCrop(),
-            numThreads = NumThreads.Default
+            numThreads = NumThreads.Half
         )
 
         /**

@@ -52,7 +52,7 @@ data class CameraPreset(
          * Fixed focus camera preset disabling tap-to-focus and smart auto-focus.
          */
         val FixedFocus = CameraPreset(
-            analysisTargetResolution = Size(1920, 1080),
+            analysisTargetResolution = Size(2048, 1080),
             tapToFocusEnabled = false,
             focusOnCardEnabled = false
         )

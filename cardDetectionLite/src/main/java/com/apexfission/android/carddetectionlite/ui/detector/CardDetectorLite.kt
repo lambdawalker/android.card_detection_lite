@@ -48,7 +48,7 @@ fun CardDetectorLite(
     cardClasses: Set<Int>,
     isDetectionEnabled: Boolean = true,
     detectorPreset: CardDetectorPreset = CardDetectorPreset.HighPerformance,
-    cameraPreset: CameraPreset = CameraPreset.Default,
+    cameraPreset: CameraPreset = CameraPreset.HighResolution,
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
