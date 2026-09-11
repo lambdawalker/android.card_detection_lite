@@ -9,6 +9,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 /**
@@ -38,8 +39,14 @@ class YoloDetector(
     maxNmsCandidates: Int = 150,
     numThreads: NumThreads = NumThreads.Default,
 ) : Detector {
-    override var enabled: Boolean = true
-    private var isClosed = false
+    private val _enabled = AtomicBoolean(true)
+    override var enabled: Boolean
+        get() = _enabled.get()
+        set(value) {
+            _enabled.set(value)
+        }
+
+    private val isClosed = AtomicBoolean(false)
 
     private val interpreter = TfliteInterpreter(context, modelPath, useGpu, numThreads)
     private val letterboxBuilder = LetterboxBuilder()
@@ -57,7 +64,7 @@ class YoloDetector(
 
     @Synchronized
     override fun detect(bitmap: Bitmap): List<Detection> {
-        if (!enabled || isClosed) return emptyList()
+        if (!enabled || isClosed.get()) return emptyList()
 
         val letterboxResult: LetterboxResult = letterboxBuilder.build(bitmap, interpreter.inputImageWidth)
         val output: FloatArray = interpreter.runInference(letterboxResult.bitmap)
@@ -69,7 +76,7 @@ class YoloDetector(
     }
 
     override fun detect(imageProxy: ImageProxy): List<Detection> {
-        if (!enabled || isClosed) return emptyList()
+        if (!enabled || isClosed.get()) return emptyList()
         val bitmap = imageProxy.toUprightBitmap()
         return try {
             detect(bitmap)
@@ -81,12 +88,14 @@ class YoloDetector(
 
     @Synchronized
     override fun close() {
-        if (isClosed) return
-        try {
+        if (isClosed.getAndSet(true)) return
+        runCatching {
             interpreter.close()
-        } finally {
+        }
+
+        runCatching {
             letterboxBuilder.close()
-            isClosed = true
         }
     }
 }
+

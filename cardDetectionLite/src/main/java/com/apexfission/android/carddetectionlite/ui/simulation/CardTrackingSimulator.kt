@@ -25,6 +25,8 @@ import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScopeImpl
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
+import com.apexfission.android.carddetectionlite.ui.detector.DetectorComponent
+import com.apexfission.android.carddetectionlite.ui.detector.detectorViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
