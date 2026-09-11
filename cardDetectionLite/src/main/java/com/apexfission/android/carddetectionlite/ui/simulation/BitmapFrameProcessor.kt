@@ -16,7 +16,8 @@ import java.util.concurrent.Executor
  * @param captureIntervalMs Interval between captured frames in milliseconds.
  * @param callbackExecutor Executor used for delivering bitmap callbacks.
  * @param onConfigured Callback invoked when video frame dimensions are configured.
- * @param onBitmap Callback invoked when a bitmap frame is captured.
+ * @param onBitmap Callback invoked when a bitmap frame is captured. Ownership of the bitmap
+ * transfers to the callback, which must eventually recycle it.
  */
 class BitmapFrameProcessor(
     captureIntervalMs: Long,
