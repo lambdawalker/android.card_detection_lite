@@ -15,8 +15,10 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
-import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import com.apexfission.android.carddetectionlite.ui.detector.LatestBestDetectionStore
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
+import com.apexfission.android.carddetectionlite.ui.detector.SingleFlightGate
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,9 +31,11 @@ import kotlinx.coroutines.launch
 class CardTrackingSimulatorViewModel(
     application: android.app.Application,
     modelPath: String,
+    val classLabels: Map<Int, String> = emptyMap(),
     cardClasses: Set<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,
+    iouThreshold: Float,
     cardFilters: List<CardValidator>,
     private val inferenceIntervalMs: Long,
     lockOnThreshold: Int,
@@ -55,7 +59,7 @@ class CardTrackingSimulatorViewModel(
             context = application,
             modelPath = modelPath,
             scoreThreshold = scoreThreshold,
-            iouThreshold = 0.45f,
+            iouThreshold = iouThreshold,
             useGpu = useGpu,
             numThreads = numThreads
         ),
@@ -70,6 +74,7 @@ class CardTrackingSimulatorViewModel(
     )
 
     private val lastInferenceMs = AtomicLong(0L)
+    private val frameProcessingGate = SingleFlightGate()
     private val latestBestDetectionStore = LatestBestDetectionStore()
 
     fun setDetectionEnabled(enabled: Boolean) {
@@ -85,7 +90,11 @@ class CardTrackingSimulatorViewModel(
     ) {
         if (!detector.enabled) return
 
-        viewModelScope.launch(Dispatchers.Default) {
+        if (!frameProcessingGate.tryAcquire()) return
+
+        val processingStarted = AtomicBoolean(false)
+        val job = viewModelScope.launch(Dispatchers.Default) {
+            processingStarted.set(true)
             var croppedBitmap: Bitmap? = null
             try {
                 val now = SystemClock.uptimeMillis()
@@ -131,6 +140,13 @@ class CardTrackingSimulatorViewModel(
                 if (croppedBitmap != null && croppedBitmap != bitmap) {
                     croppedBitmap.recycle()
                 }
+                frameProcessingGate.release()
+            }
+        }
+
+        job.invokeOnCompletion {
+            if (!processingStarted.get()) {
+                frameProcessingGate.release()
             }
         }
     }

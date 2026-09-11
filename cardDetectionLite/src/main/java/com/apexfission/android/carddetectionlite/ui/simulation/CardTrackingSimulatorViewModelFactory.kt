@@ -13,9 +13,11 @@ import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 class CardTrackingSimulatorViewModelFactory(
     private val application: Application,
     private val modelPath: String,
+    private val classLabels: Map<Int, String> = emptyMap(),
     private val cardClasses: Set<Int>,
     private val useGpu: Boolean,
     private val scoreThreshold: Float,
+    private val iouThreshold: Float,
     private val cardFilters: List<CardValidator>,
     private val inferenceIntervalMs: Long,
     private val lockOnThreshold: Int,
@@ -33,9 +35,11 @@ class CardTrackingSimulatorViewModelFactory(
             return CardTrackingSimulatorViewModel(
                 application = application,
                 modelPath = modelPath,
+                classLabels = classLabels,
                 cardClasses = cardClasses,
                 useGpu = useGpu,
                 scoreThreshold = scoreThreshold,
+                iouThreshold = iouThreshold,
                 cardFilters = cardFilters,
                 inferenceIntervalMs = inferenceIntervalMs,
                 lockOnThreshold = lockOnThreshold,

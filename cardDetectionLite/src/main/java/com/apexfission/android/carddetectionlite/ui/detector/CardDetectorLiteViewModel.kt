@@ -21,6 +21,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBi
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,9 +35,11 @@ import kotlinx.coroutines.launch
 class CardDetectorLiteViewModel(
     application: Application,
     modelPath: String,
+    val classLabels: Map<Int, String> = emptyMap(),
     cardClasses: Set<Int>,
     useGpu: Boolean,
     scoreThreshold: Float,
+    iouThreshold: Float,
     cardFilters: List<CardValidator>,
     private val inferenceIntervalMs: Long,
     lockOnThreshold: Int,
@@ -66,7 +69,7 @@ class CardDetectorLiteViewModel(
             context = application,
             modelPath = modelPath,
             scoreThreshold = scoreThreshold,
-            iouThreshold = 0.45f,
+            iouThreshold = iouThreshold,
             useGpu = useGpu,
             numThreads = numThreads
         ),
@@ -81,6 +84,7 @@ class CardDetectorLiteViewModel(
     )
 
     private val lastInferenceMs = AtomicLong(0L)
+    private val frameProcessingGate = SingleFlightGate()
     private val latestBestDetectionStore = LatestBestDetectionStore()
 
     fun setDetectionEnabled(enabled: Boolean) {
@@ -117,7 +121,14 @@ class CardDetectorLiteViewModel(
             return
         }
 
-        viewModelScope.launch(Dispatchers.Default) {
+        if (!frameProcessingGate.tryAcquire()) {
+            imageProxy.close()
+            return
+        }
+
+        val processingStarted = AtomicBoolean(false)
+        val job = viewModelScope.launch(Dispatchers.Default) {
+            processingStarted.set(true)
             imageProxy.use { proxy ->
                 var uprightBitmap: Bitmap? = null
                 var croppedBitmap: Bitmap? = null
@@ -166,7 +177,15 @@ class CardDetectorLiteViewModel(
                         croppedBitmap.recycle()
                     }
                     uprightBitmap?.recycle()
+                    frameProcessingGate.release()
                 }
+            }
+        }
+
+        job.invokeOnCompletion {
+            if (!processingStarted.get()) {
+                imageProxy.close()
+                frameProcessingGate.release()
             }
         }
     }

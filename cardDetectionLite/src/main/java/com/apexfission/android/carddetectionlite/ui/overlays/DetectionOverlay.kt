@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @Composable
 fun CardDetectorOverlayScope.DetectionOverlay(
     showClassNames: Boolean = false,
-    classLabels: Map<Int, String> = emptyMap()
+    classLabels: Map<Int, String> = this.classLabels
 ) {
     val spaceChain = imageSpaceChain ?: return
     DetectionOverlay(

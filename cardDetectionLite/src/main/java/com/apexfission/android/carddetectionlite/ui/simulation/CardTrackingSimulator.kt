@@ -70,9 +70,11 @@ fun CardTrackingSimulator(
         factory = CardTrackingSimulatorViewModelFactory(
             application = context.applicationContext as Application,
             modelPath = modelPath,
+            classLabels = classLabels,
             cardClasses = cardClasses,
             useGpu = detectorPreset.useGpu,
             scoreThreshold = detectorPreset.scoreThreshold,
+            iouThreshold = detectorPreset.iouThreshold,
             cardFilters = cardFilters,
             inferenceIntervalMs = detectorPreset.inferenceIntervalMs,
             lockOnThreshold = detectorPreset.lockOnThreshold,
@@ -123,6 +125,7 @@ fun CardTrackingSimulator(
             imageSpaceChain,
             detectorPreset,
             cameraPreset,
+            classLabels,
             onCardDetection,
             onCaptureRequested
         ) {
@@ -134,6 +137,7 @@ fun CardTrackingSimulator(
                 flashlightEnabled = false,
                 detectorPreset = detectorPreset,
                 cameraPreset = cameraPreset,
+                classLabels = classLabels,
                 onCaptureRequested = {
                     viewModel.captureLatest(onCaptureRequested)
                 },
