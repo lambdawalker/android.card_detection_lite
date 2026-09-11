@@ -53,6 +53,7 @@ class CardDetectionActivity : ComponentActivity() {
 
                         CardDetectorLite(
                             modifier = Modifier.padding(innerPadding),
+                            instanceKey = "card-detection-camera",
                             modelPath = ModelCatalog.TfLite.modelPath,
                             classLabels = ModelCatalog.TfLite.classes,
                             cardClasses = ModelCatalog.TfLite.cardClasses,

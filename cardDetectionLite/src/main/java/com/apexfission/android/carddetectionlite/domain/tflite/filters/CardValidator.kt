@@ -12,6 +12,14 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
  */
 fun interface CardValidator {
     /**
+     * Stable identity for detector configuration. Custom validators should override this
+     * when equivalent instances can be recreated during recomposition. Otherwise the
+     * validator instance identity is used and callers should retain it with `remember`.
+     */
+    val configurationKey: String
+        get() = "${javaClass.name}@${System.identityHashCode(this)}"
+
+    /**
      * Evaluates a [Detection] candidate against a specific validation rule.
      *
      * @param detection The candidate detection to validate.

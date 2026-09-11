@@ -11,6 +11,8 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
  * @property margin The required minimum distance in pixels from the image edges.
  */
 class MarginValidator(private val margin: UInt = 20u) : CardValidator {
+    override val configurationKey: String = "margin:$margin"
+
     /**
      * Validates that the candidate's bounding box is at least [margin] pixels away from image borders.
      *

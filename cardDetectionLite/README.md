@@ -47,6 +47,7 @@ fun CardDetectionScreen(mainViewModel: MainViewModel) {
     val isDetectionEnabled by mainViewModel.isDetectionEnabled.collectAsStateWithLifecycle()
 
     CardDetectorLite(
+        instanceKey = "main-camera",
         modelPath = ModelCatalog.TfLite.modelPath,
         classLabels = ModelCatalog.TfLite.classes,
         cardClasses = ModelCatalog.TfLite.cardClasses,

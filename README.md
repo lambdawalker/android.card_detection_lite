@@ -143,6 +143,7 @@ class CardDetectionActivity : ComponentActivity() {
 
                         CardDetectorLite(
                             modifier = Modifier.padding(innerPadding),
+                            instanceKey = "card-detection-camera",
                             modelPath = ModelCatalog.TfLite.modelPath,
                             classLabels = ModelCatalog.TfLite.classes,
                             cardClasses = ModelCatalog.TfLite.cardClasses,
@@ -262,6 +263,7 @@ Customize the camera interface via the `controlOverlay` slot using `CardDetector
 
 ```kotlin
 CardDetectorLite(
+    instanceKey = "custom-overlay-camera",
     modelPath = ModelCatalog.TfLite.modelPath,
     classLabels = ModelCatalog.TfLite.classes,
     cardClasses = ModelCatalog.TfLite.cardClasses,
@@ -299,6 +301,7 @@ Test and verify detection pipelines offline without requiring active camera hard
 val videoUri = "android.resource://$packageName/raw/v002".toUri()
 
 CardTrackingSimulator(
+    instanceKey = "offline-simulator",
     videoUri = videoUri,
     modelPath = ModelCatalog.TfLite.modelPath,
     classLabels = ModelCatalog.TfLite.classes,

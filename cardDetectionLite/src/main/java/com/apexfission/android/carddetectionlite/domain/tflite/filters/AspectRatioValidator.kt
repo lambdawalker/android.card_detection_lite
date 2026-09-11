@@ -17,6 +17,9 @@ class AspectRatioValidator(
     private val minAspectRatio: Float = 1.28f,
     private val maxAspectRatio: Float = 1.7f
 ) : CardValidator {
+    override val configurationKey: String =
+        "aspect-ratio:${minAspectRatio.toRawBits()}:${maxAspectRatio.toRawBits()}"
+
 
     /**
      * Validates that the aspect ratio of the candidate's bounding box falls within `minAspectRatio..maxAspectRatio`.

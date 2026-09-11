@@ -47,6 +47,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
 
                     CardTrackingSimulator(
                         modifier = Modifier.padding(innerPadding),
+                        instanceKey = "card-detection-simulator",
                         videoUri = videoUri,
                         modelPath = ModelCatalog.TfLite.modelPath,
                         classLabels = ModelCatalog.TfLite.classes,

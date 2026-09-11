@@ -44,6 +44,7 @@ val classLabels: Map<Int, String> = ModelCatalog.TfLite.classes
 val cardClasses: Set<Int> = ModelCatalog.TfLite.cardClasses
 
 CardDetectorLite(
+    instanceKey = "main-camera",
     modelPath = modelPath,
     classLabels = classLabels,
     cardClasses = cardClasses,
