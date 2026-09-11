@@ -53,7 +53,14 @@ internal class LetterboxBuilder(
         canvas.drawColor(black)
         canvas.drawBitmap(src, null, RectF(padX, padY, padX + newW, padY + newH), lbPaint)
 
-        return LetterboxResult(out, scale, padX, padY)
+        return LetterboxResult(
+            bitmap = out,
+            scale = scale,
+            padX = padX,
+            padY = padY,
+            sourceWidth = src.width,
+            sourceHeight = src.height,
+        )
     }
 
     @Synchronized
