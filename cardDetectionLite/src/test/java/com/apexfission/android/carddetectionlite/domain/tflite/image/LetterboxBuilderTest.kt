@@ -3,6 +3,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.image
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import java.lang.reflect.Modifier
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -14,6 +15,17 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.whenever
 
 class LetterboxBuilderTest {
+    @Test
+    fun resultRecordsTheSourceImageBounds() {
+        val output = bitmap(width = 640, height = 640)
+        val source = bitmap(width = 320, height = 180)
+
+        val result = builderThatCreates(output).build(source, 640)
+
+        assertEquals(320, result.sourceWidth)
+        assertEquals(180, result.sourceHeight)
+    }
+
     @Test
     fun separateBuildersDoNotShareOutputBitmaps() {
         val firstOutput = bitmap(width = 640, height = 640)
