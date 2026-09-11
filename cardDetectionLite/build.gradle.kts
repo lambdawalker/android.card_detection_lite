@@ -81,6 +81,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
 
     implementation(libs.text.recognition)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.accompanist.permissions)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -183,5 +184,4 @@ mavenPublishing {
         }
     }
 }
-
 
