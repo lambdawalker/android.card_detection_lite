@@ -88,9 +88,17 @@ class CardTrackingSimulatorViewModel(
         bitmap: Bitmap,
         onDetection: (CardDetection, BitmapTransfer) -> Unit,
     ) {
-        if (!detector.enabled) return
+        val ownedFrame = OwnedFrameBitmap(bitmap)
 
-        if (!frameProcessingGate.tryAcquire()) return
+        if (!detector.enabled) {
+            ownedFrame.recycle()
+            return
+        }
+
+        if (!frameProcessingGate.tryAcquire()) {
+            ownedFrame.recycle()
+            return
+        }
 
         val processingStarted = AtomicBoolean(false)
         val job = viewModelScope.launch(Dispatchers.Default) {
@@ -140,12 +148,14 @@ class CardTrackingSimulatorViewModel(
                 if (croppedBitmap != null && croppedBitmap != bitmap) {
                     croppedBitmap.recycle()
                 }
+                ownedFrame.recycle()
                 frameProcessingGate.release()
             }
         }
 
         job.invokeOnCompletion {
             if (!processingStarted.get()) {
+                ownedFrame.recycle()
                 frameProcessingGate.release()
             }
         }
