@@ -115,15 +115,14 @@ fun CameraPreview(
 
     DisposableEffect(lifecycleOwner, analysisTargetResolution) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-        var previewUseCase: Preview? = null
-        var analysisUseCase: ImageAnalysis? = null
+        val cameraSession = CameraProviderSession()
 
         val listener = Runnable {
+            if (!cameraSession.isActive()) return@Runnable
             val cameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build().also {
                 it.surfaceProvider = previewView.surfaceProvider
             }
-            previewUseCase = preview
 
             val resolutionStrategy = ResolutionStrategy(
                 analysisTargetResolution, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
@@ -137,7 +136,6 @@ fun CameraPreview(
                 .setResolutionSelector(resolutionSelector)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .build()
-            analysisUseCase = analysis
 
             analysis.setAnalyzer(analysisExecutor) { imageProxy ->
                 try {
@@ -166,10 +164,15 @@ fun CameraPreview(
             }
 
             try {
+                if (!cameraSession.isActive()) return@Runnable
                 cameraProvider.unbind(preview, analysis)
                 val camera = cameraProvider.bindToLifecycle(
                     lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis
                 )
+                val bindingRetained = cameraSession.completeBinding {
+                    cameraProvider.unbind(preview, analysis)
+                }
+                if (!bindingRetained) return@Runnable
                 val control = camera.cameraControl
                 cameraControl = control
 
@@ -197,14 +200,7 @@ fun CameraPreview(
 
         onDispose {
             onFlashlightAvailabilityChanged(false)
-            runCatching {
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = previewUseCase
-                val analysis = analysisUseCase
-                if (preview != null && analysis != null) {
-                    cameraProvider.unbind(preview, analysis)
-                }
-            }
+            runCatching { cameraSession.dispose() }
             analysisExecutor.shutdown()
         }
     }
