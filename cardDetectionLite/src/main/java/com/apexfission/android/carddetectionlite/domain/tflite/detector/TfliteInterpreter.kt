@@ -267,10 +267,15 @@ class TfliteInterpreter(
 
     /** Loads the TFLite model from assets into a direct ByteBuffer. */
     private fun loadModelFile(context: Context, assetPath: String): ByteBuffer {
-        val fd = context.assets.openFd(assetPath)
-        return FileInputStream(fd.fileDescriptor).channel.map(
-            FileChannel.MapMode.READ_ONLY, fd.startOffset, fd.declaredLength
-        ).order(ByteOrder.nativeOrder())
+        return context.assets.openFd(assetPath).use { fd ->
+            FileInputStream(fd.fileDescriptor).use { inputStream ->
+                inputStream.channel.use { channel ->
+                    channel.map(
+                        FileChannel.MapMode.READ_ONLY, fd.startOffset, fd.declaredLength
+                    ).order(ByteOrder.nativeOrder())
+                }
+            }
+        }
     }
 
     /**
