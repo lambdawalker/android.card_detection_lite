@@ -169,7 +169,9 @@ class TfliteInterpreter(
      *
      * This method handles the full pipeline: it preprocesses the bitmap data into the
      * correct format (FP32 or INT8), feeds it to the interpreter, runs inference,
-     * and de-quantizes the output if necessary, returning a clean `FloatArray`.
+     * and de-quantizes the output if necessary, returning an independently owned
+     * `FloatArray`. Callers may retain or modify the returned array without affecting
+     * later inference calls.
      *
      * @param bitmap The input image. For best performance, it should already be scaled
      *               to the model's required dimensions ([inputImageWidth] x [inputImageWidth]).
@@ -199,7 +201,9 @@ class TfliteInterpreter(
         }
 
         lastInferenceTimeMs = SystemClock.uptimeMillis() - startTime
-        return outFloats
+        // Do not expose the reusable scratch array. Post-processing happens after this
+        // synchronized method returns, so another caller could otherwise overwrite it.
+        return outFloats.copyOf()
     }
 
     /** Prepares bitmap data for an FP32 model by normalizing pixel values to the [0.0, 1.0] range. */
