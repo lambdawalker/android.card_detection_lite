@@ -16,6 +16,13 @@ import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
 
 /**
+ * Custom exception thrown when the [TfliteInterpreter] fails to initialize.
+ * This can happen due to invalid model files, unsupported hardware configurations,
+ * or memory allocation failures.
+ */
+class TfliteInitializationException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/**
  * A high-performance wrapper for the TensorFlow Lite [Interpreter], specialized for object detection models.
  *
  * This class abstracts away the complexities of interacting with the TFLite API.
@@ -106,25 +113,28 @@ class TfliteInterpreter(
         val modelBuffer = loadModelFile(context, modelPath)
 
         // 1. Probe Metadata: Use a temporary interpreter to determine tensor shapes and properties.
-        val temp = Interpreter(modelBuffer)
-        val inputTensor = temp.getInputTensor(0)
-        val outputTensor = temp.getOutputTensor(0)
+        var temp: Interpreter? = null
+        try {
+            temp = Interpreter(modelBuffer)
+            val inputTensor = temp.getInputTensor(0)
+            val outputTensor = temp.getOutputTensor(0)
 
-        isInt8 = inputTensor.dataType() == DataType.INT8
-        inputImageWidth = inputTensor.shape()[1]
+            isInt8 = inputTensor.dataType() == DataType.INT8
+            inputImageWidth = inputTensor.shape()[1]
 
-        val oShape = outputTensor.shape()
-        outCount = oShape.reduce { a, b -> a * b }
+            val oShape = outputTensor.shape()
+            outCount = oShape.reduce { a, b -> a * b }
 
-        // Heuristic to detect the output layout based on typical YOLO dimensions.
-        val dim1 = oShape[1]
-        val dim2 = oShape[2]
-        outLayout = if (dim2 >= 400 && dim1 <= 256) OutputLayout.ATTRS_X_BOXES else OutputLayout.BOXES_X_ATTRS
-        outAttrs = if (outLayout == OutputLayout.ATTRS_X_BOXES) dim1 else dim2
-        outBoxes = if (outLayout == OutputLayout.ATTRS_X_BOXES) dim2 else dim1
-        numClasses = outAttrs - 4
-
-        temp.close()
+            // Heuristic to detect the output layout based on typical YOLO dimensions.
+            val dim1 = oShape[1]
+            val dim2 = oShape[2]
+            outLayout = if (dim2 >= 400 && dim1 <= 256) OutputLayout.ATTRS_X_BOXES else OutputLayout.BOXES_X_ATTRS
+            outAttrs = if (outLayout == OutputLayout.ATTRS_X_BOXES) dim1 else dim2
+            outBoxes = if (outLayout == OutputLayout.ATTRS_X_BOXES) dim2 else dim1
+            numClasses = outAttrs - 4
+        } finally {
+            temp?.close()
+        }
 
         Log.i(TAG, "Config: $numClasses classes, $outBoxes boxes, Layout: $outLayout, Int8: $isInt8")
 
@@ -134,34 +144,54 @@ class TfliteInterpreter(
             setNumThreads(numThreads.toInt())
         }
 
-        if (useGpu && !isInt8) {
-            try {
-                val compat = CompatibilityList()
-                if (compat.isDelegateSupportedOnThisDevice) {
-                    gpuDelegate = GpuDelegate(compat.bestOptionsForThisDevice)
-                    options.addDelegate(gpuDelegate)
+        var localGpuDelegate: GpuDelegate? = null
+        var localInterpreter: Interpreter? = null
+
+        try {
+            if (useGpu && !isInt8) {
+                try {
+                    val compat = CompatibilityList()
+                    if (compat.isDelegateSupportedOnThisDevice) {
+                        localGpuDelegate = GpuDelegate(compat.bestOptionsForThisDevice)
+                        options.addDelegate(localGpuDelegate)
+                    }
+                } catch (_: Throwable) {
+                    localGpuDelegate?.close()
+                    localGpuDelegate = null
                 }
-            } catch (_: Throwable) {
-                gpuDelegate = null
             }
+
+            localInterpreter = Interpreter(modelBuffer, options)
+
+            // 3. Cache Quantization Parameters for later use in data conversion.
+            localInterpreter.getInputTensor(0).quantizationParams().let {
+                inScale = it.scale
+                inZeroPoint = it.zeroPoint
+            }
+
+            localInterpreter.getOutputTensor(0).quantizationParams().let {
+                outScale = it.scale
+                outZeroPoint = it.zeroPoint
+            }
+
+            // 4. Allocate I/O Buffers.
+            val bytesPerChannel = if (isInt8) 1 else 4
+            inputBuffer = ByteBuffer.allocateDirect(1 * inputImageWidth * inputImageWidth * 3 * bytesPerChannel).order(ByteOrder.nativeOrder())
+            outByteBuffer = ByteBuffer.allocateDirect(outCount * bytesPerChannel).order(ByteOrder.nativeOrder())
+            outFloats = FloatArray(outCount)
+
+            // Transfer ownership on successful construction
+            interpreter = localInterpreter
+            gpuDelegate = localGpuDelegate
+            localInterpreter = null
+            localGpuDelegate = null
+        } catch (e: Exception) {
+            throw TfliteInitializationException("Failed to initialize TFLite interpreter for model: $modelPath", e)
+        } finally {
+            localInterpreter?.close()
+            localGpuDelegate?.close()
+
         }
-
-        interpreter = Interpreter(modelBuffer, options)
-
-        // 3. Cache Quantization Parameters for later use in data conversion.
-        val inQ = interpreter.getInputTensor(0).quantizationParams()
-        inScale = inQ.scale
-        inZeroPoint = inQ.zeroPoint
-
-        val outQ = interpreter.getOutputTensor(0).quantizationParams()
-        outScale = outQ.scale
-        outZeroPoint = outQ.zeroPoint
-
-        // 4. Allocate I/O Buffers.
-        val bytesPerChannel = if (isInt8) 1 else 4
-        inputBuffer = ByteBuffer.allocateDirect(1 * inputImageWidth * inputImageWidth * 3 * bytesPerChannel).order(ByteOrder.nativeOrder())
-        outByteBuffer = ByteBuffer.allocateDirect(outCount * bytesPerChannel).order(ByteOrder.nativeOrder())
-        outFloats = FloatArray(outCount)
     }
 
     /**
