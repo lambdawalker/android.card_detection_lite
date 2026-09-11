@@ -1,10 +1,13 @@
 package com.apexfission.android.carddetectiontest
 
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
+import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
+import com.apexfission.android.carddetectionlite.resource.use
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,54 +43,51 @@ class MainViewModel : ViewModel() {
      *
      * @param card The latest valid [CardDetection] stored by the detector.
      */
-    fun onCaptureRequested(card: CardDetection?) {
-        Log.d("UserRequest", "Processing card id: ${card?.id}, locking status: ${card?.lockingStatus}")
-        if (card == null) return
-        processCard(card)
+    fun onCaptureRequested(card: CardDetection, bitmapTransfer: BitmapTransfer) {
+        Log.d("UserRequest", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}")
+        processCard(card, bitmapTransfer.takeCopy())
     }
 
     /**
      * Responds to continuous frame-by-frame detections.
      */
-    fun onDetection(card: CardDetection) {
+    fun onDetection(card: CardDetection, bitmapTransfer: BitmapTransfer) {
         Log.d("OnDetection", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}")
         if (card.lockingStatus != LockingStatus.NewCard && card.id == null) return
         if (!_isDetectionEnabled.value) return
-        processCard(card)
+        processCard(card, bitmapTransfer.takeCopy())
     }
 
-    private fun processCard(card: CardDetection) {
+    private fun processCard(card: CardDetection, bitmap: Bitmap) {
         viewModelScope.launch {
-            try {
-                _isDetectionEnabled.value = false
+            bitmap.use {
+                try {
+                    _isDetectionEnabled.value = false
 
-                if (useCloud) {
-                    performCloudOcr(card)
-                } else {
-                    performOnDeviceOcr(card)
+                    if (useCloud) {
+                        performCloudOcr(card, it)
+                    } else {
+                        performOnDeviceOcr(card, it)
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("MainViewModel", "Error processing card", e)
+                } finally {
+                    _isDetectionEnabled.value = true
                 }
-
-            } catch (e: Exception) {
-                Log.e("MainViewModel", "Error processing card", e)
-            } finally {
-                _isDetectionEnabled.value = true
             }
         }
     }
 
     // OPTION A: Cloud-based (Network/IO)
-    private suspend fun performCloudOcr(card: CardDetection) = withContext(Dispatchers.IO) {
+    private suspend fun performCloudOcr(card: CardDetection, bitmap: Bitmap) = withContext(Dispatchers.IO) {
         Log.d("MainViewModel", "Running Cloud OCR (Network bound)")
-        withContext(Dispatchers.IO) {
-            // api.uploadAndRecognize(card.image)
-        }
+        // api.uploadAndRecognize(bitmap)
     }
 
     // OPTION B: On-Device (CPU/Math)
-    private suspend fun performOnDeviceOcr(card: CardDetection) = withContext(Dispatchers.Default) {
+    private suspend fun performOnDeviceOcr(card: CardDetection, bitmap: Bitmap) = withContext(Dispatchers.Default) {
         Log.d("MainViewModel", "Running On-Device OCR (CPU bound)")
-        withContext(Dispatchers.Default) {
-            // localLibrary.process(card.bitmap)
-        }
+        // localLibrary.process(bitmap)
     }
 }

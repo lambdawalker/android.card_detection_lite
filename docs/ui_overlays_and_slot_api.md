@@ -22,9 +22,9 @@ fun CardDetectorLite(
 interface CardDetectorOverlayScope {
     val detectionState: CardDetection?         // Active frame detection
     val cardDetection: CardDetection?           // Alias for detectionState
-    val latestValidDetection: CardDetection?    // Most recent valid detection retained in memory
+    val latestBestDetection: CardDetection?     // Highest-confidence detection retained for capture
     val imageSpaceChain: ImageSpaceChain?       // Screen coordinate mapping chain
-    val captureEnabled: Boolean                // True when latestValidDetection != null
+    val captureEnabled: Boolean                // True when latestBestDetection != null
     val flashlightAvailable: Boolean           // True if camera supports flash
     val flashlightEnabled: Boolean             // Current torch state
     val detectorPreset: CardDetectorPreset     // Pipeline ML preset

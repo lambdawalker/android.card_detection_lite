@@ -1,6 +1,5 @@
 package com.apexfission.android.carddetectionlite.ui.camerapreview
 
-import android.graphics.Bitmap
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Feature
@@ -11,15 +10,12 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.mockito.Mockito.mock
 
 class AutoFocusPolicyTest {
 
-    private val dummyBitmap: Bitmap = mock(Bitmap::class.java)
-
     private fun createDetection(x1: UInt, y1: UInt, x2: UInt, y2: UInt): CardDetection {
         val box = ImageBox.from2P(x1, y1, x2, y2)
-        val feature = Feature(box = box, confidence = 0.9f, classId = 0, image = dummyBitmap)
+        val feature = Feature(box = box, confidence = 0.9f, classId = 0)
         return CardDetection(
             lockOnProgress = 1.0f,
             id = 1L,

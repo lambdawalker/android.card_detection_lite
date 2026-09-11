@@ -234,7 +234,7 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Retain capture enabled state once at least one valid detection is stored in latestValidDetection
+            // Retain capture enabled state once a best detection is stored.
             val isCaptureEnabled = if (config.requiresCardDetectionForCapture) captureEnabled else true
 
             val animatedShutterAlpha by animateFloatAsState(

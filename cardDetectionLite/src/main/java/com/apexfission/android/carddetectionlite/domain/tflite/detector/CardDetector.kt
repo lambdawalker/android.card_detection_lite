@@ -7,7 +7,6 @@ import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHashFromRegion
 import com.apexfission.android.carddetectionlite.domain.tflite.image.isVisuallySimilar
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
@@ -130,10 +129,11 @@ class CardDetector(
         val bitmap = imageProxy.toUprightBitmap()
         val result = yoloDetector.detect(bitmap)
 
-        return processDetections(
-            result = result,
-            bitmap = bitmap
-        )
+        return try {
+            processDetections(result = result, bitmap = bitmap)
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     /**
@@ -267,8 +267,7 @@ class CardDetector(
             card = Feature(
                 card.box,
                 card.confidence,
-                card.classId,
-                bitmap.crop(card.box)
+                card.classId
             ),
             features = emptyList(),
             lockOnProgress = lockOnProgress

@@ -24,10 +24,9 @@ interface CardDetectorOverlayScope {
     val cardDetection: CardDetection? get() = detectionState
 
     /**
-     * The most recent valid [CardDetection] stored by the controller layer.
-     * Maintained even if the current frame has no active card detection.
+     * The highest-confidence [CardDetection] retained for the current card.
      */
-    val latestValidDetection: CardDetection?
+    val latestBestDetection: CardDetection?
 
     /**
      * The [ImageSpaceChain] mapping card detection coordinates to screen space.
@@ -80,7 +79,7 @@ interface CardDetectorOverlayScope {
  */
 internal class CardDetectorOverlayScopeImpl(
     override val detectionState: CardDetection?,
-    override val latestValidDetection: CardDetection?,
+    override val latestBestDetection: CardDetection?,
     override val imageSpaceChain: ImageSpaceChain?,
     override val flashlightAvailable: Boolean,
     override val flashlightEnabled: Boolean,
@@ -92,7 +91,7 @@ internal class CardDetectorOverlayScopeImpl(
 ) : CardDetectorOverlayScope {
 
     override val captureEnabled: Boolean
-        get() = latestValidDetection != null
+        get() = latestBestDetection != null
 
     override fun capture() {
         onCaptureRequested()
