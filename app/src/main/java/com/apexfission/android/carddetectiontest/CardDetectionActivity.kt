@@ -60,9 +60,9 @@ class CardDetectionActivity : ComponentActivity() {
                             detectorPreset = CardDetectorPreset.HighPerformance.copy(scoreThreshold = 0.5f),
                             cameraPreset = CameraPreset.Default,
                             isDetectionEnabled = isDetectionEnabled,
-                            onCardDetection = mainViewModel::onDetection,
+                            onCardDetection = mainViewModel,
                             onBack = mainViewModel::onBackRequested,
-                            onCapture = mainViewModel::onCaptureRequested,
+                            onCapture = mainViewModel,
                             controlOverlay = {
                                 IdCaptureOverlay()
                             }

@@ -78,20 +78,20 @@ In your `AndroidManifest.xml`:
 Manage detection pause/resume states and route card detections to your OCR or data processing pipeline:
 
 ```kotlin
-class MainViewModel : ViewModel() {
+class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
     private val _isDetectionEnabled = MutableStateFlow(true)
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
 
     private val _navigateBack = MutableStateFlow(false)
     val navigateBack = _navigateBack.asStateFlow()
 
-    fun onDetection(detection: CardDetection, transfer: BitmapTransfer) {
+    override fun onCardDetection(detection: CardDetection, transfer: BitmapTransfer) {
         if (detection.lockingStatus == LockingStatus.NewCard) {
             processCapturedCard(transfer.takeCopy())
         }
     }
 
-    fun onCaptureRequested(detection: CardDetection, transfer: BitmapTransfer) {
+    override fun onCapture(detection: CardDetection, transfer: BitmapTransfer) {
         processCapturedCard(transfer.takeCopy())
     }
 
@@ -148,9 +148,9 @@ class CardDetectionActivity : ComponentActivity() {
                             detectorPreset = CardDetectorPreset.HighPerformance,
                             cameraPreset = CameraPreset.Default,
                             isDetectionEnabled = isDetectionEnabled,
-                            onCardDetection = mainViewModel::onDetection,
+                            onCardDetection = mainViewModel,
                             onBack = mainViewModel::onBackRequested,
-                            onCapture = mainViewModel::onCaptureRequested,
+                            onCapture = mainViewModel,
                             controlOverlay = {
                                 IdCaptureOverlay()
                             }
@@ -309,8 +309,8 @@ CardTrackingSimulator(
     detectorPreset = CardDetectorPreset.BatterySaver.copy(scoreThreshold = 0.3f),
     cameraPreset = CameraPreset.Default,
     isDetectionEnabled = isDetectionEnabled,
-    onCardDetection = mainViewModel::onDetection,
-    onCaptureRequested = mainViewModel::onCaptureRequested,
+    onCardDetection = mainViewModel,
+    onCaptureRequested = mainViewModel,
     onBackRequested = mainViewModel::onBackRequested,
     controlOverlay = {
         IdCaptureOverlay()

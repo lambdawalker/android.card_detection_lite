@@ -17,8 +17,6 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,9 +61,9 @@ fun CardDetectorLite(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: (CardDetection, BitmapTransfer) -> Unit = { _, _ -> },
+    onCardDetection: CardDetectionCallback = CardDetectionCallback { _, _ -> },
     onBack: () -> Unit = {},
-    onCapture: (CardDetection, BitmapTransfer) -> Unit = { _, _ -> },
+    onCapture: CardCaptureCallback = CardCaptureCallback { _, _ -> },
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -120,7 +118,7 @@ fun CardDetectorLite(
             lifecycleOwner = LocalLifecycleOwner.current,
             onFrame = { imageProxy, spaceChain ->
                 imageSpaceChainFlow.value = spaceChain
-                viewModel.processImage(imageProxy, onCardDetection)
+                viewModel.processImage(imageProxy, onCardDetection::onCardDetection)
             },
             onFocusEvent = viewModel::onFocusEvent,
             flashlightEnabled = flashlightEnabled,
@@ -157,7 +155,7 @@ fun CardDetectorLite(
                 classLabels = classLabels,
                 onCaptureRequested = {
                     captureScope.launch {
-                        viewModel.captureLatest(onCapture)
+                        viewModel.captureLatest(onCapture::onCapture)
                     }
                 },
                 onBackRequested = onBack,
