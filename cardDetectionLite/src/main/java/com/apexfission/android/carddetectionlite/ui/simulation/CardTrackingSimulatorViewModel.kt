@@ -13,6 +13,8 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValid
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
+import com.apexfission.android.carddetectionlite.ui.detector.SingleFlightGate
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +70,7 @@ class CardTrackingSimulatorViewModel(
     )
 
     private val lastInferenceMs = AtomicLong(0L)
+    private val frameProcessingGate = SingleFlightGate()
 
     fun setDetectionEnabled(enabled: Boolean) {
         detector.enabled = enabled
@@ -79,7 +82,13 @@ class CardTrackingSimulatorViewModel(
     fun processBitmap(bitmap: Bitmap, onDetection: (CardDetection) -> Unit) {
         if (!detector.enabled) return
 
-        viewModelScope.launch(Dispatchers.Default) {
+        // Video frame callbacks can arrive faster than inference completes. Drop the
+        // incoming frame instead of launching overlapping or backlogged work.
+        if (!frameProcessingGate.tryAcquire()) return
+
+        val processingStarted = AtomicBoolean(false)
+        val job = viewModelScope.launch(Dispatchers.Default) {
+            processingStarted.set(true)
             var croppedBitmap: Bitmap? = null
             try {
                 val now = SystemClock.uptimeMillis()
@@ -119,6 +128,15 @@ class CardTrackingSimulatorViewModel(
                 if (croppedBitmap != null && croppedBitmap != bitmap) {
                     croppedBitmap.recycle()
                 }
+                frameProcessingGate.release()
+            }
+        }
+
+        // Release the gate if the ViewModel scope was already cancelled and the
+        // coroutine body was therefore never entered.
+        job.invokeOnCompletion {
+            if (!processingStarted.get()) {
+                frameProcessingGate.release()
             }
         }
     }

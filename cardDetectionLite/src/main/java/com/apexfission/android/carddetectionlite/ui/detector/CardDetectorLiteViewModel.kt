@@ -18,6 +18,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValid
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,6 +81,7 @@ class CardDetectorLiteViewModel(
     )
 
     private val lastInferenceMs = AtomicLong(0L)
+    private val frameProcessingGate = SingleFlightGate()
 
     fun setDetectionEnabled(enabled: Boolean) {
         detector.enabled = enabled
@@ -112,7 +114,17 @@ class CardDetectorLiteViewModel(
             return
         }
 
-        viewModelScope.launch(Dispatchers.Default) {
+        // CameraX's KEEP_ONLY_LATEST policy only applies before a frame reaches this
+        // callback. Since processing runs in a coroutine, explicitly drop frames while
+        // another frame is being processed so inference jobs cannot overlap or queue.
+        if (!frameProcessingGate.tryAcquire()) {
+            imageProxy.close()
+            return
+        }
+
+        val processingStarted = AtomicBoolean(false)
+        val job = viewModelScope.launch(Dispatchers.Default) {
+            processingStarted.set(true)
             imageProxy.use { proxy ->
                 var uprightBitmap: Bitmap? = null
                 var croppedBitmap: Bitmap? = null
@@ -155,7 +167,17 @@ class CardDetectorLiteViewModel(
                         croppedBitmap.recycle()
                     }
                     uprightBitmap?.recycle()
+                    frameProcessingGate.release()
                 }
+            }
+        }
+
+        // A coroutine launched into an already-cancelled ViewModel scope may never enter
+        // its body, so clean up the acquired frame and gate in that case.
+        job.invokeOnCompletion {
+            if (!processingStarted.get()) {
+                imageProxy.close()
+                frameProcessingGate.release()
             }
         }
     }
