@@ -43,7 +43,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         }
                     }
 
-                    val videoUri = "android.resource://$packageName/raw/v2".toUri()
+                    val videoUri = "android.resource://$packageName/raw/in_move_out".toUri()
 
                     CardTrackingSimulator(
                         modifier = Modifier.padding(innerPadding),

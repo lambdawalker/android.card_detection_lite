@@ -22,7 +22,16 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
  */
 fun ImageProxy.toUprightBitmap(): Bitmap {
     val bitmap = this.toBitmap()
-    return rotateIfNeeded(bitmap, this.imageInfo.rotationDegrees)
+    try {
+        val uprightBitmap = rotateIfNeeded(bitmap, this.imageInfo.rotationDegrees)
+        if (uprightBitmap !== bitmap) {
+            bitmap.recycle()
+        }
+        return uprightBitmap
+    } catch (t: Throwable) {
+        bitmap.recycle()
+        throw t
+    }
 }
 
 fun Bitmap.crop(box: ImageBox): Bitmap {
