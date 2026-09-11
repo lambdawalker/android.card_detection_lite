@@ -84,6 +84,7 @@ class CardTrackingSimulatorViewModel(
         }
     }
 
+    /** Takes ownership of [bitmap] and guarantees that it is eventually recycled. */
     fun processBitmap(
         bitmap: Bitmap,
         onDetection: (CardDetection, BitmapTransfer) -> Unit,
