@@ -53,8 +53,8 @@ class BitmapFrameProcessor(
             // Must copy while Media3's pixel buffer is still valid.
             val bitmap = image.copyToBitmap()
 
-            callbackExecutor.execute {
-                onBitmap(bitmap, presentationTimeUs)
+            callbackExecutor.executeTransferring(bitmap) { transferredBitmap ->
+                onBitmap(transferredBitmap, presentationTimeUs)
             }
         }
 
