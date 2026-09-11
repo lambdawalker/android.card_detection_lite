@@ -7,13 +7,22 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.Feature
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.whenever
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class LatestBestDetectionStoreTest {
     private fun detection(
@@ -68,7 +77,7 @@ class LatestBestDetectionStoreTest {
     }
 
     @Test
-    fun captureReturnsIndependentOneShotTransfer() {
+    fun captureReturnsIndependentOneShotTransfer() = runBlocking {
         val store = LatestBestDetectionStore()
         val retained = sourceWithCopy()
         val captured = mock(Bitmap::class.java)
@@ -86,6 +95,86 @@ class LatestBestDetectionStoreTest {
         assertSame(captured, actualBitmap)
         verify(captured, never()).recycle()
         verify(retained.copy, never()).recycle()
+    }
+
+    @Test
+    fun captureCopiesOffCallerThreadAndDeliversTransferOnCallerContext() {
+        val copyExecutor = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "capture-bitmap-copy")
+        }
+        val copyDispatcher = copyExecutor.asCoroutineDispatcher()
+
+        try {
+            val store = LatestBestDetectionStore(copyDispatcher)
+            val retained = sourceWithCopy()
+            val captured = mock(Bitmap::class.java)
+            var copyThread: Thread? = null
+            whenever(
+                retained.copy.copy(Bitmap.Config.ARGB_8888, false)
+            ).doAnswer {
+                copyThread = Thread.currentThread()
+                captured
+            }
+            store.offer(detection(0.9f), retained.source)
+
+            runBlocking {
+                val callerThread = Thread.currentThread()
+                var callbackThread: Thread? = null
+
+                assertTrue(
+                    store.withTransfer { _, transfer ->
+                        callbackThread = Thread.currentThread()
+                        transfer.takeCopy()
+                    }
+                )
+
+                assertNotSame(callerThread, copyThread)
+                assertSame(callerThread, callbackThread)
+            }
+        } finally {
+            copyDispatcher.close()
+            copyExecutor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun cancelledCaptureRecyclesCopyThatCannotBeDelivered() {
+        val copyExecutor = Executors.newSingleThreadExecutor()
+        val copyDispatcher = copyExecutor.asCoroutineDispatcher()
+        val releaseCopy = CountDownLatch(1)
+
+        try {
+            val store = LatestBestDetectionStore(copyDispatcher)
+            val retained = sourceWithCopy()
+            val captured = mock(Bitmap::class.java)
+            val copyStarted = CountDownLatch(1)
+            var callbackInvoked = false
+            whenever(
+                retained.copy.copy(Bitmap.Config.ARGB_8888, false)
+            ).doAnswer {
+                copyStarted.countDown()
+                check(releaseCopy.await(5, TimeUnit.SECONDS))
+                captured
+            }
+            store.offer(detection(0.9f), retained.source)
+
+            runBlocking {
+                val captureJob = launch {
+                    store.withTransfer { _, _ -> callbackInvoked = true }
+                }
+                check(copyStarted.await(5, TimeUnit.SECONDS))
+                captureJob.cancel()
+                releaseCopy.countDown()
+                captureJob.cancelAndJoin()
+            }
+
+            assertFalse(callbackInvoked)
+            verify(captured).recycle()
+        } finally {
+            releaseCopy.countDown()
+            copyDispatcher.close()
+            copyExecutor.shutdownNow()
+        }
     }
 
     private data class BitmapPair(val source: Bitmap, val copy: Bitmap)

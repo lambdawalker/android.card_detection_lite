@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -21,6 +22,7 @@ import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * All-in-one Composable that provides a configurable in-camera-feed card detection and tracking solution.
@@ -64,6 +66,7 @@ fun CardDetectorLite(
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
+    val captureScope = rememberCoroutineScope()
     val imageSpaceChainFlow = remember { MutableStateFlow<ImageSpaceChain?>(null) }
     val detectorViewModelKey = detectorViewModelKey(
         component = DetectorComponent.CAMERA,
@@ -150,7 +153,9 @@ fun CardDetectorLite(
                 cameraPreset = cameraPreset,
                 classLabels = classLabels,
                 onCaptureRequested = {
-                    viewModel.captureLatest(onCapture)
+                    captureScope.launch {
+                        viewModel.captureLatest(onCapture)
+                    }
                 },
                 onBackRequested = onBack,
                 onFlashlightToggleRequested = viewModel::toggleFlashlight

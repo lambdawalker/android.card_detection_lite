@@ -162,7 +162,7 @@ class CardTrackingSimulatorViewModel(
         }
     }
 
-    fun captureLatest(
+    suspend fun captureLatest(
         onCapture: (CardDetection, BitmapTransfer) -> Unit,
     ): Boolean = latestBestDetectionStore.withTransfer(onCapture)
 

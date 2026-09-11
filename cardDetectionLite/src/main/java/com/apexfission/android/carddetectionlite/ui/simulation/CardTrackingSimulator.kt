@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -28,6 +29,7 @@ import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
 import com.apexfission.android.carddetectionlite.ui.detector.DetectorComponent
 import com.apexfission.android.carddetectionlite.ui.detector.detectorViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * A simulation composable that runs card tracking inference over video frames from a URI source.
@@ -70,6 +72,7 @@ fun CardTrackingSimulator(
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
+    val captureScope = rememberCoroutineScope()
     val sizeInPixels = remember { MutableStateFlow(IntSize.Zero) }
     val detectorViewModelKey = detectorViewModelKey(
         component = DetectorComponent.SIMULATOR,
@@ -155,7 +158,9 @@ fun CardTrackingSimulator(
                 cameraPreset = cameraPreset,
                 classLabels = classLabels,
                 onCaptureRequested = {
-                    viewModel.captureLatest(onCaptureRequested)
+                    captureScope.launch {
+                        viewModel.captureLatest(onCaptureRequested)
+                    }
                 },
                 onBackRequested = onBackRequested,
                 onFlashlightToggleRequested = {}
