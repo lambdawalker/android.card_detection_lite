@@ -48,7 +48,12 @@ import kotlinx.coroutines.launch
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters List of card validators.
- * @param onCardDetection Invoked with detection metadata and a callback-scoped bitmap transfer.
+ * @param onCardDetection Invoked on a library worker thread with detection metadata and a
+ * callback-scoped bitmap transfer. Call `takeCopy()` synchronously before dispatching the owned
+ * bitmap to the application's chosen coroutine context.
+ * @param onCaptureRequested Invoked on a library worker thread with the retained best detection
+ * and a one-shot bitmap transfer. The application owns and must recycle a bitmap returned by
+ * `takeCopy()`.
  * @param controlOverlay A scoped Compose slot allowing custom overlays via [CardDetectorOverlayScope].
  */
 @Composable

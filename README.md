@@ -85,16 +85,14 @@ class MainViewModel : ViewModel() {
     private val _navigateBack = MutableStateFlow(false)
     val navigateBack = _navigateBack.asStateFlow()
 
-    fun onDetection(detection: CardDetection) {
-        // Handle new card detection or ongoing lock-on updates
+    fun onDetection(detection: CardDetection, transfer: BitmapTransfer) {
         if (detection.lockingStatus == LockingStatus.NewCard) {
-            // New card locked on! Perform haptic feedback, capture, or OCR
-            processCapturedCard(detection.card)
+            processCapturedCard(transfer.takeCopy())
         }
     }
 
-    fun onCaptureRequested(detection: CardDetection) {
-        processCapturedCard(detection.card)
+    fun onCaptureRequested(detection: CardDetection, transfer: BitmapTransfer) {
+        processCapturedCard(transfer.takeCopy())
     }
 
     fun onBackRequested() {
@@ -105,11 +103,11 @@ class MainViewModel : ViewModel() {
         _navigateBack.value = false
     }
 
-    private fun processCapturedCard(cardFeature: Feature) {
-        viewModelScope.launch {
+    private fun processCapturedCard(bitmap: Bitmap) {
+        viewModelScope.launch(Dispatchers.Default) {
             _isDetectionEnabled.value = false
             try {
-                // Pass cardFeature.image (Bitmap) to On-Device or Cloud OCR
+                bitmap.use { performOcr(it) }
             } finally {
                 _isDetectionEnabled.value = true
             }
@@ -179,13 +177,14 @@ The `onCardDetection` callback returns a `CardDetection` object representing tra
 | `card` | `Feature` | Main detected ID card metadata: bounding box, confidence score, and class ID. |
 | `features` | `List<Feature>` | Sub-features detected within the card region (photos, barcodes, MRZ, QR codes). |
 
-Both detection and capture callbacks receive a callback-scoped `BitmapTransfer`. Call
-`takeCopy()` synchronously to take ownership of the card bitmap, then recycle it after use:
+Both detection and capture callbacks run on a library worker thread and receive a callback-scoped
+`BitmapTransfer`. Call `takeCopy()` synchronously to take ownership of the card bitmap, then choose
+the appropriate application dispatcher and recycle it after its final use:
 
 ```kotlin
 fun onDetection(detection: CardDetection, transfer: BitmapTransfer) {
     val bitmap = transfer.takeCopy()
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.Default) {
         bitmap.use { performOcr(it) }
     }
 }
@@ -193,7 +192,8 @@ fun onDetection(detection: CardDetection, transfer: BitmapTransfer) {
 
 `takeCopy()` succeeds exactly once. Calling it again, or after the callback returns, throws an
 `IllegalStateException`. If it succeeds, the caller owns the returned bitmap; the SDK will not
-recycle it.
+recycle it. Use `Dispatchers.Default` for CPU-bound image/OCR work, `Dispatchers.IO` for blocking
+uploads, and `Dispatchers.Main` only for UI work.
 
 ### `Feature` Model
 ```kotlin
