@@ -50,9 +50,9 @@ import kotlinx.coroutines.delay
  * @param lifecycleOwner The [LifecycleOwner] to which the CameraX lifecycle will be bound.
  * @param flashlightEnabled A boolean state that directly controls the camera's torch.
  * @param analysisTargetResolution The desired resolution for the image analysis stream.
- * @param focusOn When a [CardDetection] object is passed to this parameter, it triggers a smart auto-focus routine.
+ * @param focusOn When a [CardDetection] object is passed to this parameter, it triggers a smart autofocus routine.
  * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
- * @param focusOnCardEnabled A boolean flag to enable or disable the smart auto-focus on card feature.
+ * @param focusOnCardEnabled A boolean flag to enable or disable the smart autofocus on card feature.
  * @param showFocusIndicator A boolean flag to enable or disable the focus indicator.
  */
 @Composable
@@ -115,11 +115,15 @@ fun CameraPreview(
 
     DisposableEffect(lifecycleOwner, analysisTargetResolution) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-        cameraProviderFuture.addListener({
+        var previewUseCase: Preview? = null
+        var analysisUseCase: ImageAnalysis? = null
+
+        val listener = Runnable {
             val cameraProvider = cameraProviderFuture.get()
-            val previewUseCase = Preview.Builder().build().also {
+            val preview = Preview.Builder().build().also {
                 it.surfaceProvider = previewView.surfaceProvider
             }
+            previewUseCase = preview
 
             val resolutionStrategy = ResolutionStrategy(
                 analysisTargetResolution, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
@@ -127,14 +131,15 @@ fun CameraPreview(
 
             val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(resolutionStrategy).build()
 
-            val analysisUseCase = ImageAnalysis.Builder()
+            val analysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setTargetRotation(previewView.display.rotation)
                 .setResolutionSelector(resolutionSelector)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .build()
+            analysisUseCase = analysis
 
-            analysisUseCase.setAnalyzer(analysisExecutor) { imageProxy ->
+            analysis.setAnalyzer(analysisExecutor) { imageProxy ->
                 try {
                     val rotation = imageProxy.imageInfo.rotationDegrees
                     val uprightWidth = if (rotation % 180 == 0) imageProxy.width else imageProxy.height
@@ -161,9 +166,9 @@ fun CameraPreview(
             }
 
             try {
-                cameraProvider.unbindAll()
+                cameraProvider.unbind(preview, analysis)
                 val camera = cameraProvider.bindToLifecycle(
-                    lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, previewUseCase, analysisUseCase
+                    lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis
                 )
                 val control = camera.cameraControl
                 cameraControl = control
@@ -171,8 +176,9 @@ fun CameraPreview(
                 val hasFlashUnit = camera.cameraInfo.hasFlashUnit()
                 onFlashlightAvailabilityChanged(hasFlashUnit)
 
-                previewView.setOnTouchListener { _, event ->
+                previewView.setOnTouchListener { v, event ->
                     if (tapToFocusEnabledState.value && event.action == MotionEvent.ACTION_DOWN) {
+                        v.performClick()
                         focusPoint = FocusPoint(event.x, event.y)
                         onFocusEventState.value(
                             control, previewView.meteringPointFactory.createPoint(event.x, event.y)
@@ -185,11 +191,20 @@ fun CameraPreview(
             } catch (e: Exception) {
                 Log.e("CAM", "Camera bind failed", e)
             }
-        }, mainExecutor)
+        }
+
+        cameraProviderFuture.addListener(listener, mainExecutor)
 
         onDispose {
             onFlashlightAvailabilityChanged(false)
-            runCatching { cameraProviderFuture.get().unbindAll() }
+            runCatching {
+                val cameraProvider = cameraProviderFuture.get()
+                val preview = previewUseCase
+                val analysis = analysisUseCase
+                if (preview != null && analysis != null) {
+                    cameraProvider.unbind(preview, analysis)
+                }
+            }
             analysisExecutor.shutdown()
         }
     }
