@@ -69,7 +69,11 @@ class YoloDetector(
     override fun detect(imageProxy: ImageProxy): List<Detection> {
         if (!enabled || isClosed) return emptyList()
         val bitmap = imageProxy.toUprightBitmap()
-        return detect(bitmap)
+        return try {
+            detect(bitmap)
+        } finally {
+            bitmap.recycle()
+        }
     }
 
 
