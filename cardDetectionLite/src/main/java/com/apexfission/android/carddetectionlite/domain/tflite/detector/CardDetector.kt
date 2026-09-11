@@ -28,6 +28,10 @@ import java.io.Closeable
  * - Requires a configurable number of consistent frames before locking.
  * - Tolerates a limited number of missed detections.
  *
+ * Calls to [track] are serialized per detector instance because tracking decisions depend on
+ * mutable state accumulated from earlier frames. A call completes its full detection and state
+ * transition before the next call begins.
+ *
  * @param yoloDetector Underlying YOLO detector.
  * @param cardValidators Validators that a card candidate must pass.
  * @param cardClasses YOLO class IDs that represent cards.
@@ -125,6 +129,7 @@ class CardDetector(
      *
      * The caller remains responsible for closing [imageProxy].
      */
+    @Synchronized
     fun track(imageProxy: ImageProxy): CardDetection? {
         val bitmap = imageProxy.toUprightBitmap()
         val result = yoloDetector.detect(bitmap)
@@ -139,6 +144,7 @@ class CardDetector(
     /**
      * Tracks a card from an already-created upright [Bitmap].
      */
+    @Synchronized
     fun track(bitmap: Bitmap): CardDetection? {
         val result = yoloDetector.detect(bitmap)
 
