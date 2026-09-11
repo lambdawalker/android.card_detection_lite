@@ -114,9 +114,6 @@ class CardDetectorLiteViewModel(
             return
         }
 
-        // CameraX's KEEP_ONLY_LATEST policy only applies before a frame reaches this
-        // callback. Since processing runs in a coroutine, explicitly drop frames while
-        // another frame is being processed so inference jobs cannot overlap or queue.
         if (!frameProcessingGate.tryAcquire()) {
             imageProxy.close()
             return
@@ -172,8 +169,6 @@ class CardDetectorLiteViewModel(
             }
         }
 
-        // A coroutine launched into an already-cancelled ViewModel scope may never enter
-        // its body, so clean up the acquired frame and gate in that case.
         job.invokeOnCompletion {
             if (!processingStarted.get()) {
                 imageProxy.close()

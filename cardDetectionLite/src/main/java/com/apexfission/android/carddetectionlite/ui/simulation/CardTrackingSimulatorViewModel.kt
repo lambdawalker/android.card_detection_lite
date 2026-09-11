@@ -82,8 +82,6 @@ class CardTrackingSimulatorViewModel(
     fun processBitmap(bitmap: Bitmap, onDetection: (CardDetection) -> Unit) {
         if (!detector.enabled) return
 
-        // Video frame callbacks can arrive faster than inference completes. Drop the
-        // incoming frame instead of launching overlapping or backlogged work.
         if (!frameProcessingGate.tryAcquire()) return
 
         val processingStarted = AtomicBoolean(false)
@@ -132,8 +130,6 @@ class CardTrackingSimulatorViewModel(
             }
         }
 
-        // Release the gate if the ViewModel scope was already cancelled and the
-        // coroutine body was therefore never entered.
         job.invokeOnCompletion {
             if (!processingStarted.get()) {
                 frameProcessingGate.release()
