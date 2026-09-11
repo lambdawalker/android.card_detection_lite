@@ -1,6 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.model
 
 import android.graphics.Bitmap
+import kotlin.math.roundToInt
 
 /**
  * Encapsulates the output of a letterboxing operation, providing both the resulting image
@@ -23,10 +24,29 @@ import android.graphics.Bitmap
  *                within the letterbox. This value must be subtracted from a coordinate when
  *                mapping it back to the original image space.
  * @property padY The vertical padding (in pixels) added to one side of the image to center it.
+ * @property sourceWidth Width of the source image before letterboxing.
+ * @property sourceHeight Height of the source image before letterboxing.
  */
 data class LetterboxResult(
     val bitmap: Bitmap,
     val scale: Float,
     val padX: Float,
-    val padY: Float
-)
+    val padY: Float,
+    val sourceWidth: Int,
+    val sourceHeight: Int,
+) {
+    /** Preserves the original four-argument API for callers constructing metadata manually. */
+    constructor(bitmap: Bitmap, scale: Float, padX: Float, padY: Float) : this(
+        bitmap = bitmap,
+        scale = scale,
+        padX = padX,
+        padY = padY,
+        sourceWidth = inferSourceDimension(bitmap.width, padX, scale),
+        sourceHeight = inferSourceDimension(bitmap.height, padY, scale),
+    )
+}
+
+private fun inferSourceDimension(letterboxSize: Int, padding: Float, scale: Float): Int {
+    if (!padding.isFinite() || !scale.isFinite() || scale <= 0f) return 0
+    return ((letterboxSize - 2f * padding) / scale).roundToInt().coerceAtLeast(0)
+}
