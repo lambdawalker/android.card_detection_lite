@@ -54,7 +54,12 @@ fun CardDetectionScreen(mainViewModel: MainViewModel) {
         viewPreset = ViewPreset.Standard,
         cameraPreset = CameraPreset.Default,
         isDetectionEnabled = isDetectionEnabled,
-        onCardDetection = mainViewModel::onDetection
+        onCardDetection = { detection, transfer ->
+            val bitmap = transfer.takeCopy()
+            viewModelScope.launch {
+                bitmap.use { performOcr(it) }
+            }
+        }
     )
 }
 ```

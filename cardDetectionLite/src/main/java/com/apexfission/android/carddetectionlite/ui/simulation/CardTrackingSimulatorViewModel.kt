@@ -11,7 +11,11 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProce
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
+import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
+import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
+import com.apexfission.android.carddetectionlite.ui.detector.LatestBestDetectionStore
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import com.apexfission.android.carddetectionlite.ui.detector.SingleFlightGate
 import java.util.concurrent.atomic.AtomicBoolean
@@ -47,8 +51,8 @@ class CardTrackingSimulatorViewModel(
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection = _cardDetection.asStateFlow()
 
-    private val _latestValidDetection = MutableStateFlow<CardDetection?>(null)
-    val latestValidDetection = _latestValidDetection.asStateFlow()
+    private val _latestBestDetection = MutableStateFlow<CardDetection?>(null)
+    val latestBestDetection = _latestBestDetection.asStateFlow()
 
     private val detector = CardDetector(
         yoloDetector = YoloDetector(
@@ -71,6 +75,7 @@ class CardTrackingSimulatorViewModel(
 
     private val lastInferenceMs = AtomicLong(0L)
     private val frameProcessingGate = SingleFlightGate()
+    private val latestBestDetectionStore = LatestBestDetectionStore()
 
     fun setDetectionEnabled(enabled: Boolean) {
         detector.enabled = enabled
@@ -79,7 +84,10 @@ class CardTrackingSimulatorViewModel(
         }
     }
 
-    fun processBitmap(bitmap: Bitmap, onDetection: (CardDetection) -> Unit) {
+    fun processBitmap(
+        bitmap: Bitmap,
+        onDetection: (CardDetection, BitmapTransfer) -> Unit,
+    ) {
         if (!detector.enabled) return
 
         if (!frameProcessingGate.tryAcquire()) return
@@ -116,9 +124,15 @@ class CardTrackingSimulatorViewModel(
                     return@launch
                 }
 
-                _cardDetection.value = adjustedCard
-                _latestValidDetection.value = adjustedCard
-                onDetection(adjustedCard)
+                val sourceCard = checkNotNull(card)
+                val detectedCardBitmap = croppedBitmap.crop(sourceCard.card.box)
+                withBitmapTransfer(detectedCardBitmap) { transfer ->
+                    if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
+                        _latestBestDetection.value = adjustedCard
+                    }
+                    _cardDetection.value = adjustedCard
+                    onDetection(adjustedCard, transfer)
+                }
 
             } catch (t: Throwable) {
                 Log.e("Simulation", "Processing failed", t)
@@ -137,8 +151,13 @@ class CardTrackingSimulatorViewModel(
         }
     }
 
+    fun captureLatest(
+        onCapture: (CardDetection, BitmapTransfer) -> Unit,
+    ): Boolean = latestBestDetectionStore.withTransfer(onCapture)
+
     override fun onCleared() {
         super.onCleared()
+        latestBestDetectionStore.clear()
         detector.close()
     }
 }

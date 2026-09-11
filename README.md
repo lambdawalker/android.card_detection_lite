@@ -175,8 +175,24 @@ The `onCardDetection` callback returns a `CardDetection` object representing tra
 | `lockingStatus` | `LockingStatus` | Tracking lifecycle state (`LockingCard`, `NewCard`, `CardLocked`). |
 | `id` | `Long?` | Unique ID assigned when lock-on is achieved. `null` while evaluating. |
 | `lockOnProgress` | `Float` | Progress value from `0.0f` to `1.0f` towards lock-on confirmation. |
-| `card` | `Feature` | Main detected ID card containing bounding box, confidence score, class ID, and cropped `Bitmap`. |
+| `card` | `Feature` | Main detected ID card metadata: bounding box, confidence score, and class ID. |
 | `features` | `List<Feature>` | Sub-features detected within the card region (photos, barcodes, MRZ, QR codes). |
+
+Both detection and capture callbacks receive a callback-scoped `BitmapTransfer`. Call
+`takeCopy()` synchronously to take ownership of the card bitmap, then recycle it after use:
+
+```kotlin
+fun onDetection(detection: CardDetection, transfer: BitmapTransfer) {
+    val bitmap = transfer.takeCopy()
+    viewModelScope.launch {
+        bitmap.use { performOcr(it) }
+    }
+}
+```
+
+`takeCopy()` succeeds exactly once. Calling it again, or after the callback returns, throws an
+`IllegalStateException`. If it succeeds, the caller owns the returned bitmap; the SDK will not
+recycle it.
 
 ### `Feature` Model
 ```kotlin
@@ -267,7 +283,7 @@ CardDetectorLite(
 
 ### `CardDetectorOverlayScope` Properties & Methods
 - **`detectionState` / `cardDetection`**: Current frame's `CardDetection` result.
-- **`latestValidDetection`**: Last valid `CardDetection` preserved across temporary missed frames.
+- **`latestBestDetection`**: Highest-confidence `CardDetection` retained for capture.
 - **`imageSpaceChain`**: Transformation chain mapping image space coordinates to Compose canvas screen space.
 - **`captureEnabled`**: `true` when a valid detection is ready for capture.
 - **`flashlightAvailable` / `flashlightEnabled`**: Hardware flash state.
@@ -321,7 +337,7 @@ CardTrackingSimulator(
 
 ## Output Resolution Guidelines
 
-The cropped card image resolution returned in `CardDetection.card.image` depends on:
+The cropped card image resolution returned by `BitmapTransfer.takeCopy()` depends on:
 1. **Analysis Target Resolution** (`CameraPreset.analysisTargetResolution`): Higher sensor streams (2K or 4K) yield crisper cropped pixels.
 2. **Physical Proximity**: Cards occupying a larger percentage of the camera field yield higher crop resolution.
 3. **Pre-processing Strategy**: Crop-based input modes (`SquareCrop` or `VisibleImageSquareCrop`) maximize effective model input density for centered cards.

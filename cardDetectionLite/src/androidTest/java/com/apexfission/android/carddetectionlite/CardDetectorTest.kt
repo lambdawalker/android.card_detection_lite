@@ -9,7 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHash
+import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHashFromRegion
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
@@ -126,7 +126,7 @@ class CardDetectorTest {
                             (cardDetection.id?.toString() ?: "null").padStart(4) + ",  " +
                             "%.1f".format(cardDetection.lockOnProgress).padStart(4) + ",  " +
                             cardDetection.lockingStatus.toString().padStart(13) + ",  " +
-                            cardDetection.card.image.generateDHash().toString().padStart(22) + ", " +
+                            frame.generateDHashFromRegion(cardDetection.card.box).toString().padStart(22) + ", " +
                             "%.7f".format(cardDetection.card.box.x.toFloat() / frame.width).padStart(10) + ",  " +
                             "%.7f".format(cardDetection.card.box.y.toFloat() / frame.height).padStart(10) + ",  " +
                             "%.7f".format(cardDetection.card.box.x2.toFloat() / frame.width).padStart(10) + ",  " +
@@ -311,7 +311,7 @@ class CardDetectorTest {
                             (cardDetection.id?.toString() ?: "null").padStart(4) + ",  " +
                             "%.1f".format(cardDetection.lockOnProgress).padStart(4) + ",  " +
                             cardDetection.lockingStatus.toString().padStart(13) + ",  " +
-                            cardDetection.card.image.generateDHash().toString().padStart(22) + ", " +
+                            frame.generateDHashFromRegion(cardDetection.card.box).toString().padStart(22) + ", " +
                             "%.7f".format(cardDetection.card.box.x.toFloat() / frame.width).padStart(10) + ",  " +
                             "%.7f".format(cardDetection.card.box.y.toFloat() / frame.height).padStart(10) + ",  " +
                             "%.7f".format(cardDetection.card.box.x2.toFloat() / frame.width).padStart(10) + ",  " +

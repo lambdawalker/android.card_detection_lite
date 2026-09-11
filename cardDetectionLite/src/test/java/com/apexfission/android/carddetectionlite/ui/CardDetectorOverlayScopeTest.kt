@@ -18,7 +18,7 @@ class CardDetectorOverlayScopeTest {
         val testLabels = mapOf(0 to "horizontal_card")
         val scope = CardDetectorOverlayScopeImpl(
             detectionState = null,
-            latestValidDetection = null,
+            latestBestDetection = null,
             imageSpaceChain = null,
             flashlightAvailable = true,
             flashlightEnabled = false,
@@ -30,7 +30,7 @@ class CardDetectorOverlayScopeTest {
 
         assertNull(scope.detectionState)
         assertNull(scope.cardDetection)
-        assertNull(scope.latestValidDetection)
+        assertNull(scope.latestBestDetection)
         assertNull(scope.imageSpaceChain)
         assertFalse(scope.captureEnabled)
         assertTrue(scope.flashlightAvailable)

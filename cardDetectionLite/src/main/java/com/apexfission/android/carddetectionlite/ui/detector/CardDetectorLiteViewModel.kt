@@ -16,8 +16,11 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProce
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
+import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
+import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +55,8 @@ class CardDetectorLiteViewModel(
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection: StateFlow<CardDetection?> = _cardDetection.asStateFlow()
 
-    private val _latestValidDetection = MutableStateFlow<CardDetection?>(null)
-    val latestValidDetection: StateFlow<CardDetection?> = _latestValidDetection.asStateFlow()
+    private val _latestBestDetection = MutableStateFlow<CardDetection?>(null)
+    val latestBestDetection: StateFlow<CardDetection?> = _latestBestDetection.asStateFlow()
 
     private val _flashlightEnabled = MutableStateFlow(false)
     val flashlightEnabled: StateFlow<Boolean> = _flashlightEnabled.asStateFlow()
@@ -82,6 +85,7 @@ class CardDetectorLiteViewModel(
 
     private val lastInferenceMs = AtomicLong(0L)
     private val frameProcessingGate = SingleFlightGate()
+    private val latestBestDetectionStore = LatestBestDetectionStore()
 
     fun setDetectionEnabled(enabled: Boolean) {
         detector.enabled = enabled
@@ -108,7 +112,10 @@ class CardDetectorLiteViewModel(
         cameraControl.startFocusAndMetering(FocusMeteringAction.Builder(meteringPoint).build())
     }
 
-    fun processImage(imageProxy: ImageProxy, onDetection: (CardDetection) -> Unit) {
+    fun processImage(
+        imageProxy: ImageProxy,
+        onDetection: (CardDetection, BitmapTransfer) -> Unit,
+    ) {
         if (!detector.enabled) {
             imageProxy.close()
             return
@@ -154,9 +161,15 @@ class CardDetectorLiteViewModel(
                         return@launch
                     }
 
-                    _cardDetection.value = adjustedCard
-                    _latestValidDetection.value = adjustedCard
-                    onDetection(adjustedCard)
+                    val sourceCard = checkNotNull(card)
+                    val detectedCardBitmap = croppedBitmap.crop(sourceCard.card.box)
+                    withBitmapTransfer(detectedCardBitmap) { transfer ->
+                        if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
+                            _latestBestDetection.value = adjustedCard
+                        }
+                        _cardDetection.value = adjustedCard
+                        onDetection(adjustedCard, transfer)
+                    }
                 } catch (t: Throwable) {
                     Log.e("YOLO", "Inference failed", t)
                 } finally {
@@ -177,8 +190,13 @@ class CardDetectorLiteViewModel(
         }
     }
 
+    fun captureLatest(
+        onCapture: (CardDetection, BitmapTransfer) -> Unit,
+    ): Boolean = latestBestDetectionStore.withTransfer(onCapture)
+
     override fun onCleared() {
         super.onCleared()
+        latestBestDetectionStore.clear()
         detector.close()
     }
 }

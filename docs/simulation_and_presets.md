@@ -48,5 +48,5 @@ MP4 Video Asset ──> VideoPreviewWithFullFrameCapture ──> Bitmap Stream �
 
 - **`VideoPreviewWithFullFrameCapture`**: ExoPlayer video preview that extracts full-resolution uncompressed `Bitmap` frames.
 - **`BitmapFrameProcessor`**: Feeds extracted video bitmaps directly into `YoloDetector` and `CardDetector`.
-- **`CardTrackingSimulatorViewModel`**: Orchestrates simulation state and retains `latestValidDetection`.
+- **`CardTrackingSimulatorViewModel`**: Orchestrates simulation state and retains `latestBestDetection`.
 - Uses the same `controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit` slot API as `CardDetectorLite`, allowing overlays to be tested identically against video recordings.

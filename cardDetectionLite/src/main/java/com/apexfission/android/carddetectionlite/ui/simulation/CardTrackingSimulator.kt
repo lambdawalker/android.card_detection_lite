@@ -20,6 +20,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRat
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScopeImpl
@@ -40,7 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters List of card validators.
- * @param onCardDetection Callback lambda on card detection events.
+ * @param onCardDetection Invoked with detection metadata and a callback-scoped bitmap transfer.
  * @param controlOverlay A scoped Compose slot allowing custom overlays via [CardDetectorOverlayScope].
  */
 @Composable
@@ -56,8 +57,8 @@ fun CardTrackingSimulator(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: (CardDetection) -> Unit,
-    onCaptureRequested: (CardDetection) -> Unit = {},
+    onCardDetection: (CardDetection, BitmapTransfer) -> Unit,
+    onCaptureRequested: (CardDetection, BitmapTransfer) -> Unit = { _, _ -> },
     onBackRequested: () -> Unit = {},
 
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
@@ -92,7 +93,7 @@ fun CardTrackingSimulator(
     }
 
     val cardDetection by viewModel.cardDetection.collectAsStateWithLifecycle()
-    val lastCardDetection by viewModel.latestValidDetection.collectAsStateWithLifecycle()
+    val latestBestDetection by viewModel.latestBestDetection.collectAsStateWithLifecycle()
     val imageSpaceChainFlow = remember { MutableStateFlow<ImageSpaceChain?>(null) }
 
     Box(
@@ -120,7 +121,7 @@ fun CardTrackingSimulator(
 
         val overlayScope = remember(
             cardDetection,
-            lastCardDetection,
+            latestBestDetection,
             imageSpaceChain,
             detectorPreset,
             cameraPreset,
@@ -130,7 +131,7 @@ fun CardTrackingSimulator(
         ) {
             CardDetectorOverlayScopeImpl(
                 detectionState = cardDetection,
-                latestValidDetection = lastCardDetection,
+                latestBestDetection = latestBestDetection,
                 imageSpaceChain = imageSpaceChain,
                 flashlightAvailable = false,
                 flashlightEnabled = false,
@@ -138,7 +139,7 @@ fun CardTrackingSimulator(
                 cameraPreset = cameraPreset,
                 classLabels = classLabels,
                 onCaptureRequested = {
-                    cardDetection?.let { onCaptureRequested(it) }
+                    viewModel.captureLatest(onCaptureRequested)
                 },
                 onBackRequested = onBackRequested,
                 onFlashlightToggleRequested = {}
