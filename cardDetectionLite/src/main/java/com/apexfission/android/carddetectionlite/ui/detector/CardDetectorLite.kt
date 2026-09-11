@@ -121,6 +121,7 @@ fun CardDetectorLite(
             onFlashlightAvailabilityChanged = viewModel::setFlashlightAvailable,
             analysisTargetResolution = cameraPreset.analysisTargetResolution,
             focusOn = cardDetection,
+            focusImageSpaceChain = imageSpaceChain,
             tapToFocusEnabled = cameraPreset.tapToFocusEnabled,
             focusOnCardEnabled = cameraPreset.focusOnCardEnabled,
             showFocusIndicator = true

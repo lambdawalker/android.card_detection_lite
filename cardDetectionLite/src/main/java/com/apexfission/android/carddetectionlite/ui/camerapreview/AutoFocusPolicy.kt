@@ -1,6 +1,9 @@
 package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import androidx.compose.runtime.Immutable
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
+import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlin.math.abs
 
@@ -15,6 +18,18 @@ data class FocusPoint(
     val x: Float,
     val y: Float
 )
+
+/** Maps a focus target from the upright source image into preview pixel coordinates. */
+internal fun FocusPoint.toPreviewSpace(chain: ImageSpaceChain): FocusPoint? {
+    if (chain.isEmpty() || !x.isFinite() || !y.isFinite()) return null
+    val sourceSpace = chain.first().space
+    if (x < 0f || y < 0f || x > sourceSpace.width.toFloat() || y > sourceSpace.height.toFloat()) {
+        return null
+    }
+
+    val previewPoint = ImagePoint(x.toUInt(), y.toUInt()).toChildSpace(chain)
+    return FocusPoint(previewPoint.x.toFloat(), previewPoint.y.toFloat())
+}
 
 /**
  * Result of evaluating [AutoFocusPolicy.shouldTriggerFocus].

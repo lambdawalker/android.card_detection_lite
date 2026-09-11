@@ -51,6 +51,7 @@ import kotlinx.coroutines.delay
  * @param flashlightEnabled A boolean state that directly controls the camera's torch.
  * @param analysisTargetResolution The desired resolution for the image analysis stream.
  * @param focusOn When a [CardDetection] object is passed to this parameter, it triggers a smart autofocus routine.
+ * @param focusImageSpaceChain Mapping from the upright detection image into preview coordinates.
  * @param tapToFocusEnabled A boolean flag to enable or disable the tap-to-focus feature.
  * @param focusOnCardEnabled A boolean flag to enable or disable the smart autofocus on card feature.
  * @param showFocusIndicator A boolean flag to enable or disable the focus indicator.
@@ -64,6 +65,7 @@ fun CameraPreview(
     onFlashlightAvailabilityChanged: (Boolean) -> Unit = {},
     analysisTargetResolution: Size = Size(2048, 1080),
     focusOn: CardDetection?,
+    focusImageSpaceChain: ImageSpaceChain? = null,
     tapToFocusEnabled: Boolean = true,
     focusOnCardEnabled: Boolean = true,
     showFocusIndicator: Boolean = true,
@@ -216,13 +218,14 @@ fun CameraPreview(
     // --- Smart Auto-Focus Logic using AutoFocusPolicy ---
     val autoFocusPolicy = remember { AutoFocusPolicy() }
 
-    LaunchedEffect(focusOn) {
+    LaunchedEffect(focusOn, focusImageSpaceChain) {
         if (!focusOnCardEnabled) return@LaunchedEffect
         val control = cameraControl ?: return@LaunchedEffect
+        val spaceChain = focusImageSpaceChain?.takeIf { it.isNotEmpty() } ?: return@LaunchedEffect
 
         val focusResult = autoFocusPolicy.shouldTriggerFocus(focusOn)
         if (focusResult.shouldFocus && focusResult.focusPoint != null) {
-            val targetPoint = focusResult.focusPoint
+            val targetPoint = focusResult.focusPoint.toPreviewSpace(spaceChain) ?: return@LaunchedEffect
             val viewWidth = previewView.width.toFloat()
             val viewHeight = previewView.height.toFloat()
 
