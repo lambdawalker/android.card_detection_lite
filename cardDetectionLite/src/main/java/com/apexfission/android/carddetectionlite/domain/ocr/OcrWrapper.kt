@@ -2,7 +2,6 @@ package com.apexfission.android.carddetectionlite.domain.ocr
 
 import android.graphics.Bitmap
 import android.graphics.Rect
-import android.util.Log
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
@@ -20,7 +19,6 @@ class OcrWrapper {
     fun run(image: Bitmap): List<OcrResult> {
         val inputImage = InputImage.fromBitmap(image, 0)
         val result: Text = Tasks.await(recognizer.process(inputImage))
-        Log.d("OCR", ">>>>>>>>>>>>> ${result.text}")
         return result.textBlocks.map {
             OcrResult(it.text, it.boundingBox)
         }
