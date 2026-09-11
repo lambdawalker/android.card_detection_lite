@@ -78,23 +78,21 @@ In your `AndroidManifest.xml`:
 Manage detection pause/resume states and route card detections to your OCR or data processing pipeline:
 
 ```kotlin
-class MainViewModel : ViewModel() {
+class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
     private val _isDetectionEnabled = MutableStateFlow(true)
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
 
     private val _navigateBack = MutableStateFlow(false)
     val navigateBack = _navigateBack.asStateFlow()
 
-    fun onDetection(detection: CardDetection) {
-        // Handle new card detection or ongoing lock-on updates
+    override fun onCardDetection(detection: CardDetection, transfer: BitmapTransfer) {
         if (detection.lockingStatus == LockingStatus.NewCard) {
-            // New card locked on! Perform haptic feedback, capture, or OCR
-            processCapturedCard(detection.card)
+            processCapturedCard(transfer.takeCopy())
         }
     }
 
-    fun onCaptureRequested(detection: CardDetection) {
-        processCapturedCard(detection.card)
+    override fun onCapture(detection: CardDetection, transfer: BitmapTransfer) {
+        processCapturedCard(transfer.takeCopy())
     }
 
     fun onBackRequested() {
@@ -105,11 +103,11 @@ class MainViewModel : ViewModel() {
         _navigateBack.value = false
     }
 
-    private fun processCapturedCard(cardFeature: Feature) {
-        viewModelScope.launch {
+    private fun processCapturedCard(bitmap: Bitmap) {
+        viewModelScope.launch(Dispatchers.Default) {
             _isDetectionEnabled.value = false
             try {
-                // Pass cardFeature.image (Bitmap) to On-Device or Cloud OCR
+                bitmap.use { performOcr(it) }
             } finally {
                 _isDetectionEnabled.value = true
             }
@@ -150,9 +148,9 @@ class CardDetectionActivity : ComponentActivity() {
                             detectorPreset = CardDetectorPreset.HighPerformance,
                             cameraPreset = CameraPreset.Default,
                             isDetectionEnabled = isDetectionEnabled,
-                            onCardDetection = mainViewModel::onDetection,
+                            onCardDetection = mainViewModel,
                             onBack = mainViewModel::onBackRequested,
-                            onCapture = mainViewModel::onCaptureRequested,
+                            onCapture = mainViewModel,
                             controlOverlay = {
                                 IdCaptureOverlay()
                             }
@@ -179,13 +177,14 @@ The `onCardDetection` callback returns a `CardDetection` object representing tra
 | `card` | `Feature` | Main detected ID card metadata: bounding box, confidence score, and class ID. |
 | `features` | `List<Feature>` | Sub-features detected within the card region (photos, barcodes, MRZ, QR codes). |
 
-Both detection and capture callbacks receive a callback-scoped `BitmapTransfer`. Call
-`takeCopy()` synchronously to take ownership of the card bitmap, then recycle it after use:
+Both detection and capture callbacks run on a library worker thread and receive a callback-scoped
+`BitmapTransfer`. Call `takeCopy()` synchronously to take ownership of the card bitmap, then choose
+the appropriate application dispatcher and recycle it after its final use:
 
 ```kotlin
 fun onDetection(detection: CardDetection, transfer: BitmapTransfer) {
     val bitmap = transfer.takeCopy()
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.Default) {
         bitmap.use { performOcr(it) }
     }
 }
@@ -193,7 +192,8 @@ fun onDetection(detection: CardDetection, transfer: BitmapTransfer) {
 
 `takeCopy()` succeeds exactly once. Calling it again, or after the callback returns, throws an
 `IllegalStateException`. If it succeeds, the caller owns the returned bitmap; the SDK will not
-recycle it.
+recycle it. Use `Dispatchers.Default` for CPU-bound image/OCR work, `Dispatchers.IO` for blocking
+uploads, and `Dispatchers.Main` only for UI work.
 
 ### `Feature` Model
 ```kotlin
@@ -309,8 +309,8 @@ CardTrackingSimulator(
     detectorPreset = CardDetectorPreset.BatterySaver.copy(scoreThreshold = 0.3f),
     cameraPreset = CameraPreset.Default,
     isDetectionEnabled = isDetectionEnabled,
-    onCardDetection = mainViewModel::onDetection,
-    onCaptureRequested = mainViewModel::onCaptureRequested,
+    onCardDetection = mainViewModel,
+    onCaptureRequested = mainViewModel,
     onBackRequested = mainViewModel::onBackRequested,
     controlOverlay = {
         IdCaptureOverlay()

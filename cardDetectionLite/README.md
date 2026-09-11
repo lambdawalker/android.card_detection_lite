@@ -57,13 +57,17 @@ fun CardDetectionScreen(mainViewModel: MainViewModel) {
         isDetectionEnabled = isDetectionEnabled,
         onCardDetection = { detection, transfer ->
             val bitmap = transfer.takeCopy()
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.Default) {
                 bitmap.use { performOcr(it) }
             }
         }
     )
 }
 ```
+
+Detection and capture callbacks run on a library worker thread. A callback must call `takeCopy()`
+synchronously if it needs the bitmap after returning. The returned bitmap belongs to the caller;
+dispatch it to the appropriate application context and recycle it after its final use.
 
 ---
 

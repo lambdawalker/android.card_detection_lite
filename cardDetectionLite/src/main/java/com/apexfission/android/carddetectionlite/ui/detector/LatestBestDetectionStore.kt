@@ -7,11 +7,12 @@ import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 /** Thread-safe owner of the highest-confidence image retained for capture. */
 internal class LatestBestDetectionStore(
-    private val bitmapCopyDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val workerDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private data class Entry(
         val detection: CardDetection,
@@ -43,33 +44,32 @@ internal class LatestBestDetectionStore(
 
     fun detection(): CardDetection? = synchronized(lock) { entry?.detection }
 
-    suspend fun withTransfer(block: (CardDetection, BitmapTransfer) -> Unit): Boolean {
-        var snapshot: Entry? = null
-        try {
-            withContext(bitmapCopyDispatcher) {
-                snapshot = synchronized(lock) {
-                    entry?.let { current ->
-                        val copy = checkNotNull(
-                            current.bitmap.copy(
-                                current.bitmap.config ?: Bitmap.Config.ARGB_8888,
-                                false,
-                            )
-                        ) { "Unable to copy the retained card bitmap." }
-                        Entry(current.detection, copy)
-                    }
-                }
+    suspend fun withTransfer(
+        block: (CardDetection, BitmapTransfer) -> Unit,
+    ): Boolean = withContext(workerDispatcher) {
+        val snapshot = synchronized(lock) {
+            entry?.let { current ->
+                val copy = checkNotNull(
+                    current.bitmap.copy(
+                        current.bitmap.config ?: Bitmap.Config.ARGB_8888,
+                        false,
+                    )
+                ) { "Unable to copy the retained card bitmap." }
+                Entry(current.detection, copy)
             }
+        } ?: return@withContext false
+
+        try {
+            coroutineContext.ensureActive()
         } catch (throwable: Throwable) {
-            snapshot?.bitmap?.recycle()
+            snapshot.bitmap.recycle()
             throw throwable
         }
 
-        val captured = snapshot ?: return false
-
-        withBitmapTransfer(captured.bitmap) { transfer ->
-            block(captured.detection, transfer)
+        withBitmapTransfer(snapshot.bitmap) { transfer ->
+            block(snapshot.detection, transfer)
         }
-        return true
+        true
     }
 
     fun clear() {

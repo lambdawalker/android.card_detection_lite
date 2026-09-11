@@ -98,7 +98,7 @@ class LatestBestDetectionStoreTest {
     }
 
     @Test
-    fun captureCopiesOffCallerThreadAndDeliversTransferOnCallerContext() {
+    fun captureCopiesAndDeliversTransferOffCallerThread() {
         val copyExecutor = Executors.newSingleThreadExecutor { runnable ->
             Thread(runnable, "capture-bitmap-copy")
         }
@@ -129,7 +129,8 @@ class LatestBestDetectionStoreTest {
                 )
 
                 assertNotSame(callerThread, copyThread)
-                assertSame(callerThread, callbackThread)
+                assertNotSame(callerThread, callbackThread)
+                assertSame(copyThread, callbackThread)
             }
         } finally {
             copyDispatcher.close()

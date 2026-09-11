@@ -17,24 +17,34 @@ Demonstrates offline video processing using `CardTrackingSimulator` over pre-rec
 
 ## ViewModel Integration (`MainViewModel`)
 
-`MainViewModel` bridges card detection events (`onDetection(CardDetection)`) to downstream OCR pipelines (on-device or cloud) while managing detection pause/resume state (`isDetectionEnabled`).
+`MainViewModel` implements `CardDetectionCallback` and `CardCaptureCallback`, bridging their worker-thread callbacks to downstream OCR pipelines while managing detection pause/resume state (`isDetectionEnabled`).
 
 ```kotlin
-class MainViewModel : ViewModel() {
+class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
     private val _isDetectionEnabled = MutableStateFlow(true)
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
 
-    fun onDetection(card: CardDetection) {
+    override fun onCardDetection(card: CardDetection, bitmapTransfer: BitmapTransfer) {
         if (!card.isNewDetection && card.id == null) return
         if (!_isDetectionEnabled.value) return
+        val bitmap = bitmapTransfer.takeCopy()
 
-        viewModelScope.launch {
-            try {
+        viewModelScope.launch(Dispatchers.Default) {
+            bitmap.use {
                 _isDetectionEnabled.value = false
-                // Execute OCR or data extraction workflow
-            } finally {
-                _isDetectionEnabled.value = true
+                try {
+                    // Execute OCR or data extraction workflow
+                } finally {
+                    _isDetectionEnabled.value = true
+                }
             }
+        }
+    }
+
+    override fun onCapture(card: CardDetection, bitmapTransfer: BitmapTransfer) {
+        val bitmap = bitmapTransfer.takeCopy()
+        viewModelScope.launch(Dispatchers.Default) {
+            bitmap.use { /* Execute OCR or upload workflow */ }
         }
     }
 }

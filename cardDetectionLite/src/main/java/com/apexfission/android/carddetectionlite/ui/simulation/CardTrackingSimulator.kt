@@ -20,12 +20,12 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScopeImpl
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
+import com.apexfission.android.carddetectionlite.ui.detector.CardCaptureCallback
+import com.apexfission.android.carddetectionlite.ui.detector.CardDetectionCallback
 import com.apexfission.android.carddetectionlite.ui.detector.DetectorComponent
 import com.apexfission.android.carddetectionlite.ui.detector.detectorViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +48,12 @@ import kotlinx.coroutines.launch
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters List of card validators.
- * @param onCardDetection Invoked with detection metadata and a callback-scoped bitmap transfer.
+ * @param onCardDetection Invoked on a library worker thread with detection metadata and a
+ * callback-scoped bitmap transfer. Call `takeCopy()` synchronously before dispatching the owned
+ * bitmap to the application's chosen coroutine context.
+ * @param onCaptureRequested Invoked on a library worker thread with the retained best detection
+ * and a one-shot bitmap transfer. The application owns and must recycle a bitmap returned by
+ * `takeCopy()`.
  * @param controlOverlay A scoped Compose slot allowing custom overlays via [CardDetectorOverlayScope].
  */
 @Composable
@@ -65,8 +70,8 @@ fun CardTrackingSimulator(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: (CardDetection, BitmapTransfer) -> Unit,
-    onCaptureRequested: (CardDetection, BitmapTransfer) -> Unit = { _, _ -> },
+    onCardDetection: CardDetectionCallback,
+    onCaptureRequested: CardCaptureCallback = CardCaptureCallback { _, _ -> },
     onBackRequested: () -> Unit = {},
 
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
@@ -129,7 +134,7 @@ fun CardTrackingSimulator(
                 imageSpaceChainFlow.value = imageSpaceChain
                 Log.d("onFrame", "${bitmap.width} x ${bitmap.height}")
                 viewModel.processBitmap(
-                    bitmap, onCardDetection
+                    bitmap, onCardDetection::onCardDetection
                 )
             },
         )
@@ -159,7 +164,7 @@ fun CardTrackingSimulator(
                 classLabels = classLabels,
                 onCaptureRequested = {
                     captureScope.launch {
-                        viewModel.captureLatest(onCaptureRequested)
+                        viewModel.captureLatest(onCaptureRequested::onCapture)
                     }
                 },
                 onBackRequested = onBackRequested,

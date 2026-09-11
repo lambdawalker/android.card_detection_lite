@@ -2,19 +2,22 @@ package com.apexfission.android.carddetectiontest
 
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.annotation.WorkerThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.resource.use
+import com.apexfission.android.carddetectionlite.ui.detector.CardCaptureCallback
+import com.apexfission.android.carddetectionlite.ui.detector.CardDetectionCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainViewModel : ViewModel() {
+class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
     private val _isDetectionEnabled = MutableStateFlow(true)
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
 
@@ -43,7 +46,8 @@ class MainViewModel : ViewModel() {
      *
      * @param card The latest valid [CardDetection] stored by the detector.
      */
-    fun onCaptureRequested(card: CardDetection, bitmapTransfer: BitmapTransfer) {
+    @WorkerThread
+    override fun onCapture(card: CardDetection, bitmapTransfer: BitmapTransfer) {
         Log.d("UserRequest", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}")
         processCard(card, bitmapTransfer.takeCopy())
     }
@@ -51,7 +55,8 @@ class MainViewModel : ViewModel() {
     /**
      * Responds to continuous frame-by-frame detections.
      */
-    fun onDetection(card: CardDetection, bitmapTransfer: BitmapTransfer) {
+    @WorkerThread
+    override fun onCardDetection(card: CardDetection, bitmapTransfer: BitmapTransfer) {
         Log.d("OnDetection", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}")
         if (card.lockingStatus != LockingStatus.NewCard && card.id == null) return
         if (!_isDetectionEnabled.value) return
