@@ -42,6 +42,7 @@ class YoloDetector(
     private var isClosed = false
 
     private val interpreter = TfliteInterpreter(context, modelPath, useGpu, numThreads)
+    private val letterboxBuilder = LetterboxBuilder()
 
     private val postProcessor = YoloPostProcessor(
         interpreter.outLayout,
@@ -54,10 +55,11 @@ class YoloDetector(
         maxNmsCandidates
     )
 
+    @Synchronized
     override fun detect(bitmap: Bitmap): List<Detection> {
         if (!enabled || isClosed) return emptyList()
 
-        val letterboxResult: LetterboxResult = LetterboxBuilder.build(bitmap, interpreter.inputImageWidth)
+        val letterboxResult: LetterboxResult = letterboxBuilder.build(bitmap, interpreter.inputImageWidth)
         val output: FloatArray = interpreter.runInference(letterboxResult.bitmap)
 
         return postProcessor.process(
@@ -80,8 +82,11 @@ class YoloDetector(
     @Synchronized
     override fun close() {
         if (isClosed) return
-        interpreter.close()
-        LetterboxBuilder.cleanUp()
-        isClosed = true
+        try {
+            interpreter.close()
+        } finally {
+            letterboxBuilder.close()
+            isClosed = true
+        }
     }
 }

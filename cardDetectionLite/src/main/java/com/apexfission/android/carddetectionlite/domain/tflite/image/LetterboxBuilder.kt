@@ -7,19 +7,41 @@ import android.graphics.Paint
 import android.graphics.RectF
 import androidx.core.graphics.createBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
+import java.io.Closeable
 import kotlin.math.min
 
-object LetterboxBuilder {
+internal class LetterboxBuilder(
+    private val bitmapFactory: (targetSize: Int) -> Bitmap = { targetSize ->
+        createBitmap(targetSize, targetSize)
+    },
+    private val canvasFactory: (bitmap: Bitmap) -> Canvas = { bitmap -> Canvas(bitmap) },
+) : Closeable {
 
     private var lbOut: Bitmap? = null
     private var lbCanvas: Canvas? = null
     private val lbPaint = Paint(Paint.FILTER_BITMAP_FLAG)
     private val black = Color.BLACK
 
+    @Synchronized
     fun build(src: Bitmap, targetSize: Int): LetterboxResult {
-        val out = lbOut?.takeIf { it.width == targetSize } ?: createBitmap(targetSize, targetSize).also { lbOut = it }
+        val outputMatchesTarget = lbOut?.let {
+            it.width == targetSize && it.height == targetSize
+        } == true
+        if (!outputMatchesTarget) {
+            releaseCachedOutput()
+            val newOutput = bitmapFactory(targetSize)
+            val newCanvas = try {
+                canvasFactory(newOutput)
+            } catch (t: Throwable) {
+                newOutput.recycle()
+                throw t
+            }
+            lbOut = newOutput
+            lbCanvas = newCanvas
+        }
 
-        val canvas = lbCanvas ?: Canvas(out).also { lbCanvas = it }
+        val out = checkNotNull(lbOut)
+        val canvas = checkNotNull(lbCanvas)
         val scale = min(targetSize / src.width.toFloat(), targetSize / src.height.toFloat())
 
         val newW = (src.width * scale).toInt()
@@ -34,7 +56,18 @@ object LetterboxBuilder {
         return LetterboxResult(out, scale, padX, padY)
     }
 
-    fun cleanUp() {
+    @Synchronized
+    override fun close() {
+        releaseCachedOutput()
+    }
+
+    private fun releaseCachedOutput() {
+        lbCanvas?.setBitmap(null)
+        lbOut?.let { bitmap ->
+            if (!bitmap.isRecycled) {
+                bitmap.recycle()
+            }
+        }
         lbOut = null
         lbCanvas = null
     }
