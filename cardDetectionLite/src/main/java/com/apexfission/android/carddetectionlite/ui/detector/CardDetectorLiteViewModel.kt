@@ -161,8 +161,7 @@ class CardDetectorLiteViewModel(
                         return@launch
                     }
 
-                    val sourceCard = checkNotNull(card)
-                    val detectedCardBitmap = croppedBitmap.crop(sourceCard.card.box)
+                    val detectedCardBitmap = croppedBitmap.crop(card.card.box)
                     withBitmapTransfer(detectedCardBitmap) { transfer ->
                         if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
                             _latestBestDetection.value = adjustedCard
