@@ -72,7 +72,6 @@ fun CameraPreview(
 ) {
     val context = LocalContext.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
-    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
     val onFrameState = rememberUpdatedState(onFrame)
     val previewView = remember { PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER } }
 
@@ -116,6 +115,7 @@ fun CameraPreview(
     val tapToFocusEnabledState = rememberUpdatedState(tapToFocusEnabled)
 
     DisposableEffect(lifecycleOwner, analysisTargetResolution) {
+        val analysisExecutor = Executors.newSingleThreadExecutor()
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         val cameraSession = CameraProviderSession()
 
