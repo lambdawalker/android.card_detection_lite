@@ -65,7 +65,12 @@ class YoloPostProcessor(
         output: FloatArray, letterboxResult: LetterboxResult
     ): List<Detection> {
         val rawDetections = decodeDetections(
-            output = output, lbScale = letterboxResult.scale, padX = letterboxResult.padX, padY = letterboxResult.padY
+            output = output,
+            lbScale = letterboxResult.scale,
+            padX = letterboxResult.padX,
+            padY = letterboxResult.padY,
+            sourceWidth = letterboxResult.sourceWidth,
+            sourceHeight = letterboxResult.sourceHeight,
         )
 
         return nms(rawDetections)
@@ -73,9 +78,18 @@ class YoloPostProcessor(
 
     /** Decodes the raw model output, reversing the letterboxing transformation. */
     private fun decodeDetections(
-        output: FloatArray, lbScale: Float, padX: Float, padY: Float
+        output: FloatArray,
+        lbScale: Float,
+        padX: Float,
+        padY: Float,
+        sourceWidth: Int,
+        sourceHeight: Int,
     ): ArrayList<Detection> {
         val detections = ArrayList<Detection>(128)
+
+        if (!lbScale.isFinite() || lbScale <= 0f || sourceWidth <= 0 || sourceHeight <= 0) {
+            return detections
+        }
 
         val isBoxesFirst = outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES
         val strideBox = if (isBoxesFirst) 1 else outAttrs
@@ -97,7 +111,7 @@ class YoloPostProcessor(
                 }
             }
 
-            if (maxClassScore < scoreThreshold) continue
+            if (!maxClassScore.isFinite() || maxClassScore < scoreThreshold) continue
 
             // Extract coordinates.
 
@@ -109,6 +123,9 @@ class YoloPostProcessor(
             val w = output[bIdx + 2 * strideAttr]
             val h = output[bIdx + 3 * strideAttr]
 
+            if (!cx.isFinite() || !cy.isFinite() || !w.isFinite() || !h.isFinite()) continue
+            if (w <= 0f || h <= 0f) continue
+
             val halfW = (w * modelInputImageWidth) / 2f
             val halfH = (h * modelInputImageWidth) / 2f
 
@@ -118,10 +135,20 @@ class YoloPostProcessor(
             val x2 = ((cx * modelInputImageWidth + halfW) - padX) / lbScale
             val y2 = ((cy * modelInputImageWidth + halfH) - padY) / lbScale
 
-            // Normalize coordinates to the cropped image dimensions and store.
+            if (!x1.isFinite() || !y1.isFinite() || !x2.isFinite() || !y2.isFinite()) continue
+
+            val left = x1.coerceIn(0f, sourceWidth.toFloat()).toInt()
+            val top = y1.coerceIn(0f, sourceHeight.toFloat()).toInt()
+            val right = x2.coerceIn(0f, sourceWidth.toFloat()).toInt()
+            val bottom = y2.coerceIn(0f, sourceHeight.toFloat()).toInt()
+
+            if (right <= left || bottom <= top) continue
+
+            // Convert only after validation and clamping so negative model values can
+            // never wrap into large unsigned coordinates.
             detections += Detection(
                 ImageBox.from2P(
-                    x1 = x1.toUInt(), y1 = y1.toUInt(), x2 = x2.toUInt(), y2 = y2.toUInt()
+                    x1 = left, y1 = top, x2 = right, y2 = bottom
                 ), maxClassScore, bestCls
             )
         }
