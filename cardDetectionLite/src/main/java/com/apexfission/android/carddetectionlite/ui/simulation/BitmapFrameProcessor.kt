@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.media3.common.GlTextureInfo
 import androidx.media3.common.util.GlRect
 import androidx.media3.common.util.Size
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.ByteBufferGlEffect
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -19,6 +20,7 @@ import java.util.concurrent.Executor
  * @param onBitmap Callback invoked when a bitmap frame is captured. Ownership of the bitmap
  * transfers to the callback, which must eventually recycle it.
  */
+@UnstableApi
 class BitmapFrameProcessor(
     captureIntervalMs: Long,
     private val callbackExecutor: Executor,
