@@ -29,6 +29,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * and extensible via a developer-customizable scoped slot API ([controlOverlay]).
  *
  * @param modifier A [Modifier] applied to the root `Box` of this component.
+ * @param instanceKey Stable identity for this detector within its [androidx.lifecycle.ViewModelStoreOwner].
+ * Use a different value for sibling detector components. Changing detector configuration recreates
+ * the detector ViewModel; camera-only configuration and callbacks do not.
  * @param modelPath The path to the `.tflite` model file within the application's `assets` directory.
  * @param classLabels A map where keys are integer class IDs and values are human-readable string labels.
  * @param cardClasses A set of class IDs from the model that should be treated as primary targets for card detection.
@@ -45,6 +48,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @Composable
 fun CardDetectorLite(
     modifier: Modifier = Modifier,
+    instanceKey: String,
     modelPath: String,
     classLabels: Map<Int, String>,
     cardClasses: Set<Int>,
@@ -61,8 +65,18 @@ fun CardDetectorLite(
 ) {
     val context = LocalContext.current
     val imageSpaceChainFlow = remember { MutableStateFlow<ImageSpaceChain?>(null) }
+    val detectorViewModelKey = detectorViewModelKey(
+        component = DetectorComponent.CAMERA,
+        instanceKey = instanceKey,
+        modelPath = modelPath,
+        classLabels = classLabels,
+        cardClasses = cardClasses,
+        detectorPreset = detectorPreset,
+        cardFilters = cardFilters,
+    )
 
     val viewModel: CardDetectorLiteViewModel = viewModel(
+        key = detectorViewModelKey,
         factory = CardDetectorLiteViewModelFactory(
             application = context.applicationContext as Application,
             modelPath = modelPath,

@@ -39,6 +39,7 @@ fun MainScreen(onFinish: () -> Unit) {
     ) {
         // Permission granted: Render camera feed composable
         CardDetectorLite(
+            instanceKey = "main-camera",
             modelPath = ModelCatalog.TfLite.modelPath,
             classLabels = ModelCatalog.TfLite.classes,
             cardClasses = ModelCatalog.TfLite.cardClasses,

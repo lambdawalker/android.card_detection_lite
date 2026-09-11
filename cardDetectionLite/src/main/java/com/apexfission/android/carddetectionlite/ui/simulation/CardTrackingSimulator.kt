@@ -33,6 +33,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * Configured via structured preset objects ([CardDetectorPreset] and [CameraPreset]).
  *
  * @param modifier Composable modifier.
+ * @param instanceKey Stable identity for this simulator within its [androidx.lifecycle.ViewModelStoreOwner].
+ * Use a different value for sibling detector components. Changing detector configuration recreates
+ * the detector ViewModel; video, camera-only configuration, and callbacks do not.
  * @param videoUri Source video URI.
  * @param modelPath Asset path to TFLite model.
  * @param classLabels Map of class IDs to human readable labels.
@@ -47,6 +50,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @Composable
 fun CardTrackingSimulator(
     modifier: Modifier = Modifier,
+    instanceKey: String,
     videoUri: Uri,
     modelPath: String,
     classLabels: Map<Int, String>,
@@ -65,8 +69,18 @@ fun CardTrackingSimulator(
 ) {
     val context = LocalContext.current
     val sizeInPixels = remember { MutableStateFlow(IntSize.Zero) }
+    val detectorViewModelKey = detectorViewModelKey(
+        component = DetectorComponent.SIMULATOR,
+        instanceKey = instanceKey,
+        modelPath = modelPath,
+        classLabels = classLabels,
+        cardClasses = cardClasses,
+        detectorPreset = detectorPreset,
+        cardFilters = cardFilters,
+    )
 
     val viewModel: CardTrackingSimulatorViewModel = viewModel(
+        key = detectorViewModelKey,
         factory = CardTrackingSimulatorViewModelFactory(
             application = context.applicationContext as Application,
             modelPath = modelPath,

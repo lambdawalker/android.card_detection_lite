@@ -11,6 +11,7 @@
 ```kotlin
 @Composable
 fun CardDetectorLite(
+    instanceKey: String,
     ...,
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 )
