@@ -24,13 +24,14 @@ data class ImageBox(
 ) {
     /**
      * Returns a new [ImageBox] shifted by [dx] and [dy].
+     * Intermediate calculations are performed in 64-bit signed integers to prevent wrapping/overflows.
      */
     fun offset(dx: Int, dy: Int): ImageBox {
         return from2P(
-            x1 = (x.toInt() + dx).coerceAtLeast(0),
-            y1 = (y.toInt() + dy).coerceAtLeast(0),
-            x2 = (x2.toInt() + dx).coerceAtLeast(0),
-            y2 = (y2.toInt() + dy).coerceAtLeast(0)
+            x1 = (x.toLong() + dx).coerceIn(0, UInt.MAX_VALUE.toLong()).toUInt(),
+            y1 = (y.toLong() + dy).coerceIn(0, UInt.MAX_VALUE.toLong()).toUInt(),
+            x2 = (x2.toLong() + dx).coerceIn(0, UInt.MAX_VALUE.toLong()).toUInt(),
+            y2 = (y2.toLong() + dy).coerceIn(0, UInt.MAX_VALUE.toLong()).toUInt()
         )
     }
 
@@ -67,15 +68,15 @@ data class ImageBox(
          * Constructs an [ImageBox] from top-left point (x, y) and dimensions (width, height).
          */
         fun fromPS(x: UInt, y: UInt, width: UInt, height: UInt): ImageBox {
-            val x2 = x + width
-            val y2 = y + height
+            val x2 = (x.toLong() + width.toLong()).coerceAtMost(UInt.MAX_VALUE.toLong()).toUInt()
+            val y2 = (y.toLong() + height.toLong()).coerceAtMost(UInt.MAX_VALUE.toLong()).toUInt()
             return ImageBox(
                 x = x,
                 y = y,
                 x2 = x2,
                 y2 = y2,
-                width = width,
-                height = height
+                width = x2 - x,
+                height = y2 - y
             )
         }
 

@@ -55,9 +55,11 @@ fun ImageSpace.crop(width: UInt, height: UInt, xOffset: UInt, yOffset: UInt): Im
 }
 
 fun ImageSpace.cropAtCenter(width: UInt, height: UInt): ImageSpace {
-    val xOffset = (this.width - width) / 2u
-    val yOffset = (this.height - height) / 2u
-    return crop(width, height, xOffset, yOffset)
+    val clampedWidth = width.coerceAtMost(this.width)
+    val clampedHeight = height.coerceAtMost(this.height)
+    val xOffset = (this.width - clampedWidth) / 2u
+    val yOffset = (this.height - clampedHeight) / 2u
+    return crop(clampedWidth, clampedHeight, xOffset, yOffset)
 }
 
 /**
