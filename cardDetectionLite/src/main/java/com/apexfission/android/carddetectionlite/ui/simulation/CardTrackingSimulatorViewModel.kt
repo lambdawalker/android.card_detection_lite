@@ -16,6 +16,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetecti
 import com.apexfission.android.carddetectionlite.ui.detector.DetectionFrame
 import com.apexfission.android.carddetectionlite.ui.detector.DetectionFrameSequencer
 import com.apexfission.android.carddetectionlite.ui.detector.LatestBestDetectionStore
+import com.apexfission.android.carddetectionlite.ui.detector.LatestCallbackDispatcher
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import com.apexfission.android.carddetectionlite.ui.detector.SingleFlightGate
 import java.util.concurrent.atomic.AtomicBoolean
@@ -81,6 +82,14 @@ class CardTrackingSimulatorViewModel(
     private val lastInferenceMs = AtomicLong(0L)
     private val frameProcessingGate = SingleFlightGate()
     private val latestBestDetectionStore = LatestBestDetectionStore()
+    private val detectionCallbackDispatcher = LatestCallbackDispatcher<Pair<CardDetection, Bitmap>>(
+        scope = viewModelScope,
+        dispatcher = Dispatchers.Default,
+        releaseUndelivered = { (_, bitmap) -> bitmap.recycle() },
+        onCallbackFailure = { throwable ->
+            Log.e("SimulatorCallback", "onCardDetection failed", throwable)
+        },
+    )
 
     fun setDetectionEnabled(enabled: Boolean) {
         detector.enabled = enabled
@@ -149,8 +158,10 @@ class CardTrackingSimulatorViewModel(
                     _latestBestDetection.value = adjustedCard
                 }
                 publishDetectionFrame(adjustedCard)
+                detectionCallbackDispatcher.submit(adjustedCard to detectedCardBitmap) { (detection, deliveredBitmap) ->
+                    onDetection(detection, deliveredBitmap)
+                }
                 deliveryBitmap = null
-                onDetection(adjustedCard, detectedCardBitmap)
 
             } catch (e: CancellationException) {
                 throw e
@@ -185,6 +196,7 @@ class CardTrackingSimulatorViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        detectionCallbackDispatcher.close()
         latestBestDetectionStore.clear()
         detector.close()
     }
