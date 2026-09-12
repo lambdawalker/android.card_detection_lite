@@ -1,6 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui
 
 import android.util.Size
+import androidx.annotation.WorkerThread
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import org.junit.Assert.assertEquals

@@ -1,6 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui.simulation
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Box
@@ -20,12 +21,11 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScopeImpl
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
-import com.apexfission.android.carddetectionlite.ui.detector.CardCaptureCallback
-import com.apexfission.android.carddetectionlite.ui.detector.CardDetectionCallback
 import com.apexfission.android.carddetectionlite.ui.detector.DetectorComponent
 import com.apexfission.android.carddetectionlite.ui.detector.detectorViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,8 +68,8 @@ fun CardTrackingSimulator(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: CardDetectionCallback,
-    onCaptureRequested: CardCaptureCallback = CardCaptureCallback { _, _ -> },
+    onCardDetection: (CardDetection, Bitmap) -> Unit,
+    onCaptureRequested: (CardDetection, Bitmap) -> Unit = { _, _ -> },
     onBackRequested: () -> Unit = {},
 
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
@@ -132,13 +132,12 @@ fun CardTrackingSimulator(
                 imageSpaceChainFlow.value = imageSpaceChain
                 Log.d("onFrame", "${bitmap.width} x ${bitmap.height}")
                 viewModel.processBitmap(
-                    bitmap, onCardDetection::onCardDetection
+                    bitmap, onCardDetection
                 )
             },
         )
 
         val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
-
 
 
         val overlayScope = remember(
@@ -162,7 +161,7 @@ fun CardTrackingSimulator(
                 classLabels = classLabels,
                 onCaptureRequested = {
                     captureScope.launch {
-                        viewModel.captureLatest(onCaptureRequested::onCapture)
+                        viewModel.captureLatest(onCaptureRequested)
                     }
                 },
                 onBackRequested = onBackRequested,

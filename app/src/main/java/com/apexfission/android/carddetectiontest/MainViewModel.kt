@@ -8,15 +8,13 @@ import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import com.apexfission.android.carddetectionlite.resource.use
-import com.apexfission.android.carddetectionlite.ui.detector.CardCaptureCallback
-import com.apexfission.android.carddetectionlite.ui.detector.CardDetectionCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
+class MainViewModel : ViewModel() {
     private val _isDetectionEnabled = MutableStateFlow(true)
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
 
@@ -46,7 +44,7 @@ class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
      * @param card The latest valid [CardDetection] stored by the detector.
      */
     @WorkerThread
-    override fun onCapture(card: CardDetection, bitmap: Bitmap) {
+    fun onCapture(card: CardDetection, bitmap: Bitmap) {
         Log.d("UserRequest", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}")
         processCard(card, bitmap)
     }
@@ -55,7 +53,7 @@ class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
      * Responds to continuous frame-by-frame detections.
      */
     @WorkerThread
-    override fun onCardDetection(card: CardDetection, bitmap: Bitmap) {
+    fun onCardDetection(card: CardDetection, bitmap: Bitmap) {
         Log.d("OnDetection", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}")
         if (card.lockingStatus != LockingStatus.NewCard && card.id == null) {
             bitmap.recycle()

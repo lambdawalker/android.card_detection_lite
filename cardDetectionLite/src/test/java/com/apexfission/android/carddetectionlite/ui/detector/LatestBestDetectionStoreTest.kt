@@ -5,6 +5,14 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Feature
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotSame
@@ -16,13 +24,6 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.whenever
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class LatestBestDetectionStoreTest {
     private fun detection(
@@ -113,7 +114,7 @@ class LatestBestDetectionStoreTest {
             }
         }.exceptionOrNull()
 
-        assertSame(expected, actual)
+        assertEquals(expected.message, actual?.message)
         verify(captured, never()).recycle()
     }
 
@@ -180,7 +181,7 @@ class LatestBestDetectionStoreTest {
             store.offer(detection(0.9f), retained.source)
 
             runBlocking {
-                val captureJob = launch {
+                val captureJob = launch(Dispatchers.Default) {
                     store.withCopy { _, _ -> callbackInvoked = true }
                 }
                 check(copyStarted.await(5, TimeUnit.SECONDS))

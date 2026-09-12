@@ -1,6 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui.detector
 
 import android.app.Application
+import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -17,6 +18,7 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,9 +61,9 @@ fun CardDetectorLite(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: CardDetectionCallback = CardDetectionCallback { _, _ -> },
+    onCardDetection: (CardDetection, Bitmap) -> Unit = { _, _ -> },
     onBack: () -> Unit = {},
-    onCapture: CardCaptureCallback = CardCaptureCallback { _, _ -> },
+    onCapture: (CardDetection, Bitmap) -> Unit = { _, _ -> },
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -116,7 +118,7 @@ fun CardDetectorLite(
             lifecycleOwner = LocalLifecycleOwner.current,
             onFrame = { imageProxy, spaceChain ->
                 imageSpaceChainFlow.value = spaceChain
-                viewModel.processImage(imageProxy, onCardDetection::onCardDetection)
+                viewModel.processImage(imageProxy, onCardDetection)
             },
             onFocusEvent = viewModel::onFocusEvent,
             flashlightEnabled = flashlightEnabled,
@@ -153,7 +155,7 @@ fun CardDetectorLite(
                 classLabels = classLabels,
                 onCaptureRequested = {
                     captureScope.launch {
-                        viewModel.captureLatest(onCapture::onCapture)
+                        viewModel.captureLatest(onCapture)
                     }
                 },
                 onBackRequested = onBack,
