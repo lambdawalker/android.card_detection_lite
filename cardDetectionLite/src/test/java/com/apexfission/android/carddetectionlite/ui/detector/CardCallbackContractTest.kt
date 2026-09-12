@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui.detector
 
+import android.graphics.Bitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import org.junit.Assert.assertSame
 import org.junit.Test
 import org.mockito.kotlin.mock
@@ -11,34 +11,34 @@ class CardCallbackContractTest {
     @Test
     fun detectionCallbackSupportsExplicitSamImplementation() {
         val detection = mock<CardDetection>()
-        val transfer = mock<BitmapTransfer>()
+        val bitmap = mock<Bitmap>()
         var receivedDetection: CardDetection? = null
-        var receivedTransfer: BitmapTransfer? = null
-        val callback = CardDetectionCallback { card, bitmapTransfer ->
+        var receivedBitmap: Bitmap? = null
+        val callback = CardDetectionCallback { card, ownedBitmap ->
             receivedDetection = card
-            receivedTransfer = bitmapTransfer
+            receivedBitmap = ownedBitmap
         }
 
-        callback.onCardDetection(detection, transfer)
+        callback.onCardDetection(detection, bitmap)
 
         assertSame(detection, receivedDetection)
-        assertSame(transfer, receivedTransfer)
+        assertSame(bitmap, receivedBitmap)
     }
 
     @Test
     fun captureCallbackSupportsExplicitSamImplementation() {
         val detection = mock<CardDetection>()
-        val transfer = mock<BitmapTransfer>()
+        val bitmap = mock<Bitmap>()
         var receivedDetection: CardDetection? = null
-        var receivedTransfer: BitmapTransfer? = null
-        val callback = CardCaptureCallback { card, bitmapTransfer ->
+        var receivedBitmap: Bitmap? = null
+        val callback = CardCaptureCallback { card, ownedBitmap ->
             receivedDetection = card
-            receivedTransfer = bitmapTransfer
+            receivedBitmap = ownedBitmap
         }
 
-        callback.onCapture(detection, transfer)
+        callback.onCapture(detection, bitmap)
 
         assertSame(detection, receivedDetection)
-        assertSame(transfer, receivedTransfer)
+        assertSame(bitmap, receivedBitmap)
     }
 }

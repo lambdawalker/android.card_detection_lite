@@ -48,9 +48,8 @@ CardDetectorLite(
     modelPath = modelPath,
     classLabels = classLabels,
     cardClasses = cardClasses,
-    onCardDetection = { detection, transfer ->
-        val bitmap = transfer.takeCopy()
-        // The caller now owns bitmap and must recycle it.
+    onCardDetection = { detection, bitmap ->
+        // The caller owns bitmap and must recycle it after its final use.
     }
 )
 ```

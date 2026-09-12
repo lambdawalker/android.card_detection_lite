@@ -24,10 +24,11 @@ class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
     private val _isDetectionEnabled = MutableStateFlow(true)
     val isDetectionEnabled = _isDetectionEnabled.asStateFlow()
 
-    override fun onCardDetection(card: CardDetection, bitmapTransfer: BitmapTransfer) {
-        if (!card.isNewDetection && card.id == null) return
-        if (!_isDetectionEnabled.value) return
-        val bitmap = bitmapTransfer.takeCopy()
+    override fun onCardDetection(card: CardDetection, bitmap: Bitmap) {
+        if ((!card.isNewDetection && card.id == null) || !_isDetectionEnabled.value) {
+            bitmap.recycle()
+            return
+        }
 
         viewModelScope.launch(Dispatchers.Default) {
             bitmap.use {
@@ -41,8 +42,7 @@ class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
         }
     }
 
-    override fun onCapture(card: CardDetection, bitmapTransfer: BitmapTransfer) {
-        val bitmap = bitmapTransfer.takeCopy()
+    override fun onCapture(card: CardDetection, bitmap: Bitmap) {
         viewModelScope.launch(Dispatchers.Default) {
             bitmap.use { /* Execute OCR or upload workflow */ }
         }

@@ -85,14 +85,16 @@ class MainViewModel : ViewModel(), CardDetectionCallback, CardCaptureCallback {
     private val _navigateBack = MutableStateFlow(false)
     val navigateBack = _navigateBack.asStateFlow()
 
-    override fun onCardDetection(detection: CardDetection, transfer: BitmapTransfer) {
+    override fun onCardDetection(detection: CardDetection, bitmap: Bitmap) {
         if (detection.lockingStatus == LockingStatus.NewCard) {
-            processCapturedCard(transfer.takeCopy())
+            processCapturedCard(bitmap)
+        } else {
+            bitmap.recycle()
         }
     }
 
-    override fun onCapture(detection: CardDetection, transfer: BitmapTransfer) {
-        processCapturedCard(transfer.takeCopy())
+    override fun onCapture(detection: CardDetection, bitmap: Bitmap) {
+        processCapturedCard(bitmap)
     }
 
     fun onBackRequested() {
@@ -177,23 +179,21 @@ The `onCardDetection` callback returns a `CardDetection` object representing tra
 | `card` | `Feature` | Main detected ID card metadata: bounding box, confidence score, and class ID. |
 | `features` | `List<Feature>` | Sub-features detected within the card region (photos, barcodes, MRZ, QR codes). |
 
-Both detection and capture callbacks run on a library worker thread and receive a callback-scoped
-`BitmapTransfer`. Call `takeCopy()` synchronously to take ownership of the card bitmap, then choose
-the appropriate application dispatcher and recycle it after its final use:
+Both detection and capture callbacks run on a library worker thread. Each callback receives an
+independent bitmap owned exclusively by the application. Choose the appropriate application
+dispatcher and recycle the bitmap after its final use:
 
 ```kotlin
-fun onDetection(detection: CardDetection, transfer: BitmapTransfer) {
-    val bitmap = transfer.takeCopy()
+fun onDetection(detection: CardDetection, bitmap: Bitmap) {
     viewModelScope.launch(Dispatchers.Default) {
         bitmap.use { performOcr(it) }
     }
 }
 ```
 
-`takeCopy()` succeeds exactly once. Calling it again, or after the callback returns, throws an
-`IllegalStateException`. If it succeeds, the caller owns the returned bitmap; the SDK will not
-recycle it. Use `Dispatchers.Default` for CPU-bound image/OCR work, `Dispatchers.IO` for blocking
-uploads, and `Dispatchers.Main` only for UI work.
+The SDK never recycles a bitmap after delivering it to a callback, including when the callback
+returns or throws. Use `Dispatchers.Default` for CPU-bound image/OCR work, `Dispatchers.IO` for
+blocking uploads, and `Dispatchers.Main` only for UI work.
 
 ### `Feature` Model
 ```kotlin
@@ -340,7 +340,7 @@ CardTrackingSimulator(
 
 ## Output Resolution Guidelines
 
-The cropped card image resolution returned by `BitmapTransfer.takeCopy()` depends on:
+The cropped card image resolution delivered to the callbacks depends on:
 1. **Analysis Target Resolution** (`CameraPreset.analysisTargetResolution`): Higher sensor streams (2K or 4K) yield crisper cropped pixels.
 2. **Physical Proximity**: Cards occupying a larger percentage of the camera field yield higher crop resolution.
 3. **Pre-processing Strategy**: Crop-based input modes (`SquareCrop` or `VisibleImageSquareCrop`) maximize effective model input density for centered cards.

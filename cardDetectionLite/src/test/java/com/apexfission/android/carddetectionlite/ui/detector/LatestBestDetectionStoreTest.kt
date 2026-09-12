@@ -77,7 +77,7 @@ class LatestBestDetectionStoreTest {
     }
 
     @Test
-    fun captureReturnsIndependentOneShotTransfer() = runBlocking {
+    fun captureReturnsIndependentUserOwnedBitmap() = runBlocking {
         val store = LatestBestDetectionStore()
         val retained = sourceWithCopy()
         val captured = mock(Bitmap::class.java)
@@ -86,9 +86,9 @@ class LatestBestDetectionStoreTest {
         store.offer(expected, retained.source)
 
         var actualBitmap: Bitmap? = null
-        val didCapture = store.withTransfer { actualDetection, transfer ->
+        val didCapture = store.withCopy { actualDetection, bitmap ->
             assertSame(expected, actualDetection)
-            actualBitmap = transfer.takeCopy()
+            actualBitmap = bitmap
         }
 
         assertTrue(didCapture)
@@ -98,7 +98,27 @@ class LatestBestDetectionStoreTest {
     }
 
     @Test
-    fun captureCopiesAndDeliversTransferOffCallerThread() {
+    fun deliveredCaptureRemainsUserOwnedWhenCallbackThrows() = runBlocking {
+        val store = LatestBestDetectionStore()
+        val retained = sourceWithCopy()
+        val captured = mock(Bitmap::class.java)
+        whenever(retained.copy.copy(Bitmap.Config.ARGB_8888, false)).thenReturn(captured)
+        store.offer(detection(0.9f), retained.source)
+
+        val expected = IllegalStateException("Application callback failed")
+        val actual = runCatching {
+            store.withCopy { _, bitmap ->
+                assertSame(captured, bitmap)
+                throw expected
+            }
+        }.exceptionOrNull()
+
+        assertSame(expected, actual)
+        verify(captured, never()).recycle()
+    }
+
+    @Test
+    fun captureCopiesAndDeliversOwnedBitmapOffCallerThread() {
         val copyExecutor = Executors.newSingleThreadExecutor { runnable ->
             Thread(runnable, "capture-bitmap-copy")
         }
@@ -122,9 +142,9 @@ class LatestBestDetectionStoreTest {
                 var callbackThread: Thread? = null
 
                 assertTrue(
-                    store.withTransfer { _, transfer ->
+                    store.withCopy { _, bitmap ->
                         callbackThread = Thread.currentThread()
-                        transfer.takeCopy()
+                        assertSame(captured, bitmap)
                     }
                 )
 
@@ -161,7 +181,7 @@ class LatestBestDetectionStoreTest {
 
             runBlocking {
                 val captureJob = launch {
-                    store.withTransfer { _, _ -> callbackInvoked = true }
+                    store.withCopy { _, _ -> callbackInvoked = true }
                 }
                 check(copyStarted.await(5, TimeUnit.SECONDS))
                 captureJob.cancel()

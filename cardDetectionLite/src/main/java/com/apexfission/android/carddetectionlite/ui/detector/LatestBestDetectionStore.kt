@@ -3,8 +3,6 @@ package com.apexfission.android.carddetectionlite.ui.detector
 import android.graphics.Bitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
-import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -44,8 +42,8 @@ internal class LatestBestDetectionStore(
 
     fun detection(): CardDetection? = synchronized(lock) { entry?.detection }
 
-    suspend fun withTransfer(
-        block: (CardDetection, BitmapTransfer) -> Unit,
+    suspend fun withCopy(
+        block: (CardDetection, Bitmap) -> Unit,
     ): Boolean = withContext(workerDispatcher) {
         val snapshot = synchronized(lock) {
             entry?.let { current ->
@@ -66,9 +64,7 @@ internal class LatestBestDetectionStore(
             throw throwable
         }
 
-        withBitmapTransfer(snapshot.bitmap) { transfer ->
-            block(snapshot.detection, transfer)
-        }
+        block(snapshot.detection, snapshot.bitmap)
         true
     }
 
