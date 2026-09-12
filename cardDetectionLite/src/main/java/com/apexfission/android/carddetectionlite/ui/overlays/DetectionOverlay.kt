@@ -56,38 +56,23 @@ fun DetectionOverlay(
 ) {
     val textMeasurer = rememberTextMeasurer()
 
-    val cardCount = remember { MutableStateFlow(0) }
-    val misses = remember { MutableStateFlow(0) }
-
     Canvas(
         modifier = Modifier.fillMaxSize()
     ) {
         val features = cardDetection?.let { it.features + it.card } ?: emptyList()
 
-        val textStyle = TextStyle(color = Color.Green, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
-        val log = "Detection counts: ${cardCount.value}"
-        val logLayout = textMeasurer.measure(log, textStyle)
-        drawText(textLayoutResult = logLayout, topLeft = Offset(10f, 12f))
-
 
         if (cardDetection == null) {
-            misses.value++
             val errorTextStyle = TextStyle(color = Color.Red, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
             val errorLog = "cardDetection not detected"
             val errorLogLayout = textMeasurer.measure(errorLog, errorTextStyle)
             drawText(textLayoutResult = errorLogLayout, topLeft = Offset(10f, 60f))
         } else {
-            cardCount.value++
             val infoTextStyle = TextStyle(color = Color.Green, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
             val infoLog = "lockOnProgress: ${cardDetection.lockOnProgress} | id: ${cardDetection.id} | confidence: ${(cardDetection.card.confidence * 100).toInt()}%"
             val infoLogLayout = textMeasurer.measure(infoLog, infoTextStyle)
             drawText(textLayoutResult = infoLogLayout, topLeft = Offset(10f, 60f))
         }
-
-        val infoTextStyle = TextStyle(color = Color.Red, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
-        val infoLog = "Misses: ${misses.value}"
-        val infoLogLayout = textMeasurer.measure(infoLog, infoTextStyle)
-        drawText(textLayoutResult = infoLogLayout, topLeft = Offset(10f, 108f))
 
         features.forEach { feature ->
             val box = feature.box.translate(imageSpaceChain)
