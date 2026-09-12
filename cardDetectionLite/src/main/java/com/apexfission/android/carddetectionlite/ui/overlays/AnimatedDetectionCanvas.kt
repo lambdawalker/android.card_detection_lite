@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -95,13 +96,19 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
     }
     var opacityDurationMs by remember { mutableIntStateOf(config.fadeAnimationDurationMs) }
     var boundsDurationMs by remember { mutableIntStateOf(config.resetAnimationDurationMs) }
+    val currentConfig by rememberUpdatedState(config)
+    val currentFallbackCenterBox by rememberUpdatedState(fallbackCenterBox)
 
-    LaunchedEffect(detectionSequence, spaceChain) {
+    // Config is a key because changing thresholds, targets, or durations must immediately
+    // re-evaluate the current visual state, even when no new detector result arrives.
+    LaunchedEffect(detectionSequence, spaceChain, config, fallbackCenterBox) {
         if (detectionSequence == 0L) {
             consecutiveMissTracker.reset()
             guideState = InternalGuideState.IDLE
             targetBox = fallbackCenterBox
             targetOpacity = config.idleOpacity
+            opacityDurationMs = config.fadeAnimationDurationMs
+            boundsDurationMs = config.resetAnimationDurationMs
             return@LaunchedEffect
         }
 
@@ -135,32 +142,51 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
             targetOpacity = config.detectedOpacity
             opacityDurationMs = config.trackingAnimationDurationMs
         } else if (activeDetection == null) {
-            if (guideState == InternalGuideState.TRACKING || guideState == InternalGuideState.FADING) {
-                guideState = InternalGuideState.FADING
-                targetOpacity = config.idleOpacity
-                opacityDurationMs = config.fadeAnimationDurationMs
+            when (guideState) {
+                InternalGuideState.TRACKING, InternalGuideState.FADING -> {
+                    guideState = InternalGuideState.FADING
+                    targetOpacity = config.idleOpacity
+                    opacityDurationMs = config.fadeAnimationDurationMs
 
-                if (lastDetectedBoxScreen != null) {
-                    targetBox = lastDetectedBoxScreen
+                    if (lastDetectedBoxScreen != null) {
+                        targetBox = lastDetectedBoxScreen
+                    }
+
+                    val maxMisses = config.maxConsecutiveMisses
+                    if (maxMisses != null && consecutiveMisses >= maxMisses) {
+                        guideState = InternalGuideState.RESETTING
+                        targetBox = if (config.resetPositionOnMissing) fallbackCenterBox else (lastDetectedBoxScreen ?: fallbackCenterBox)
+                        boundsDurationMs = config.resetAnimationDurationMs
+                    }
                 }
 
-                val maxMisses = config.maxConsecutiveMisses
-                if (maxMisses != null && consecutiveMisses >= maxMisses) {
-                    guideState = InternalGuideState.RESETTING
-                    targetBox = if (config.resetPositionOnMissing) fallbackCenterBox else (lastDetectedBoxScreen ?: fallbackCenterBox)
+                InternalGuideState.RESETTING -> {
+                    targetOpacity = config.idleOpacity
                     boundsDurationMs = config.resetAnimationDurationMs
+                    targetBox = if (config.resetPositionOnMissing) fallbackCenterBox else (lastDetectedBoxScreen ?: fallbackCenterBox)
+                }
+
+                InternalGuideState.IDLE -> {
+                    targetOpacity = config.idleOpacity
+                    opacityDurationMs = config.fadeAnimationDurationMs
                 }
             }
         }
     }
 
-    LaunchedEffect(guideState, detectionToken) {
+    // A delay change intentionally restarts the timer. Other config changes are read through
+    // currentConfig so the timer can finish without retaining an obsolete configuration.
+    LaunchedEffect(guideState, detectionToken, config.missingCardResetDelayMs) {
         if (guideState == InternalGuideState.FADING) {
             delay(config.missingCardResetDelayMs)
             guideState = InternalGuideState.RESETTING
-            targetBox = if (config.resetPositionOnMissing) fallbackCenterBox else (lastDetectedBoxScreen ?: fallbackCenterBox)
-            boundsDurationMs = config.resetAnimationDurationMs
-            targetOpacity = config.idleOpacity
+            targetBox = if (currentConfig.resetPositionOnMissing) {
+                currentFallbackCenterBox
+            } else {
+                lastDetectedBoxScreen ?: currentFallbackCenterBox
+            }
+            boundsDurationMs = currentConfig.resetAnimationDurationMs
+            targetOpacity = currentConfig.idleOpacity
         }
     }
 
