@@ -28,7 +28,7 @@ class BitmapFrameProcessor(
     private val onBitmap: (bitmap: Bitmap, presentationTimeUs: Long) -> Unit,
 ) : ByteBufferGlEffect.Processor<Unit> {
 
-    private val captureIntervalUs = captureIntervalMs.coerceAtLeast(0L) * 1_000L
+    private val captureIntervalUs = captureIntervalMs.coerceIn(0L, Long.MAX_VALUE / 1_000L) * 1_000L
 
     private var width = 0
     private var height = 0

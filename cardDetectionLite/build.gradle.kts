@@ -65,7 +65,7 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    implementation(libs.androidx.junit.ktx)
+
 
     implementation("androidx.media3:media3-inspector:1.11.0")
     implementation("androidx.media3:media3-inspector-frame:1.11.0")
@@ -96,6 +96,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
+
+    androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(project(":tfmodel"))
     androidTestImplementation("androidx.test.services:storage:1.4.2")
     androidTestUtil("androidx.test.services:test-services:1.4.2")
