@@ -2,11 +2,11 @@ package com.apexfission.android.carddetectiontest
 
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.annotation.WorkerThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.resource.use
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,19 +43,27 @@ class MainViewModel : ViewModel() {
      *
      * @param card The latest valid [CardDetection] stored by the detector.
      */
-    fun onCaptureRequested(card: CardDetection, bitmapTransfer: BitmapTransfer) {
+    @WorkerThread
+    fun onCapture(card: CardDetection, bitmap: Bitmap) {
         Log.d("UserRequest", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}")
-        processCard(card, bitmapTransfer.takeCopy())
+        processCard(card, bitmap)
     }
 
     /**
      * Responds to continuous frame-by-frame detections.
      */
-    fun onDetection(card: CardDetection, bitmapTransfer: BitmapTransfer) {
+    @WorkerThread
+    fun onCardDetection(card: CardDetection, bitmap: Bitmap) {
         Log.d("OnDetection", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}")
-        if (card.lockingStatus != LockingStatus.NewCard && card.id == null) return
-        if (!_isDetectionEnabled.value) return
-        processCard(card, bitmapTransfer.takeCopy())
+        if (card.lockingStatus != LockingStatus.NewCard && card.id == null) {
+            bitmap.recycle()
+            return
+        }
+        if (!_isDetectionEnabled.value) {
+            bitmap.recycle()
+            return
+        }
+        processCard(card, bitmap)
     }
 
     private fun processCard(card: CardDetection, bitmap: Bitmap) {

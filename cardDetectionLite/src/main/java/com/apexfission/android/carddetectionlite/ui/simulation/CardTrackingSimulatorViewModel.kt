@@ -13,8 +13,6 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValid
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
 import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
-import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
 import com.apexfission.android.carddetectionlite.ui.detector.LatestBestDetectionStore
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import com.apexfission.android.carddetectionlite.ui.detector.SingleFlightGate
@@ -87,7 +85,7 @@ class CardTrackingSimulatorViewModel(
     /** Takes ownership of [bitmap] and guarantees that it is eventually recycled. */
     fun processBitmap(
         bitmap: Bitmap,
-        onDetection: (CardDetection, BitmapTransfer) -> Unit,
+        onDetection: (CardDetection, Bitmap) -> Unit,
     ) {
         val ownedFrame = OwnedFrameBitmap(bitmap)
 
@@ -105,6 +103,7 @@ class CardTrackingSimulatorViewModel(
         val job = viewModelScope.launch(Dispatchers.Default) {
             processingStarted.set(true)
             var croppedBitmap: Bitmap? = null
+            var deliveryBitmap: Bitmap? = null
             try {
                 val now = SystemClock.uptimeMillis()
                 if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
@@ -135,13 +134,14 @@ class CardTrackingSimulatorViewModel(
 
                 val sourceCard = checkNotNull(card)
                 val detectedCardBitmap = croppedBitmap.crop(sourceCard.card.box)
-                withBitmapTransfer(detectedCardBitmap) { transfer ->
-                    if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
-                        _latestBestDetection.value = adjustedCard
-                    }
-                    _cardDetection.value = adjustedCard
-                    onDetection(adjustedCard, transfer)
+                deliveryBitmap = detectedCardBitmap
+                if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
+                    _latestBestDetection.value = adjustedCard
                 }
+                _cardDetection.value = adjustedCard
+
+                deliveryBitmap = null
+                onDetection(adjustedCard, detectedCardBitmap)
 
             } catch (t: Throwable) {
                 Log.e("Simulation", "Processing failed", t)
@@ -149,6 +149,7 @@ class CardTrackingSimulatorViewModel(
                 if (croppedBitmap != null && croppedBitmap != bitmap) {
                     croppedBitmap.recycle()
                 }
+                deliveryBitmap?.recycle()
                 ownedFrame.recycle()
                 frameProcessingGate.release()
             }
@@ -162,9 +163,9 @@ class CardTrackingSimulatorViewModel(
         }
     }
 
-    fun captureLatest(
-        onCapture: (CardDetection, BitmapTransfer) -> Unit,
-    ): Boolean = latestBestDetectionStore.withTransfer(onCapture)
+    suspend fun captureLatest(
+        onCapture: (CardDetection, Bitmap) -> Unit,
+    ): Boolean = latestBestDetectionStore.withCopy(onCapture)
 
     override fun onCleared() {
         super.onCleared()

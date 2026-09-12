@@ -68,7 +68,7 @@ These branches are stacked only where an earlier lifecycle abstraction is requir
 9. Finding 34 — define and enforce callback dispatcher behavior.
 10. Finding 36 — remove or gate per-frame detector logging.
 
-The existing `BitmapTransfer.takeCopy()` contract remains authoritative: the callback receives a one-shot synchronous transfer, and ownership of the returned copy belongs to the caller. Internal capture retention stays library-owned and must never expose a recyclable shared bitmap.
+Each callback receives an independent bitmap and assumes full ownership at invocation. The SDK never recycles a delivered bitmap. Internal capture retention stays SDK-owned, uses a separate bitmap instance, and never exposes that retained instance directly.
 
 ### Coordinate and geometry safety
 

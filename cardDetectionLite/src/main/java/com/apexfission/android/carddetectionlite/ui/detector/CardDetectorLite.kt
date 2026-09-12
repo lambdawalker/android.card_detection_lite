@@ -1,12 +1,14 @@
 package com.apexfission.android.carddetectionlite.ui.detector
 
 import android.app.Application
+import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -17,10 +19,10 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRat
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * All-in-one Composable that provides a configurable in-camera-feed card detection and tracking solution.
@@ -39,10 +41,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters A list of [CardValidator] instances used to apply additional heuristic validation rules.
- * @param onCardDetection Invoked for a detection with a one-shot bitmap transfer. Call
- * `takeCopy()` synchronously inside this callback to take ownership of the bitmap.
+ * @param onCardDetection Invoked on a library worker thread with a bitmap owned by the application.
+ * The application must recycle the bitmap after its final use.
  * @param onBack An optional callback lambda invoked when the user taps the back button in the overlay.
- * @param onCapture Invoked with the retained best detection and a one-shot bitmap transfer.
+ * @param onCapture Invoked on a library worker thread with the retained best detection and an
+ * independent bitmap copy. The application owns and must recycle the bitmap after its final use.
  * @param controlOverlay A scoped Compose slot allowing developers to provide a custom overlay UI via [CardDetectorOverlayScope].
  */
 @Composable
@@ -58,12 +61,13 @@ fun CardDetectorLite(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: (CardDetection, BitmapTransfer) -> Unit = { _, _ -> },
+    onCardDetection: (CardDetection, Bitmap) -> Unit = { _, _ -> },
     onBack: () -> Unit = {},
-    onCapture: (CardDetection, BitmapTransfer) -> Unit = { _, _ -> },
+    onCapture: (CardDetection, Bitmap) -> Unit = { _, _ -> },
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
+    val captureScope = rememberCoroutineScope()
     val imageSpaceChainFlow = remember { MutableStateFlow<ImageSpaceChain?>(null) }
     val detectorViewModelKey = detectorViewModelKey(
         component = DetectorComponent.CAMERA,
@@ -150,7 +154,9 @@ fun CardDetectorLite(
                 cameraPreset = cameraPreset,
                 classLabels = classLabels,
                 onCaptureRequested = {
-                    viewModel.captureLatest(onCapture)
+                    captureScope.launch {
+                        viewModel.captureLatest(onCapture)
+                    }
                 },
                 onBackRequested = onBack,
                 onFlashlightToggleRequested = viewModel::toggleFlashlight

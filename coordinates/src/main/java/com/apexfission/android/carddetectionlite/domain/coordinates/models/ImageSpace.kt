@@ -28,7 +28,7 @@ data class ImageSpace(
 fun ImageSpace.scale(x: Float, y: Float): ImageSpace =
     ImageSpace(
         width = (width.toFloat() * x).toUInt(),
-        height = (height.toFloat() * x).toUInt(),
+        height = (height.toFloat() * y).toUInt(),
         xScale = x,
         yScale = y,
         xOffset = xOffset,

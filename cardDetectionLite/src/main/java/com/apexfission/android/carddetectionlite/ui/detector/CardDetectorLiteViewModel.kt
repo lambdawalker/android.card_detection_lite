@@ -19,8 +19,6 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOff
 import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
-import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
@@ -114,7 +112,7 @@ class CardDetectorLiteViewModel(
 
     fun processImage(
         imageProxy: ImageProxy,
-        onDetection: (CardDetection, BitmapTransfer) -> Unit,
+        onDetection: (CardDetection, Bitmap) -> Unit,
     ) {
         if (!detector.enabled) {
             imageProxy.close()
@@ -132,6 +130,7 @@ class CardDetectorLiteViewModel(
             imageProxy.use { proxy ->
                 var uprightBitmap: Bitmap? = null
                 var croppedBitmap: Bitmap? = null
+                var deliveryBitmap: Bitmap? = null
                 try {
                     val now = SystemClock.uptimeMillis()
                     if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
@@ -161,21 +160,22 @@ class CardDetectorLiteViewModel(
                         return@launch
                     }
 
-                    val sourceCard = checkNotNull(card)
-                    val detectedCardBitmap = croppedBitmap.crop(sourceCard.card.box)
-                    withBitmapTransfer(detectedCardBitmap) { transfer ->
-                        if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
-                            _latestBestDetection.value = adjustedCard
-                        }
-                        _cardDetection.value = adjustedCard
-                        onDetection(adjustedCard, transfer)
+                    val detectedCardBitmap = croppedBitmap.crop(card.card.box)
+                    deliveryBitmap = detectedCardBitmap
+                    if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
+                        _latestBestDetection.value = adjustedCard
                     }
+                    _cardDetection.value = adjustedCard
+
+                    deliveryBitmap = null
+                    onDetection(adjustedCard, detectedCardBitmap)
                 } catch (t: Throwable) {
                     Log.e("YOLO", "Inference failed", t)
                 } finally {
                     if (croppedBitmap != null && croppedBitmap != uprightBitmap) {
                         croppedBitmap.recycle()
                     }
+                    deliveryBitmap?.recycle()
                     uprightBitmap?.recycle()
                     frameProcessingGate.release()
                 }
@@ -190,9 +190,9 @@ class CardDetectorLiteViewModel(
         }
     }
 
-    fun captureLatest(
-        onCapture: (CardDetection, BitmapTransfer) -> Unit,
-    ): Boolean = latestBestDetectionStore.withTransfer(onCapture)
+    suspend fun captureLatest(
+        onCapture: (CardDetection, Bitmap) -> Unit,
+    ): Boolean = latestBestDetectionStore.withCopy(onCapture)
 
     override fun onCleared() {
         super.onCleared()

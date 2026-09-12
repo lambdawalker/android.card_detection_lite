@@ -1,6 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui.simulation
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -20,7 +22,6 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRat
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScopeImpl
@@ -28,6 +29,7 @@ import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
 import com.apexfission.android.carddetectionlite.ui.detector.DetectorComponent
 import com.apexfission.android.carddetectionlite.ui.detector.detectorViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * A simulation composable that runs card tracking inference over video frames from a URI source.
@@ -46,7 +48,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @param detectorPreset ML pipeline configuration preset ([CardDetectorPreset]). Defaults to [CardDetectorPreset.HighPerformance].
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters List of card validators.
- * @param onCardDetection Invoked with detection metadata and a callback-scoped bitmap transfer.
+ * @param onCardDetection Invoked on a library worker thread with detection metadata and a bitmap
+ * owned by the application. The application must recycle it after its final use.
+ * @param onCaptureRequested Invoked on a library worker thread with the retained best detection
+ * and an independent bitmap copy. The application owns and must recycle it after its final use.
  * @param controlOverlay A scoped Compose slot allowing custom overlays via [CardDetectorOverlayScope].
  */
 @Composable
@@ -63,13 +68,14 @@ fun CardTrackingSimulator(
     cardFilters: List<CardValidator> = listOf(
         MarginValidator(), AspectRatioValidator()
     ),
-    onCardDetection: (CardDetection, BitmapTransfer) -> Unit,
-    onCaptureRequested: (CardDetection, BitmapTransfer) -> Unit = { _, _ -> },
+    onCardDetection: (CardDetection, Bitmap) -> Unit,
+    onCaptureRequested: (CardDetection, Bitmap) -> Unit = { _, _ -> },
     onBackRequested: () -> Unit = {},
 
     controlOverlay: @Composable CardDetectorOverlayScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
+    val captureScope = rememberCoroutineScope()
     val sizeInPixels = remember { MutableStateFlow(IntSize.Zero) }
     val detectorViewModelKey = detectorViewModelKey(
         component = DetectorComponent.SIMULATOR,
@@ -134,7 +140,6 @@ fun CardTrackingSimulator(
         val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
 
 
-
         val overlayScope = remember(
             cardDetection,
             latestBestDetection,
@@ -155,7 +160,9 @@ fun CardTrackingSimulator(
                 cameraPreset = cameraPreset,
                 classLabels = classLabels,
                 onCaptureRequested = {
-                    viewModel.captureLatest(onCaptureRequested)
+                    captureScope.launch {
+                        viewModel.captureLatest(onCaptureRequested)
+                    }
                 },
                 onBackRequested = onBackRequested,
                 onFlashlightToggleRequested = {}

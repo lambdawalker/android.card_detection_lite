@@ -59,8 +59,8 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         ),
                         cameraPreset = CameraPreset.Default,
                         isDetectionEnabled = isDetectionEnabled,
-                        onCardDetection = mainViewModel::onDetection,
-                        onCaptureRequested = mainViewModel::onCaptureRequested,
+                        onCardDetection = mainViewModel::onCardDetection,
+                        onCaptureRequested = mainViewModel::onCapture,
                         onBackRequested = mainViewModel::onBackRequested,
                         controlOverlay = {
                             IdCaptureOverlay()

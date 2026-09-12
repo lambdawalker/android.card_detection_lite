@@ -3,11 +3,15 @@ package com.apexfission.android.carddetectionlite.ui.detector
 import android.graphics.Bitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
-import com.apexfission.android.carddetectionlite.resource.BitmapTransfer
-import com.apexfission.android.carddetectionlite.resource.withBitmapTransfer
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 
 /** Thread-safe owner of the highest-confidence image retained for capture. */
-internal class LatestBestDetectionStore {
+internal class LatestBestDetectionStore(
+    private val workerDispatcher: CoroutineDispatcher = Dispatchers.Default,
+) {
     private data class Entry(
         val detection: CardDetection,
         val bitmap: Bitmap,
@@ -38,7 +42,9 @@ internal class LatestBestDetectionStore {
 
     fun detection(): CardDetection? = synchronized(lock) { entry?.detection }
 
-    fun withTransfer(block: (CardDetection, BitmapTransfer) -> Unit): Boolean {
+    suspend fun withCopy(
+        block: (CardDetection, Bitmap) -> Unit,
+    ): Boolean = withContext(workerDispatcher) {
         val snapshot = synchronized(lock) {
             entry?.let { current ->
                 val copy = checkNotNull(
@@ -49,12 +55,17 @@ internal class LatestBestDetectionStore {
                 ) { "Unable to copy the retained card bitmap." }
                 Entry(current.detection, copy)
             }
-        } ?: return false
+        } ?: return@withContext false
 
-        withBitmapTransfer(snapshot.bitmap) { transfer ->
-            block(snapshot.detection, transfer)
+        try {
+            coroutineContext.ensureActive()
+        } catch (throwable: Throwable) {
+            snapshot.bitmap.recycle()
+            throw throwable
         }
-        return true
+
+        block(snapshot.detection, snapshot.bitmap)
+        true
     }
 
     fun clear() {
