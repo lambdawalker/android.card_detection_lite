@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.Color
  * @property resetAnimationDurationMs Duration in milliseconds for guide reset animation back to center. Defaults to 300ms.
  * @property fadeAnimationDurationMs Duration in milliseconds for opacity fade animation when card is missing. Defaults to 1,000ms.
  * @property enableGuideSmoothing Whether to smooth bounding box coordinates to prevent jitter. Defaults to true.
+ * @property enableContinuousAnimations Whether breathing and sweep animations run while the guide is visible and tracking.
+ * Defaults to false because the built-in ID capture guide does not consume those values.
  * @property guideSmoothingFactor Smoothing factor between 0f and 1f for coordinate interpolation when smoothing is enabled. Defaults to 0.2f.
  * @property requiresCardDetectionForCapture When true, capture button is disabled until at least one valid card detection exists. Defaults to true.
  * @property title Header text displayed at the top of the overlay. Defaults to "Verify Your Identity".
@@ -39,5 +41,6 @@ data class IdCaptureOverlayConfig(
     val title: String = "Verify Your Identity",
     val instructionTitle: String = "Position your ID within the frame",
     val instructionSubTitle: String = "We'll use this to pre-fill your information securely",
-    val guideColor: Color = Color(0xFF2979FF)
+    val guideColor: Color = Color(0xFF2979FF),
+    val enableContinuousAnimations: Boolean = false,
 )

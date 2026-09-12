@@ -78,6 +78,7 @@ data class AnimatedDetectionBounds(
  * @property fadeAnimationDurationMs Duration in milliseconds for opacity fade animation when card is missing. Defaults to 1,000ms.
  * @property enableGuideSmoothing Whether to enable coordinate transition smoothing. Defaults to true.
  * @property resetPositionOnMissing Whether to animate bounds back to default center when missing (`true`), or leave bounds at last known detected position (`false`). Defaults to `true`.
+ * @property enableContinuousAnimations Whether breathing and sweep animations run while the guide is visible and tracking.
  */
 @Immutable
 data class DetectionAnimationConfig(
@@ -89,5 +90,6 @@ data class DetectionAnimationConfig(
     val resetAnimationDurationMs: Int = 300,
     val fadeAnimationDurationMs: Int = 1_000,
     val enableGuideSmoothing: Boolean = true,
-    val resetPositionOnMissing: Boolean = true
+    val resetPositionOnMissing: Boolean = true,
+    val enableContinuousAnimations: Boolean = true,
 )

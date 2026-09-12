@@ -239,29 +239,43 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         label = "smoothProgress"
     )
 
-    // Continuous breathing pulse
-    val infiniteTransition = rememberInfiniteTransition(label = "detection_bounds_infinite")
-
-    val breathe by infiniteTransition.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.04f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "breathe"
+    val runContinuousAnimations = shouldRunContinuousAnimations(
+        isTracking = guideState == InternalGuideState.TRACKING,
+        opacity = animatedOpacity,
+        motionEnabled = config.enableContinuousAnimations,
+        hasVisibleBounds = animatedRight > animatedLeft && animatedBottom > animatedTop,
     )
 
-    // Continuous sweep phase
-    val sweepPhase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sweepPhase"
-    )
+    var breathe = 1f
+    var sweepPhase = 0f
+    if (runContinuousAnimations) {
+        // Leaving this branch removes the infinite transition from the composition, stopping
+        // its frame clock rather than merely ignoring continuously changing output values.
+        val infiniteTransition = rememberInfiniteTransition(label = "detection_bounds_infinite")
+
+        val animatedBreathe by infiniteTransition.animateFloat(
+            initialValue = 0.96f,
+            targetValue = 1.04f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1600, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "breathe"
+        )
+
+        val animatedSweepPhase by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1200, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "sweepPhase"
+        )
+
+        breathe = animatedBreathe
+        sweepPhase = animatedSweepPhase
+    }
 
     return AnimatedDetectionBounds(
         left = animatedLeft,
@@ -277,6 +291,13 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         activeDetection = activeDetection
     )
 }
+
+internal fun shouldRunContinuousAnimations(
+    isTracking: Boolean,
+    opacity: Float,
+    motionEnabled: Boolean,
+    hasVisibleBounds: Boolean,
+): Boolean = isTracking && opacity.isFinite() && opacity > 0f && motionEnabled && hasVisibleBounds
 
 /**
  * Renders a full-screen [Canvas] providing animated card detection bounds and state in [AnimatedDetectionScope].

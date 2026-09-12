@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureOverlayConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -21,6 +22,7 @@ class IdCaptureOverlayConfigTest {
         assertEquals(300, config.resetAnimationDurationMs)
         assertEquals(1_000, config.fadeAnimationDurationMs)
         assertTrue(config.enableGuideSmoothing)
+        assertFalse(config.enableContinuousAnimations)
         assertEquals(0.2f, config.guideSmoothingFactor, 0.001f)
         assertTrue(config.requiresCardDetectionForCapture)
         assertEquals("Verify Your Identity", config.title)

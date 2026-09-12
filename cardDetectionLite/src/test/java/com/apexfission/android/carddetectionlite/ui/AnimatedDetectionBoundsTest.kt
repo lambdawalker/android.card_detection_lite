@@ -47,6 +47,7 @@ class AnimatedDetectionBoundsTest {
         assertEquals(300, config.resetAnimationDurationMs)
         assertEquals(1_000, config.fadeAnimationDurationMs)
         assertTrue(config.enableGuideSmoothing)
+        assertTrue(config.enableContinuousAnimations)
         assertTrue(config.resetPositionOnMissing)
     }
 

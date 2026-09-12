@@ -74,7 +74,8 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
                 trackingAnimationDurationMs = config.trackingAnimationDurationMs,
                 resetAnimationDurationMs = config.resetAnimationDurationMs,
                 fadeAnimationDurationMs = config.fadeAnimationDurationMs,
-                enableGuideSmoothing = config.enableGuideSmoothing
+                enableGuideSmoothing = config.enableGuideSmoothing,
+                enableContinuousAnimations = config.enableContinuousAnimations,
             )
         ) {
             val left = bounds.left
