@@ -67,8 +67,8 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
 
-    implementation("androidx.media3:media3-inspector:1.11.0")
-    implementation("androidx.media3:media3-inspector-frame:1.11.0")
+    implementation(libs.androidx.media3.inspector)
+    implementation(libs.androidx.media3.inspectorframe)
 
     /* ---------------- TensorFlow Lite ---------------- */
     implementation(libs.litert.gpu)
@@ -99,16 +99,16 @@ dependencies {
 
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(project(":tfmodel"))
-    androidTestImplementation("androidx.test.services:storage:1.4.2")
-    androidTestUtil("androidx.test.services:test-services:1.4.2")
+    androidTestImplementation(libs.androidx.testservices.storage)
+    androidTestUtil(libs.androidx.testservices.testservices)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(libs.junit)
-    testImplementation("org.mockito:mockito-core:5.11.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
 }
 
 
