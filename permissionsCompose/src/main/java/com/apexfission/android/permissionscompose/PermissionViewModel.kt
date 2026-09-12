@@ -28,8 +28,13 @@ class PermissionViewModel : ViewModel() {
      * @return The remembered [PermissionState] for `android.Manifest.permission.CAMERA`.
      */
     @Composable
-    fun rememberCameraPermissionState(): PermissionState {
-        return rememberPermissionState(Manifest.permission.CAMERA)
+    fun rememberCameraPermissionState(
+        onPermissionResult: (Boolean) -> Unit = {},
+    ): PermissionState {
+        return rememberPermissionState(
+            permission = Manifest.permission.CAMERA,
+            onPermissionResult = onPermissionResult,
+        )
     }
 
     /**

@@ -80,6 +80,7 @@ data class PermissionFeature(
  *             app's functionality.
  * @param features A list of [PermissionFeature]s to be displayed as bullet points, highlighting
  *                 the concrete benefits the user will gain by granting the permission.
+ * @param primaryActionText Text displayed by the primary permission or recovery action.
  */
 @Composable
 fun PermissionScreen(
@@ -95,7 +96,8 @@ fun PermissionScreen(
             title = stringResource(R.string.permission_feature_title_identity),
             subtitle = stringResource(R.string.permission_feature_subtitle_identity)
         )
-    )
+    ),
+    primaryActionText: String = stringResource(R.string.camera_permission_allow),
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -136,7 +138,7 @@ fun PermissionScreen(
             Button(onClick = onAllow, modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp), shape = RoundedCornerShape(12.dp)) {
-                Text("Allow Camera Access", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(primaryActionText, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
             TextButton(onClick = onNotNow, modifier = Modifier.fillMaxWidth()) {
                 Text("Not Now", fontWeight = FontWeight.SemiBold)

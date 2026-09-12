@@ -9,6 +9,9 @@ Built on top of Google Accompanist Permissions, it abstracts runtime permission 
 ## Key Features
 
 - **`HandleCameraPermission`**: Top-level composable wrapper that manages `Manifest.permission.CAMERA` state.
+- **Host-driven request**: Merely composing the permission gate never launches the Android dialog.
+- **Explicit states**: Distinguishes first request, rationale, permanent denial, and grant.
+- **Settings recovery**: Exposes an action that opens this application's system settings.
 - **Graceful Fallbacks**:
   - `onBack`: Triggered when the user presses back or navigates away.
   - `onNotNow`: Triggered when permission is declined.
@@ -24,6 +27,30 @@ dependencies {
     implementation(project(":permissionsCompose"))
 }
 ```
+
+For fully custom contextual UI, observe the controller directly:
+
+```kotlin
+@Composable
+fun CameraPermissionGate() {
+    val cameraPermission = rememberCameraPermissionController()
+
+    when (cameraPermission.status) {
+        CameraPermissionStatus.Granted -> CameraContent()
+        CameraPermissionStatus.NotRequested,
+        CameraPermissionStatus.RationaleRequired -> PermissionExplanation(
+            onContinue = cameraPermission::requestPermission,
+        )
+        CameraPermissionStatus.PermanentlyDenied -> PermissionSettingsRecovery(
+            onOpenSettings = cameraPermission::openAppSettings,
+        )
+    }
+}
+```
+
+The request and settings actions only run when the host invokes them. `PermanentlyDenied` is
+derived from Android's rationale signal plus a persisted record that this library previously
+launched the camera request.
 
 ---
 
