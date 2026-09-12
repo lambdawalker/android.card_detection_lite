@@ -108,7 +108,8 @@ fun CardDetectorLite(
 
     val flashlightEnabled by viewModel.flashlightEnabled.collectAsStateWithLifecycle()
     val flashlightAvailable by viewModel.flashlightAvailable.collectAsStateWithLifecycle()
-    val cardDetection by viewModel.cardDetection.collectAsStateWithLifecycle()
+    val detectionFrame by viewModel.detectionFrame.collectAsStateWithLifecycle()
+    val cardDetection = detectionFrame.detection
     val latestBestDetection by viewModel.latestBestDetection.collectAsStateWithLifecycle()
     val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
 
@@ -133,6 +134,7 @@ fun CardDetectorLite(
 
         val overlayScope = remember(
             cardDetection,
+            detectionFrame.sequence,
             latestBestDetection,
             imageSpaceChain,
             flashlightAvailable,
@@ -146,6 +148,7 @@ fun CardDetectorLite(
         ) {
             CardDetectorOverlayScopeImpl(
                 detectionState = cardDetection,
+                detectionSequence = detectionFrame.sequence,
                 latestBestDetection = latestBestDetection,
                 imageSpaceChain = imageSpaceChain,
                 flashlightAvailable = flashlightAvailable,

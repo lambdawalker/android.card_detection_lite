@@ -53,6 +53,10 @@ class CardDetectorLiteViewModel(
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection: StateFlow<CardDetection?> = _cardDetection.asStateFlow()
 
+    private val detectionFrameSequencer = DetectionFrameSequencer()
+    private val _detectionFrame = MutableStateFlow(DetectionFrame.Initial)
+    internal val detectionFrame: StateFlow<DetectionFrame> = _detectionFrame.asStateFlow()
+
     private val _latestBestDetection = MutableStateFlow<CardDetection?>(null)
     val latestBestDetection: StateFlow<CardDetection?> = _latestBestDetection.asStateFlow()
 
@@ -90,6 +94,7 @@ class CardDetectorLiteViewModel(
 
         if (!enabled) {
             _cardDetection.value = null
+            _detectionFrame.value = detectionFrameSequencer.reset()
         }
     }
 
@@ -156,7 +161,7 @@ class CardDetectorLiteViewModel(
                     }
 
                     if (adjustedCard == null) {
-                        _cardDetection.value = null
+                        publishDetectionFrame(null)
                         return@launch
                     }
 
@@ -165,8 +170,7 @@ class CardDetectorLiteViewModel(
                     if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
                         _latestBestDetection.value = adjustedCard
                     }
-                    _cardDetection.value = adjustedCard
-
+                    publishDetectionFrame(adjustedCard)
                     deliveryBitmap = null
                     onDetection(adjustedCard, detectedCardBitmap)
                 } catch (t: Throwable) {
@@ -188,6 +192,11 @@ class CardDetectorLiteViewModel(
                 frameProcessingGate.release()
             }
         }
+    }
+
+    private fun publishDetectionFrame(detection: CardDetection?) {
+        _cardDetection.value = detection
+        _detectionFrame.value = detectionFrameSequencer.next(detection)
     }
 
     suspend fun captureLatest(
