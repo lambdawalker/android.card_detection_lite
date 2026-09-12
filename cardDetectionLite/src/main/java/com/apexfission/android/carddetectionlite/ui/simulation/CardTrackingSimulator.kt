@@ -49,7 +49,9 @@ import kotlinx.coroutines.launch
  * @param cameraPreset CameraX lens and focus configuration preset ([CameraPreset]). Defaults to [CameraPreset.Default].
  * @param cardFilters List of card validators.
  * @param onCardDetection Invoked on a library worker thread with detection metadata and a bitmap
- * owned by the application. The application must recycle it after its final use.
+ * owned by the application. The application must recycle it after its final use. Delivery is
+ * serial and does not block inference. While a callback is running, only the latest pending
+ * detection is retained; an older pending detection may be dropped before callback invocation.
  * @param onCaptureRequested Invoked on a library worker thread with the retained best detection
  * and an independent bitmap copy. The application owns and must recycle it after its final use.
  * @param controlOverlay A scoped Compose slot allowing custom overlays via [CardDetectorOverlayScope].

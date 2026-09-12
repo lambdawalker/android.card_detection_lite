@@ -88,6 +88,14 @@ class CardDetectorLiteViewModel(
     private val lastInferenceMs = AtomicLong(0L)
     private val frameProcessingGate = SingleFlightGate()
     private val latestBestDetectionStore = LatestBestDetectionStore()
+    private val detectionCallbackDispatcher = LatestCallbackDispatcher<Pair<CardDetection, Bitmap>>(
+        scope = viewModelScope,
+        dispatcher = Dispatchers.Default,
+        releaseUndelivered = { (_, bitmap) -> bitmap.recycle() },
+        onCallbackFailure = { throwable ->
+            Log.e("CardDetectorCallback", "onCardDetection failed", throwable)
+        },
+    )
 
     fun setDetectionEnabled(enabled: Boolean) {
         detector.enabled = enabled
@@ -171,8 +179,10 @@ class CardDetectorLiteViewModel(
                         _latestBestDetection.value = adjustedCard
                     }
                     publishDetectionFrame(adjustedCard)
+                    detectionCallbackDispatcher.submit(adjustedCard to detectedCardBitmap) { (detection, bitmap) ->
+                        onDetection(detection, bitmap)
+                    }
                     deliveryBitmap = null
-                    onDetection(adjustedCard, detectedCardBitmap)
                 } catch (t: Throwable) {
                     Log.e("YOLO", "Inference failed", t)
                 } finally {
@@ -205,6 +215,7 @@ class CardDetectorLiteViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        detectionCallbackDispatcher.close()
         latestBestDetectionStore.clear()
         detector.close()
     }
