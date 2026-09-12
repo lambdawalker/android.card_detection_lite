@@ -10,7 +10,6 @@ import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
-import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
@@ -60,7 +59,7 @@ class TfliteInterpreter(
     private var gpuDelegate: GpuDelegate? = null
     private var isClosed = false
 
-    /** Direct buffer for model input. Its size is adjusted based on the model's data type ([isInt8]). */
+    /** Direct buffer for model input. Its size is adjusted based on the input tensor datatype ([isInt8]). */
     private val inputBuffer: ByteBuffer
 
     /** A reusable array to hold raw pixel data from the input bitmap, avoiding per-frame allocations. */
@@ -69,13 +68,14 @@ class TfliteInterpreter(
     private val outCount: Int
     private val outByteBuffer: ByteBuffer
     private val outFloats: FloatArray
+    private val isOutputInt8: Boolean
 
     private val inScale: Float
     private val inZeroPoint: Int
     private val outScale: Float
     private val outZeroPoint: Int
 
-    /** `true` if the loaded model uses INT8 quantization, `false` if it uses FP32. */
+    /** `true` if the model input uses INT8 quantization, `false` if it uses FP32. */
     val isInt8: Boolean
 
     /** The required width and height of the square input image for the model (e.g., 640 for a 640x640 model). */
@@ -112,34 +112,47 @@ class TfliteInterpreter(
     init {
         val modelBuffer = loadModelFile(context, modelPath)
 
-        // 1. Probe Metadata: Use a temporary interpreter to determine tensor shapes and properties.
+        // 1. Probe and validate metadata before allocating buffers or creating delegates.
         var temp: Interpreter? = null
-        try {
+        val contract = try {
             temp = Interpreter(modelBuffer)
-            val inputTensor = temp.getInputTensor(0)
-            val outputTensor = temp.getOutputTensor(0)
+            require(temp.inputTensorCount == 1) {
+                "model must expose exactly 1 input tensor, but exposed ${temp.inputTensorCount}"
+            }
+            require(temp.outputTensorCount == 1) {
+                "model must expose exactly 1 output tensor, but exposed ${temp.outputTensorCount}"
+            }
 
-            isInt8 = inputTensor.dataType() == DataType.INT8
-            inputImageWidth = inputTensor.shape()[1]
-
-            val oShape = outputTensor.shape()
-            outCount = oShape.reduce { a, b -> a * b }
-
-            // Heuristic to detect the output layout based on typical YOLO dimensions.
-            val dim1 = oShape[1]
-            val dim2 = oShape[2]
-            outLayout = if (dim2 >= 400 && dim1 <= 256) OutputLayout.ATTRS_X_BOXES else OutputLayout.BOXES_X_ATTRS
-            outAttrs = if (outLayout == OutputLayout.ATTRS_X_BOXES) dim1 else dim2
-            outBoxes = if (outLayout == OutputLayout.ATTRS_X_BOXES) dim2 else dim1
-            numClasses = outAttrs - 4
+            TensorContractValidator.validate(
+                input = temp.getInputTensor(0).toMetadata(),
+                output = temp.getOutputTensor(0).toMetadata(),
+            )
+        } catch (e: Exception) {
+            throw TfliteInitializationException(
+                "Model tensor contract is unsupported for '$modelPath': ${e.message}",
+                e,
+            )
         } finally {
             temp?.close()
         }
 
-        Log.i(TAG, "Config: $numClasses classes, $outBoxes boxes, Layout: $outLayout, Int8: $isInt8")
+        isInt8 = contract.isInputInt8
+        isOutputInt8 = contract.isOutputInt8
+        inputImageWidth = contract.inputImageWidth
+        outCount = contract.outputElementCount
+        outLayout = contract.outputLayout
+        outAttrs = contract.outputAttributes
+        outBoxes = contract.outputBoxes
+        numClasses = outAttrs - 4
+
+        Log.i(
+            TAG,
+            "Config: $numClasses classes, $outBoxes boxes, Layout: $outLayout, " +
+                "Input INT8: $isInt8, Output INT8: $isOutputInt8",
+        )
 
         // 2. Configure Final Interpreter with appropriate options.
-        pixelBuffer = IntArray(inputImageWidth * inputImageWidth)
+        pixelBuffer = IntArray(contract.inputElementCount / 3)
         val options = Interpreter.Options().apply {
             setNumThreads(numThreads.toInt())
         }
@@ -175,9 +188,8 @@ class TfliteInterpreter(
             }
 
             // 4. Allocate I/O Buffers.
-            val bytesPerChannel = if (isInt8) 1 else 4
-            inputBuffer = ByteBuffer.allocateDirect(1 * inputImageWidth * inputImageWidth * 3 * bytesPerChannel).order(ByteOrder.nativeOrder())
-            outByteBuffer = ByteBuffer.allocateDirect(outCount * bytesPerChannel).order(ByteOrder.nativeOrder())
+            inputBuffer = ByteBuffer.allocateDirect(contract.inputByteCount).order(ByteOrder.nativeOrder())
+            outByteBuffer = ByteBuffer.allocateDirect(contract.outputByteCount).order(ByteOrder.nativeOrder())
             outFloats = FloatArray(outCount)
 
             // Transfer ownership on successful construction
@@ -221,7 +233,7 @@ class TfliteInterpreter(
 
         // Extract results and de-quantize if necessary.
         outByteBuffer.rewind()
-        if (isInt8) {
+        if (isOutputInt8) {
             for (i in 0 until outCount) {
                 val q = outByteBuffer.get().toInt()
                 outFloats[i] = (q - outZeroPoint) * outScale
@@ -264,6 +276,16 @@ class TfliteInterpreter(
     /** Applies the quantization formula to a single float value. */
     private fun quantizeToInt8(v: Float, zeroPoint: Int): Byte =
         (v + zeroPoint).toInt().coerceIn(-128, 127).toByte()
+
+    private fun org.tensorflow.lite.Tensor.toMetadata(): TensorMetadata {
+        val quantization = quantizationParams()
+        return TensorMetadata(
+            shape = shape(),
+            dataType = dataType(),
+            quantizationScale = quantization.scale,
+            quantizationZeroPoint = quantization.zeroPoint,
+        )
+    }
 
     /** Loads the TFLite model from assets into a direct ByteBuffer. */
     private fun loadModelFile(context: Context, assetPath: String): ByteBuffer {
