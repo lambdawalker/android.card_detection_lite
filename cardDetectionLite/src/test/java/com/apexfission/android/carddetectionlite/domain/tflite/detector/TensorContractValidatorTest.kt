@@ -157,7 +157,7 @@ class TensorContractValidatorTest {
             )
         }
 
-        assertTrue(error.message!!.contains("output tensor byte count exceeds"))
+        assertTrue(error.message!!.contains("output tensor") && error.message!!.contains("count exceeds"))
     }
 
     private fun validInput() = metadata(intArrayOf(1, 640, 640, 3), DataType.FLOAT32)

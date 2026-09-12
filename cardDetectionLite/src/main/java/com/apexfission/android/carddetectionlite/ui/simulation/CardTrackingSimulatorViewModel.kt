@@ -20,6 +20,7 @@ import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import com.apexfission.android.carddetectionlite.ui.detector.SingleFlightGate
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,6 +93,7 @@ class CardTrackingSimulatorViewModel(
     /** Takes ownership of [bitmap] and guarantees that it is eventually recycled. */
     fun processBitmap(
         bitmap: Bitmap,
+        canvasSize: IntSize = IntSize.Zero,
         onDetection: (CardDetection, Bitmap) -> Unit,
     ) {
         val ownedFrame = OwnedFrameBitmap(bitmap)
@@ -116,10 +118,11 @@ class CardTrackingSimulatorViewModel(
                 if (now - lastInferenceMs.get() < inferenceIntervalMs) return@launch
                 lastInferenceMs.set(now)
 
+                val targetCanvasSize = if (canvasSize != IntSize.Zero) canvasSize else IntSize(bitmap.width, bitmap.height)
                 val croppedResult = cropWithOffset(
                     preProcessingImageTransformation,
                     bitmap,
-                    IntSize(bitmap.width, bitmap.height)
+                    targetCanvasSize
                 )
                 croppedBitmap = croppedResult.bitmap
 
@@ -149,8 +152,10 @@ class CardTrackingSimulatorViewModel(
                 deliveryBitmap = null
                 onDetection(adjustedCard, detectedCardBitmap)
 
-            } catch (t: Throwable) {
-                Log.e("Simulation", "Processing failed", t)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("Simulation", "Processing failed", e)
             } finally {
                 if (croppedBitmap != null && croppedBitmap != bitmap) {
                     croppedBitmap.recycle()

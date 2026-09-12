@@ -38,6 +38,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import kotlinx.coroutines.CancellationException
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -186,7 +187,11 @@ fun CameraPreview(
                     }
 
                     onFrameState.value(imageProxy, spaceChain)
-                } catch (_: Throwable) {
+                } catch (e: CancellationException) {
+                    imageProxy.close()
+                    throw e
+                } catch (e: Exception) {
+                    Log.e("CAM", "Frame processing failed", e)
                     imageProxy.close()
                 }
             }

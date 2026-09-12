@@ -119,6 +119,8 @@ fun CardTrackingSimulator(
     val latestBestDetection by viewModel.latestBestDetection.collectAsStateWithLifecycle()
     val imageSpaceChainFlow = remember { MutableStateFlow<ImageSpaceChain?>(null) }
 
+    val viewportSize by sizeInPixels.collectAsStateWithLifecycle()
+
     Box(
         modifier
             .fillMaxSize()
@@ -133,7 +135,9 @@ fun CardTrackingSimulator(
                 imageSpaceChainFlow.value = imageSpaceChain
                 Log.d("onFrame", "${bitmap.width} x ${bitmap.height}")
                 viewModel.processBitmap(
-                    bitmap, onCardDetection
+                    bitmap = bitmap,
+                    canvasSize = viewportSize,
+                    onDetection = onCardDetection
                 )
             },
         )

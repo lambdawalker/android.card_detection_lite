@@ -10,7 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -106,6 +108,8 @@ fun CardDetectorLite(
         viewModel.setDetectionEnabled(isDetectionEnabled)
     }
 
+    val sizeInPixels = remember { MutableStateFlow(IntSize.Zero) }
+    val viewportSize by sizeInPixels.collectAsStateWithLifecycle()
     val flashlightEnabled by viewModel.flashlightEnabled.collectAsStateWithLifecycle()
     val flashlightAvailable by viewModel.flashlightAvailable.collectAsStateWithLifecycle()
     val detectionFrame by viewModel.detectionFrame.collectAsStateWithLifecycle()
@@ -113,13 +117,23 @@ fun CardDetectorLite(
     val latestBestDetection by viewModel.latestBestDetection.collectAsStateWithLifecycle()
     val imageSpaceChain by imageSpaceChainFlow.collectAsStateWithLifecycle()
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onSizeChanged { size ->
+                sizeInPixels.value = size
+            }
+    ) {
 
         CameraPreview(
             lifecycleOwner = LocalLifecycleOwner.current,
             onFrame = { imageProxy, spaceChain ->
                 imageSpaceChainFlow.value = spaceChain
-                viewModel.processImage(imageProxy, onCardDetection)
+                viewModel.processImage(
+                    imageProxy = imageProxy,
+                    canvasSize = viewportSize,
+                    onDetection = onCardDetection
+                )
             },
             onFocusEvent = viewModel::onFocusEvent,
             flashlightEnabled = flashlightEnabled,

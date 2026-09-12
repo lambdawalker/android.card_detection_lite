@@ -21,6 +21,7 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBi
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -117,6 +118,7 @@ class CardDetectorLiteViewModel(
 
     fun processImage(
         imageProxy: ImageProxy,
+        canvasSize: IntSize = IntSize.Zero,
         onDetection: (CardDetection, Bitmap) -> Unit,
     ) {
         if (!detector.enabled) {
@@ -142,10 +144,11 @@ class CardDetectorLiteViewModel(
                     lastInferenceMs.set(now)
 
                     uprightBitmap = proxy.toUprightBitmap()
+                    val targetCanvasSize = if (canvasSize != IntSize.Zero) canvasSize else IntSize(uprightBitmap.width, uprightBitmap.height)
                     val croppedResult = cropWithOffset(
                         preProcessingImageTransformation,
                         uprightBitmap,
-                        IntSize(uprightBitmap.width, uprightBitmap.height)
+                        targetCanvasSize
                     )
                     croppedBitmap = croppedResult.bitmap
 
@@ -173,8 +176,10 @@ class CardDetectorLiteViewModel(
                     publishDetectionFrame(adjustedCard)
                     deliveryBitmap = null
                     onDetection(adjustedCard, detectedCardBitmap)
-                } catch (t: Throwable) {
-                    Log.e("YOLO", "Inference failed", t)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e("YOLO", "Inference failed", e)
                 } finally {
                     if (croppedBitmap != null && croppedBitmap != uprightBitmap) {
                         croppedBitmap.recycle()

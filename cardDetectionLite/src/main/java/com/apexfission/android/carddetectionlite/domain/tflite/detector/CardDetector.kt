@@ -2,7 +2,6 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector
 
 import android.graphics.Bitmap
 import android.os.SystemClock
-import android.util.Log
 import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
@@ -159,7 +158,6 @@ class CardDetector(
         bitmap: Bitmap
     ): CardDetection? {
         val currentTime = SystemClock.elapsedRealtime()
-        Log.d("CardTracker", "Raw results: ${result.size} ${cardValidators.size}")
 
         if (
             memoryDetectionTimeLimit > 0L &&
@@ -180,11 +178,7 @@ class CardDetector(
                 }
         }
 
-        Log.d("CardTracker", "Filtered results: ${candidates.size}")
-
         val card = selectCandidate(candidates)
-
-        Log.d("CardTracker", "Selected card: $card")
 
         if (card == null) {
             handleMissingDetection()
