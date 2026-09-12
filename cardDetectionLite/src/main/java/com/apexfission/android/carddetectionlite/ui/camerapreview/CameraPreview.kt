@@ -3,6 +3,8 @@ package com.apexfission.android.carddetectionlite.ui.camerapreview
 import android.util.Log
 import android.util.Size
 import android.view.MotionEvent
+import android.view.OrientationEventListener
+import android.view.Surface
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
@@ -119,12 +121,35 @@ fun CameraPreview(
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         val cameraSession = CameraProviderSession()
 
+        var activePreview: Preview? = null
+        var activeAnalysis: ImageAnalysis? = null
+
+        val orientationEventListener = object : OrientationEventListener(context) {
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation == ORIENTATION_UNKNOWN) return
+                val display = previewView.display ?: return
+                val rotation = display.rotation
+                runCatching {
+                    activePreview?.targetRotation = rotation
+                    activeAnalysis?.targetRotation = rotation
+                }
+            }
+        }
+        if (orientationEventListener.canDetectOrientation()) {
+            orientationEventListener.enable()
+        }
+
         val listener = Runnable {
             if (!cameraSession.isActive()) return@Runnable
             val cameraProvider = cameraProviderFuture.get()
-            val preview = Preview.Builder().build().also {
-                it.surfaceProvider = previewView.surfaceProvider
-            }
+            val displayRotation = previewView.display?.rotation ?: Surface.ROTATION_0
+
+            val preview = Preview.Builder()
+                .setTargetRotation(displayRotation)
+                .build().also {
+                    it.surfaceProvider = previewView.surfaceProvider
+                }
+            activePreview = preview
 
             val resolutionStrategy = ResolutionStrategy(
                 analysisTargetResolution, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
@@ -134,10 +159,11 @@ fun CameraPreview(
 
             val analysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetRotation(previewView.display.rotation)
+                .setTargetRotation(displayRotation)
                 .setResolutionSelector(resolutionSelector)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .build()
+            activeAnalysis = analysis
 
             analysis.setAnalyzer(analysisExecutor) { imageProxy ->
                 try {
@@ -201,6 +227,7 @@ fun CameraPreview(
         cameraProviderFuture.addListener(listener, mainExecutor)
 
         onDispose {
+            orientationEventListener.disable()
             onFlashlightAvailabilityChanged(false)
             runCatching { cameraSession.dispose() }
             analysisExecutor.shutdown()
@@ -218,7 +245,7 @@ fun CameraPreview(
     // --- Smart Auto-Focus Logic using AutoFocusPolicy ---
     val autoFocusPolicy = remember { AutoFocusPolicy() }
 
-    LaunchedEffect(focusOn, focusImageSpaceChain) {
+    LaunchedEffect(focusOn, focusImageSpaceChain, focusOnCardEnabled, cameraControl) {
         if (!focusOnCardEnabled) return@LaunchedEffect
         val control = cameraControl ?: return@LaunchedEffect
         val spaceChain = focusImageSpaceChain?.takeIf { it.isNotEmpty() } ?: return@LaunchedEffect
