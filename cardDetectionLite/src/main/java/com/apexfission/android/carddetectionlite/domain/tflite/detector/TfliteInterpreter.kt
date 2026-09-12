@@ -11,9 +11,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.util.concurrent.Executors
-import java.util.concurrent.RejectedExecutionException
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
@@ -59,14 +58,13 @@ class TfliteInterpreter(
         private const val TAG = "TfliteInterpreter"
     }
 
-    private var interpreter: Interpreter
+    private val interpreter: Interpreter
     private var gpuDelegate: GpuDelegate? = null
     private var isClosed = false
 
     private val engineExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "TfliteEngineThread")
     }
-    private val engineDispatcher = engineExecutor.asCoroutineDispatcher()
 
     internal var engineThreadId: Long = -1L
         private set
@@ -186,41 +184,76 @@ class TfliteInterpreter(
         outByteBuffer = ByteBuffer.allocateDirect(contract.outputByteCount).order(ByteOrder.nativeOrder())
         outFloats = FloatArray(outCount)
 
-        var localGpuDelegate: GpuDelegate? = null
-        var localInterpreter: Interpreter? = null
-
-        try {
-            runBlocking(engineDispatcher) {
+        val resources = try {
+            onEngineThread {
                 @Suppress("DEPRECATION")
                 engineThreadId = Thread.currentThread().id
-
-                if (useGpu && !isInt8) {
-                    try {
-                        val compat = CompatibilityList()
-                        if (compat.isDelegateSupportedOnThisDevice) {
-                            localGpuDelegate = GpuDelegate(compat.bestOptionsForThisDevice)
-                            options.addDelegate(localGpuDelegate)
+                var localGpuDelegate: GpuDelegate? = null
+                var localInterpreter: Interpreter? = null
+                try {
+                    if (useGpu && !isInt8) {
+                        try {
+                            CompatibilityList().use { compat ->
+                                if (compat.isDelegateSupportedOnThisDevice) {
+                                    localGpuDelegate = GpuDelegate(compat.bestOptionsForThisDevice)
+                                }
+                            }
+                        } catch (failure: Throwable) {
+                            localGpuDelegate?.close()
+                            localGpuDelegate = null
                         }
-                    } catch (_: Throwable) {
-                        localGpuDelegate?.close()
-                        localGpuDelegate = null
                     }
+                    localGpuDelegate?.let { options.addDelegate(it) }
+                    val initializedInterpreter = Interpreter(modelBuffer, options)
+                    localInterpreter = initializedInterpreter
+                    initializedInterpreter to localGpuDelegate
+                } catch (failure: Throwable) {
+                    // Partial initialization owns native resources until this block returns.
+                    // Cleanup must run on the same engine thread, including failure paths.
+                    try {
+                        localInterpreter?.close()
+                    } catch (cleanupFailure: Throwable) {
+                        failure.addSuppressed(cleanupFailure)
+                    }
+                    try {
+                        localGpuDelegate?.close()
+                    } catch (cleanupFailure: Throwable) {
+                        failure.addSuppressed(cleanupFailure)
+                    }
+                    throw failure
                 }
-
-                localInterpreter = Interpreter(modelBuffer, options)
-
-                // Transfer ownership on successful construction
-                interpreter = localInterpreter
-                gpuDelegate = localGpuDelegate
-                localInterpreter = null
-                localGpuDelegate = null
             }
-        } catch (e: Exception) {
+        } catch (failure: Throwable) {
             engineExecutor.shutdown()
-            throw TfliteInitializationException("Failed to initialize TFLite interpreter for model: $modelPath", e)
+            throw TfliteInitializationException(
+                "Failed to initialize TFLite interpreter for model: $modelPath", failure,
+            )
+        }
+        interpreter = resources.first
+        gpuDelegate = resources.second
+    }
+
+    /**
+     * Executes a synchronous operation on the private engine thread. An interrupted caller
+     * must not abandon native work and recycle its inputs while inference still uses them.
+     * Wait for completion, then restore the caller's interrupt status and unwrap failures.
+     * No application callbacks execute on this thread.
+     */
+    private fun <T> onEngineThread(block: () -> T): T {
+        val future = engineExecutor.submit(Callable { block() })
+        var interrupted = false
+        try {
+            while (true) {
+                try {
+                    return future.get()
+                } catch (_: InterruptedException) {
+                    interrupted = true
+                } catch (failure: ExecutionException) {
+                    throw (failure.cause ?: failure)
+                }
+            }
         } finally {
-            localInterpreter?.close()
-            localGpuDelegate?.close()
+            if (interrupted) Thread.currentThread().interrupt()
         }
     }
 
@@ -237,40 +270,36 @@ class TfliteInterpreter(
      *               to the model's required dimensions ([inputImageWidth] x [inputImageWidth]).
      * @return A flattened `FloatArray` containing the raw output of the model.
      */
+    @Synchronized
     fun runInference(bitmap: Bitmap): FloatArray {
         if (isClosed) return FloatArray(0)
-        return try {
-            runBlocking(engineDispatcher) {
-                if (isClosed) return@runBlocking FloatArray(0)
-                @Suppress("DEPRECATION")
-                lastInferenceThreadId = Thread.currentThread().id
-                val startTime = SystemClock.uptimeMillis()
+        return onEngineThread {
+            @Suppress("DEPRECATION")
+            lastInferenceThreadId = Thread.currentThread().id
+            val startTime = SystemClock.uptimeMillis()
 
-                // Fill the input buffer based on whether the model is quantized or not.
-                if (isInt8) fillBitmapToByteBuffer(bitmap, inputBuffer)
-                else fillBitmapToFloatBuffer(bitmap, inputBuffer)
+            // Fill the input buffer based on whether the model is quantized or not.
+            if (isInt8) fillBitmapToByteBuffer(bitmap, inputBuffer)
+            else fillBitmapToFloatBuffer(bitmap, inputBuffer)
 
-                outByteBuffer.rewind()
-                interpreter.run(inputBuffer, outByteBuffer)
+            outByteBuffer.rewind()
+            interpreter.run(inputBuffer, outByteBuffer)
 
-                // Extract results and de-quantize if necessary.
-                outByteBuffer.rewind()
-                if (isOutputInt8) {
-                    for (i in 0 until outCount) {
-                        val q = outByteBuffer.get().toInt()
-                        outFloats[i] = (q - outZeroPoint) * outScale
-                    }
-                } else {
-                    outByteBuffer.asFloatBuffer().get(outFloats)
+            // Extract results and de-quantize if necessary.
+            outByteBuffer.rewind()
+            if (isOutputInt8) {
+                for (i in 0 until outCount) {
+                    val q = outByteBuffer.get().toInt()
+                    outFloats[i] = (q - outZeroPoint) * outScale
                 }
-
-                lastInferenceTimeMs = SystemClock.uptimeMillis() - startTime
-                // Do not expose the reusable scratch array. Post-processing happens after this
-                // block returns, so another caller could otherwise overwrite it.
-                outFloats.copyOf()
+            } else {
+                outByteBuffer.asFloatBuffer().get(outFloats)
             }
-        } catch (_: RejectedExecutionException) {
-            FloatArray(0)
+
+            lastInferenceTimeMs = SystemClock.uptimeMillis() - startTime
+            // Do not expose the reusable scratch array. Post-processing happens after this
+            // block returns, so another caller could otherwise overwrite it.
+            outFloats.copyOf()
         }
     }
 
@@ -330,20 +359,25 @@ class TfliteInterpreter(
      * Closes the TFLite interpreter and releases associated resources like the GPU delegate.
      * This is crucial to call to prevent memory leaks.
      */
+    @Synchronized
     override fun close() {
         if (isClosed) return
+        // The monitor serializes admission with shutdown. No inference can submit after close.
+        isClosed = true
         try {
-            runBlocking(engineDispatcher) {
-                if (isClosed) return@runBlocking
-                isClosed = true
+            onEngineThread {
                 @Suppress("DEPRECATION")
                 closeThreadId = Thread.currentThread().id
-                interpreter.close()
-                gpuDelegate?.close()
-                gpuDelegate = null
+                try {
+                    interpreter.close()
+                } finally {
+                    try {
+                        gpuDelegate?.close()
+                    } finally {
+                        gpuDelegate = null
+                    }
+                }
             }
-        } catch (_: RejectedExecutionException) {
-            isClosed = true
         } finally {
             engineExecutor.shutdown()
         }
