@@ -10,6 +10,10 @@ import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
+import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.runBlocking
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
@@ -58,6 +62,20 @@ class TfliteInterpreter(
     private var interpreter: Interpreter
     private var gpuDelegate: GpuDelegate? = null
     private var isClosed = false
+
+    private val engineExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "TfliteEngineThread")
+    }
+    private val engineDispatcher = engineExecutor.asCoroutineDispatcher()
+
+    internal var engineThreadId: Long = -1L
+        private set
+
+    internal var lastInferenceThreadId: Long = -1L
+        private set
+
+    internal var closeThreadId: Long = -1L
+        private set
 
     /** Direct buffer for model input. Its size is adjusted based on the input tensor datatype ([isInt8]). */
     private val inputBuffer: ByteBuffer
@@ -128,6 +146,7 @@ class TfliteInterpreter(
                 output = temp.getOutputTensor(0).toMetadata(),
             )
         } catch (e: Exception) {
+            engineExecutor.shutdown()
             throw TfliteInitializationException(
                 "Model tensor contract is unsupported for '$modelPath': ${e.message}",
                 e,
@@ -145,6 +164,11 @@ class TfliteInterpreter(
         outBoxes = contract.outputBoxes
         numClasses = outAttrs - 4
 
+        inScale = contract.inputQuantizationScale
+        inZeroPoint = contract.inputQuantizationZeroPoint
+        outScale = contract.outputQuantizationScale
+        outZeroPoint = contract.outputQuantizationZeroPoint
+
         Log.i(
             TAG,
             "Config: $numClasses classes, $outBoxes boxes, Layout: $outLayout, " +
@@ -157,52 +181,46 @@ class TfliteInterpreter(
             setNumThreads(numThreads.toInt())
         }
 
+        // Allocate I/O Buffers.
+        inputBuffer = ByteBuffer.allocateDirect(contract.inputByteCount).order(ByteOrder.nativeOrder())
+        outByteBuffer = ByteBuffer.allocateDirect(contract.outputByteCount).order(ByteOrder.nativeOrder())
+        outFloats = FloatArray(outCount)
+
         var localGpuDelegate: GpuDelegate? = null
         var localInterpreter: Interpreter? = null
 
         try {
-            if (useGpu && !isInt8) {
-                try {
-                    val compat = CompatibilityList()
-                    if (compat.isDelegateSupportedOnThisDevice) {
-                        localGpuDelegate = GpuDelegate(compat.bestOptionsForThisDevice)
-                        options.addDelegate(localGpuDelegate)
+            runBlocking(engineDispatcher) {
+                @Suppress("DEPRECATION")
+                engineThreadId = Thread.currentThread().id
+
+                if (useGpu && !isInt8) {
+                    try {
+                        val compat = CompatibilityList()
+                        if (compat.isDelegateSupportedOnThisDevice) {
+                            localGpuDelegate = GpuDelegate(compat.bestOptionsForThisDevice)
+                            options.addDelegate(localGpuDelegate)
+                        }
+                    } catch (_: Throwable) {
+                        localGpuDelegate?.close()
+                        localGpuDelegate = null
                     }
-                } catch (_: Throwable) {
-                    localGpuDelegate?.close()
-                    localGpuDelegate = null
                 }
+
+                localInterpreter = Interpreter(modelBuffer, options)
+
+                // Transfer ownership on successful construction
+                interpreter = localInterpreter
+                gpuDelegate = localGpuDelegate
+                localInterpreter = null
+                localGpuDelegate = null
             }
-
-            localInterpreter = Interpreter(modelBuffer, options)
-
-            // 3. Cache Quantization Parameters for later use in data conversion.
-            localInterpreter.getInputTensor(0).quantizationParams().let {
-                inScale = it.scale
-                inZeroPoint = it.zeroPoint
-            }
-
-            localInterpreter.getOutputTensor(0).quantizationParams().let {
-                outScale = it.scale
-                outZeroPoint = it.zeroPoint
-            }
-
-            // 4. Allocate I/O Buffers.
-            inputBuffer = ByteBuffer.allocateDirect(contract.inputByteCount).order(ByteOrder.nativeOrder())
-            outByteBuffer = ByteBuffer.allocateDirect(contract.outputByteCount).order(ByteOrder.nativeOrder())
-            outFloats = FloatArray(outCount)
-
-            // Transfer ownership on successful construction
-            interpreter = localInterpreter
-            gpuDelegate = localGpuDelegate
-            localInterpreter = null
-            localGpuDelegate = null
         } catch (e: Exception) {
+            engineExecutor.shutdown()
             throw TfliteInitializationException("Failed to initialize TFLite interpreter for model: $modelPath", e)
         } finally {
             localInterpreter?.close()
             localGpuDelegate?.close()
-
         }
     }
 
@@ -219,33 +237,41 @@ class TfliteInterpreter(
      *               to the model's required dimensions ([inputImageWidth] x [inputImageWidth]).
      * @return A flattened `FloatArray` containing the raw output of the model.
      */
-    @Synchronized
     fun runInference(bitmap: Bitmap): FloatArray {
         if (isClosed) return FloatArray(0)
-        val startTime = SystemClock.uptimeMillis()
+        return try {
+            runBlocking(engineDispatcher) {
+                if (isClosed) return@runBlocking FloatArray(0)
+                @Suppress("DEPRECATION")
+                lastInferenceThreadId = Thread.currentThread().id
+                val startTime = SystemClock.uptimeMillis()
 
-        // Fill the input buffer based on whether the model is quantized or not.
-        if (isInt8) fillBitmapToByteBuffer(bitmap, inputBuffer)
-        else fillBitmapToFloatBuffer(bitmap, inputBuffer)
+                // Fill the input buffer based on whether the model is quantized or not.
+                if (isInt8) fillBitmapToByteBuffer(bitmap, inputBuffer)
+                else fillBitmapToFloatBuffer(bitmap, inputBuffer)
 
-        outByteBuffer.rewind()
-        interpreter.run(inputBuffer, outByteBuffer)
+                outByteBuffer.rewind()
+                interpreter.run(inputBuffer, outByteBuffer)
 
-        // Extract results and de-quantize if necessary.
-        outByteBuffer.rewind()
-        if (isOutputInt8) {
-            for (i in 0 until outCount) {
-                val q = outByteBuffer.get().toInt()
-                outFloats[i] = (q - outZeroPoint) * outScale
+                // Extract results and de-quantize if necessary.
+                outByteBuffer.rewind()
+                if (isOutputInt8) {
+                    for (i in 0 until outCount) {
+                        val q = outByteBuffer.get().toInt()
+                        outFloats[i] = (q - outZeroPoint) * outScale
+                    }
+                } else {
+                    outByteBuffer.asFloatBuffer().get(outFloats)
+                }
+
+                lastInferenceTimeMs = SystemClock.uptimeMillis() - startTime
+                // Do not expose the reusable scratch array. Post-processing happens after this
+                // block returns, so another caller could otherwise overwrite it.
+                outFloats.copyOf()
             }
-        } else {
-            outByteBuffer.asFloatBuffer().get(outFloats)
+        } catch (_: RejectedExecutionException) {
+            FloatArray(0)
         }
-
-        lastInferenceTimeMs = SystemClock.uptimeMillis() - startTime
-        // Do not expose the reusable scratch array. Post-processing happens after this
-        // synchronized method returns, so another caller could otherwise overwrite it.
-        return outFloats.copyOf()
     }
 
     /** Prepares bitmap data for an FP32 model by normalizing pixel values to the [0.0, 1.0] range. */
@@ -304,12 +330,22 @@ class TfliteInterpreter(
      * Closes the TFLite interpreter and releases associated resources like the GPU delegate.
      * This is crucial to call to prevent memory leaks.
      */
-    @Synchronized
     override fun close() {
         if (isClosed) return
-        interpreter.close()
-        gpuDelegate?.close()
-        gpuDelegate = null
-        isClosed = true
+        try {
+            runBlocking(engineDispatcher) {
+                if (isClosed) return@runBlocking
+                isClosed = true
+                @Suppress("DEPRECATION")
+                closeThreadId = Thread.currentThread().id
+                interpreter.close()
+                gpuDelegate?.close()
+                gpuDelegate = null
+            }
+        } catch (_: RejectedExecutionException) {
+            isClosed = true
+        } finally {
+            engineExecutor.shutdown()
+        }
     }
 }

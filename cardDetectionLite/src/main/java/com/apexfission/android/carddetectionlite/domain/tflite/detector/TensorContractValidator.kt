@@ -14,9 +14,13 @@ internal data class ModelTensorContract(
     val inputElementCount: Int,
     val inputByteCount: Int,
     val isInputInt8: Boolean,
+    val inputQuantizationScale: Float,
+    val inputQuantizationZeroPoint: Int,
     val outputElementCount: Int,
     val outputByteCount: Int,
     val isOutputInt8: Boolean,
+    val outputQuantizationScale: Float,
+    val outputQuantizationZeroPoint: Int,
     val outputLayout: TfliteInterpreter.OutputLayout,
     val outputAttributes: Int,
     val outputBoxes: Int,
@@ -56,9 +60,13 @@ internal object TensorContractValidator {
             inputElementCount = inputElementCount,
             inputByteCount = inputByteCount,
             isInputInt8 = input.dataType == DataType.INT8,
+            inputQuantizationScale = input.quantizationScale,
+            inputQuantizationZeroPoint = input.quantizationZeroPoint,
             outputElementCount = outputElementCount,
             outputByteCount = outputByteCount,
             isOutputInt8 = output.dataType == DataType.INT8,
+            outputQuantizationScale = output.quantizationScale,
+            outputQuantizationZeroPoint = output.quantizationZeroPoint,
             outputLayout = if (dim1 == attributes) {
                 TfliteInterpreter.OutputLayout.ATTRS_X_BOXES
             } else {
