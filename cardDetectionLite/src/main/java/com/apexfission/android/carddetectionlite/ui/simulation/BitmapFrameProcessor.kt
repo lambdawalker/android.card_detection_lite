@@ -9,6 +9,7 @@ import androidx.media3.effect.ByteBufferGlEffect
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import java.util.concurrent.Executor
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Media3 [ByteBufferGlEffect.Processor] implementation that captures video frames into [Bitmap] instances
@@ -23,12 +24,18 @@ import java.util.concurrent.Executor
 @UnstableApi
 class BitmapFrameProcessor(
     captureIntervalMs: Long,
-    private val callbackExecutor: Executor,
+    callbackExecutor: Executor,
     private val onConfigured: (width: Int, height: Int) -> Unit,
     private val onBitmap: (bitmap: Bitmap, presentationTimeUs: Long) -> Unit,
 ) : ByteBufferGlEffect.Processor<Unit> {
 
     private val captureIntervalUs = captureIntervalMs.coerceIn(0L, Long.MAX_VALUE / 1_000L) * 1_000L
+    private val lifecycleLock = Any()
+    private val released = AtomicBoolean(false)
+    private val bitmapCallbacks = ReleaseAwareCallbackDispatcher(
+        executor = callbackExecutor,
+        releaseUndelivered = Bitmap::recycle,
+    )
 
     private var width = 0
     private var height = 0
@@ -38,7 +45,9 @@ class BitmapFrameProcessor(
         width = inputWidth
         height = inputHeight
 
-        onConfigured(inputWidth, inputHeight)
+        synchronized(lifecycleLock) {
+            if (!released.get()) onConfigured(inputWidth, inputHeight)
+        }
 
         return Size(inputWidth, inputHeight)
     }
@@ -50,13 +59,15 @@ class BitmapFrameProcessor(
         image: ByteBufferGlEffect.Image,
         presentationTimeUs: Long
     ): ListenableFuture<Unit> {
+        if (released.get()) return Futures.immediateFuture(Unit)
+
         if (shouldCaptureFrame(presentationTimeUs)) {
             lastCaptureTimeUs = presentationTimeUs
 
             // Must copy while Media3's pixel buffer is still valid.
             val bitmap = image.copyToBitmap()
 
-            callbackExecutor.executeTransferring(bitmap) { transferredBitmap ->
+            bitmapCallbacks.submit(bitmap) { transferredBitmap ->
                 onBitmap(transferredBitmap, presentationTimeUs)
             }
         }
@@ -78,5 +89,10 @@ class BitmapFrameProcessor(
         result: Unit
     ) = Unit
 
-    override fun release() = Unit
+    override fun release() {
+        val firstRelease = synchronized(lifecycleLock) {
+            released.compareAndSet(false, true)
+        }
+        if (firstRelease) bitmapCallbacks.close()
+    }
 }
