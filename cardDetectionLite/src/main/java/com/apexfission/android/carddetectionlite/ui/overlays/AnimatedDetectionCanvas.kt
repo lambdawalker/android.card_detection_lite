@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
+import com.apexfission.android.carddetectionlite.ui.detector.ConsecutiveMissTracker
 import kotlinx.coroutines.delay
 
 private enum class InternalGuideState {
@@ -83,7 +84,7 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         )
     }
     var detectionToken by remember { mutableLongStateOf(0L) }
-    var consecutiveMisses by remember { mutableIntStateOf(0) }
+    val consecutiveMissTracker = remember { ConsecutiveMissTracker() }
     var isFirstDetection by remember { mutableStateOf(true) }
 
     var lastDetectedBoxScreen by remember { mutableStateOf<RectF?>(initialTargetBox) }
@@ -95,7 +96,20 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
     var opacityDurationMs by remember { mutableIntStateOf(config.fadeAnimationDurationMs) }
     var boundsDurationMs by remember { mutableIntStateOf(config.resetAnimationDurationMs) }
 
-    LaunchedEffect(activeDetection, spaceChain) {
+    LaunchedEffect(detectionSequence, spaceChain) {
+        if (detectionSequence == 0L) {
+            consecutiveMissTracker.reset()
+            guideState = InternalGuideState.IDLE
+            targetBox = fallbackCenterBox
+            targetOpacity = config.idleOpacity
+            return@LaunchedEffect
+        }
+
+        val consecutiveMisses = consecutiveMissTracker.record(
+            sequence = detectionSequence,
+            detected = activeDetection != null,
+        )
+
         if (activeDetection != null && spaceChain != null) {
             val rawBox = activeDetection.card.box.translate(spaceChain)
             val rectInScreen = RectF(
@@ -115,15 +129,12 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
             }
 
             isFirstDetection = false
-            consecutiveMisses = 0
             detectionToken++
             guideState = InternalGuideState.TRACKING
 
             targetOpacity = config.detectedOpacity
             opacityDurationMs = config.trackingAnimationDurationMs
-        } else {
-            consecutiveMisses++
-
+        } else if (activeDetection == null) {
             if (guideState == InternalGuideState.TRACKING || guideState == InternalGuideState.FADING) {
                 guideState = InternalGuideState.FADING
                 targetOpacity = config.idleOpacity

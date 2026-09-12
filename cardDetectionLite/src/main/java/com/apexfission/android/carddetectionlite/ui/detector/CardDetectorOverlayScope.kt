@@ -19,6 +19,12 @@ interface CardDetectorOverlayScope {
     val detectionState: CardDetection?
 
     /**
+     * Identity of the latest completed detector evaluation within the current enabled session.
+     * A new value is produced for every result, including consecutive misses.
+     */
+    val detectionSequence: Long get() = 0L
+
+    /**
      * Convenient alias for [detectionState].
      */
     val cardDetection: CardDetection? get() = detectionState
@@ -84,6 +90,7 @@ interface CardDetectorOverlayScope {
  */
 internal class CardDetectorOverlayScopeImpl(
     override val detectionState: CardDetection?,
+    override val detectionSequence: Long = 0L,
     override val latestBestDetection: CardDetection?,
     override val imageSpaceChain: ImageSpaceChain?,
     override val flashlightAvailable: Boolean,

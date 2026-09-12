@@ -13,6 +13,8 @@ import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValid
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
 import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
+import com.apexfission.android.carddetectionlite.ui.detector.DetectionFrame
+import com.apexfission.android.carddetectionlite.ui.detector.DetectionFrameSequencer
 import com.apexfission.android.carddetectionlite.ui.detector.LatestBestDetectionStore
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import com.apexfission.android.carddetectionlite.ui.detector.SingleFlightGate
@@ -49,6 +51,10 @@ class CardTrackingSimulatorViewModel(
     private val _cardDetection = MutableStateFlow<CardDetection?>(null)
     val cardDetection = _cardDetection.asStateFlow()
 
+    private val detectionFrameSequencer = DetectionFrameSequencer()
+    private val _detectionFrame = MutableStateFlow(DetectionFrame.Initial)
+    internal val detectionFrame = _detectionFrame.asStateFlow()
+
     private val _latestBestDetection = MutableStateFlow<CardDetection?>(null)
     val latestBestDetection = _latestBestDetection.asStateFlow()
 
@@ -79,6 +85,7 @@ class CardTrackingSimulatorViewModel(
         detector.enabled = enabled
         if (!enabled) {
             _cardDetection.value = null
+            _detectionFrame.value = detectionFrameSequencer.reset()
         }
     }
 
@@ -128,7 +135,7 @@ class CardTrackingSimulatorViewModel(
                 }
 
                 if (adjustedCard == null) {
-                    _cardDetection.value = null
+                    publishDetectionFrame(null)
                     return@launch
                 }
 
@@ -138,8 +145,7 @@ class CardTrackingSimulatorViewModel(
                 if (latestBestDetectionStore.offer(adjustedCard, detectedCardBitmap)) {
                     _latestBestDetection.value = adjustedCard
                 }
-                _cardDetection.value = adjustedCard
-
+                publishDetectionFrame(adjustedCard)
                 deliveryBitmap = null
                 onDetection(adjustedCard, detectedCardBitmap)
 
@@ -161,6 +167,11 @@ class CardTrackingSimulatorViewModel(
                 frameProcessingGate.release()
             }
         }
+    }
+
+    private fun publishDetectionFrame(detection: CardDetection?) {
+        _cardDetection.value = detection
+        _detectionFrame.value = detectionFrameSequencer.next(detection)
     }
 
     suspend fun captureLatest(
