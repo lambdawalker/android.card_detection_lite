@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +91,7 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
 
     var lastDetectedBoxScreen by remember { mutableStateOf<RectF?>(initialTargetBox) }
     var targetBox by remember { mutableStateOf<RectF?>(initialTargetBox) }
+    var lastLockOnProgress by remember { mutableFloatStateOf(activeDetection?.lockOnProgress?.coerceIn(0f, 1f) ?: 0f) }
 
     var targetOpacity by remember {
         mutableStateOf(if (activeDetection != null) config.detectedOpacity else config.idleOpacity)
@@ -128,6 +130,7 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
 
             lastDetectedBoxScreen = rectInScreen
             targetBox = rectInScreen
+            lastLockOnProgress = activeDetection.lockOnProgress.coerceIn(0f, 1f)
 
             if (isFirstDetection && (defaultBox == null || defaultBox.isEmpty)) {
                 boundsDurationMs = 0
@@ -229,7 +232,15 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
     )
 
     // Smooth spring lock-on progress
-    val rawProgress = activeDetection?.lockOnProgress?.coerceIn(0f, 1f) ?: 0f
+    val rawProgress = if (activeDetection != null) {
+        val prog = activeDetection.lockOnProgress.coerceIn(0f, 1f)
+        lastLockOnProgress = prog
+        prog
+    } else if (guideState == InternalGuideState.FADING) {
+        lastLockOnProgress
+    } else {
+        0f
+    }
     val smoothProgress by animateFloatAsState(
         targetValue = rawProgress,
         animationSpec = spring(
@@ -239,8 +250,10 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         label = "smoothProgress"
     )
 
+    val isTrackingOrFading = guideState == InternalGuideState.TRACKING || guideState == InternalGuideState.FADING
+
     val runContinuousAnimations = shouldRunContinuousAnimations(
-        isTracking = guideState == InternalGuideState.TRACKING,
+        isTracking = isTrackingOrFading,
         opacity = animatedOpacity,
         motionEnabled = config.enableContinuousAnimations,
         hasVisibleBounds = animatedRight > animatedLeft && animatedBottom > animatedTop,
@@ -287,7 +300,7 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         breathe = breathe,
         sweepPhase = sweepPhase,
         opacity = animatedOpacity,
-        isTracking = guideState == InternalGuideState.TRACKING,
+        isTracking = isTrackingOrFading,
         activeDetection = activeDetection
     )
 }
