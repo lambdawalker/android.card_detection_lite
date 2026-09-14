@@ -55,15 +55,15 @@ class SharedEngineDispatcherTest {
             override fun close() {}
         }
 
-        val inferenceEngineWrapper = ThreadConfinedInferenceEngine(sharedEngineDispatcher.dispatcher) {
+        val inferenceEngineWrapper = ThreadConfinedInferenceEngine(sharedEngineDispatcher) {
             mockInferenceEngine
         }
 
-        val yoloDetectorWrapper = ThreadConfinedYoloDetector(sharedEngineDispatcher.dispatcher) {
+        val yoloDetectorWrapper = ThreadConfinedYoloDetector(sharedEngineDispatcher) {
             mockDetector
         }
 
-        val cardDetectorWrapper = ThreadConfinedCardDetector(sharedEngineDispatcher.dispatcher) {
+        val cardDetectorWrapper = ThreadConfinedCardDetector(sharedEngineDispatcher) {
             mockCardDetector
         }
 
@@ -89,6 +89,6 @@ class SharedEngineDispatcherTest {
         inferenceEngineWrapper.close()
 
         sharedEngineDispatcher.close()
-        assertTrue("Shared executor should be shut down after close()", sharedEngineDispatcher.executor.isShutdown)
+        assertTrue("Shared executor should be shut down after close()", sharedEngineDispatcher.isShutdown)
     }
 }

@@ -130,8 +130,10 @@ internal class InferenceCore(
     override fun close() {
         if (isClosed) return
         isClosed = true
-        interpreter.close()
-        gpuDelegate?.close()
-        gpuDelegate = null
+        try {
+            interpreter.close()
+        } finally {
+            try { gpuDelegate?.close() } finally { gpuDelegate = null }
+        }
     }
 }

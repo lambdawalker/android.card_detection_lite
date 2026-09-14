@@ -2,7 +2,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.en
 
 import android.content.Context
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
-import kotlinx.coroutines.CoroutineDispatcher
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.EngineThreadDispatcher
 
 fun buildYoloDetector(
     context: Context,
@@ -12,7 +12,7 @@ fun buildYoloDetector(
     useGpu: Boolean,
     maxNmsCandidates: Int = 150,
     numThreads: NumThreads = NumThreads.Default,
-    sharedDispatcher: CoroutineDispatcher? = null
+    sharedDispatcher: EngineThreadDispatcher? = null
 ): Detector = buildThreadConfinedYoloDetector(
     context = context,
     modelPath = modelPath,
@@ -32,7 +32,7 @@ fun buildThreadConfinedYoloDetector(
     useGpu: Boolean,
     maxNmsCandidates: Int = 150,
     numThreads: NumThreads = NumThreads.Default,
-    sharedDispatcher: CoroutineDispatcher? = null
+    sharedDispatcher: EngineThreadDispatcher? = null
 ): Detector {
     return ThreadConfinedYoloDetector(sharedDispatcher) {
         YoloDetector(
@@ -42,7 +42,8 @@ fun buildThreadConfinedYoloDetector(
             iouThreshold = iouThreshold,
             useGpu = useGpu,
             maxNmsCandidates = maxNmsCandidates,
-            numThreads = numThreads
+            numThreads = numThreads,
+            sharedDispatcher = sharedDispatcher
         )
     }
 }

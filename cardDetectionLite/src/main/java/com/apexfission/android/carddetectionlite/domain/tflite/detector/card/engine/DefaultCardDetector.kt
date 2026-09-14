@@ -6,7 +6,7 @@ import androidx.camera.core.ImageProxy
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.selection.CardCandidateSelector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.tracking.CardLockStateMachine
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.tracking.TemporalConsistencyChecker
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.Detector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
@@ -14,13 +14,13 @@ import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBi
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 
 internal class DefaultCardDetector internal constructor(
-    private val yoloDetector: YoloDetector,
+    private val yoloDetector: Detector,
     private val candidateSelector: CardCandidateSelector,
     private val stateMachine: CardLockStateMachine
 ) : CardDetector {
 
     constructor(
-        yoloDetector: YoloDetector,
+        yoloDetector: Detector,
         cardValidators: List<CardValidator> = listOf(
             AspectRatioValidator(),
             MarginValidator()

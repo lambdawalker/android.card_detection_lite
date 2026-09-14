@@ -1,13 +1,13 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine
 
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.Detector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator
-import kotlinx.coroutines.CoroutineDispatcher
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.EngineThreadDispatcher
 
 fun buildCardDetector(
-    yoloDetector: YoloDetector,
+    yoloDetector: Detector,
     cardValidators: List<CardValidator> = listOf(
         AspectRatioValidator(),
         MarginValidator()
@@ -19,7 +19,7 @@ fun buildCardDetector(
     noDetectionCountLimit: Int = 8,
     differenceHashDistanceLimit: Int = 25,
     allowTemporalDrift: Boolean = true,
-    sharedDispatcher: CoroutineDispatcher? = null
+    sharedDispatcher: EngineThreadDispatcher? = null
 ): CardDetector = buildThreadConfinedCardDetector(
     yoloDetector = yoloDetector,
     cardValidators = cardValidators,
@@ -34,7 +34,7 @@ fun buildCardDetector(
 )
 
 fun buildThreadConfinedCardDetector(
-    yoloDetector: YoloDetector,
+    yoloDetector: Detector,
     cardValidators: List<CardValidator> = listOf(
         AspectRatioValidator(),
         MarginValidator()
@@ -46,7 +46,7 @@ fun buildThreadConfinedCardDetector(
     noDetectionCountLimit: Int = 8,
     differenceHashDistanceLimit: Int = 25,
     allowTemporalDrift: Boolean = true,
-    sharedDispatcher: CoroutineDispatcher? = null
+    sharedDispatcher: EngineThreadDispatcher? = null
 ): CardDetector {
     return ThreadConfinedCardDetector(sharedDispatcher) {
         DefaultCardDetector(
