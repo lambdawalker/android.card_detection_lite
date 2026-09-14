@@ -1,34 +1,17 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine
 
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.InferenceEngine
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.buildThreadConfinedInferenceEngine
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.postprocess.YoloPostProcessor
 import com.apexfission.android.carddetectionlite.domain.tflite.image.LetterboxBuilder
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
-import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
-
-
-/**
- * Defines the contract for a generic object detector that is lifecycle-aware.
- */
-interface Detector : Closeable {
-    /**
-     * Controls the active state of the detector. When `false`, detection calls should
-     * return empty results immediately.
-     */
-    var enabled: Boolean
-
-
-    fun detect(bitmap: Bitmap): List<Detection>
-
-
-    fun detect(imageProxy: ImageProxy): List<Detection>
-}
-
 
 class YoloDetector(
     context: Context,
@@ -48,7 +31,7 @@ class YoloDetector(
 
     private val isClosed = AtomicBoolean(false)
 
-    private val interpreter = TfliteInterpreter(context, modelPath, useGpu, numThreads)
+    private val interpreter: InferenceEngine = buildThreadConfinedInferenceEngine(context, modelPath, useGpu, numThreads)
     private val letterboxBuilder = LetterboxBuilder()
 
     private val postProcessor = YoloPostProcessor(
@@ -85,7 +68,6 @@ class YoloDetector(
         }
     }
 
-
     @Synchronized
     override fun close() {
         if (isClosed.getAndSet(true)) return
@@ -98,4 +80,3 @@ class YoloDetector(
         }
     }
 }
-

@@ -21,7 +21,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 

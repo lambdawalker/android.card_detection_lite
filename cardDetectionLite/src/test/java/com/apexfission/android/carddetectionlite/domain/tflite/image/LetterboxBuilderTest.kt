@@ -2,6 +2,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
 import java.lang.reflect.Modifier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -83,7 +84,7 @@ class LetterboxBuilderTest {
 
     @Test
     fun yoloBitmapDetectionSerializesTheCompletePipeline() {
-        val method = com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector::class.java
+        val method = YoloDetector::class.java
             .getDeclaredMethod("detect", Bitmap::class.java)
 
         assertTrue(Modifier.isSynchronized(method.modifiers))

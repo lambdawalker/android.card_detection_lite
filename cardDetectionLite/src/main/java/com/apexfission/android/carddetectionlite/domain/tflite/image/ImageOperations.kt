@@ -6,7 +6,7 @@ import android.graphics.Rect
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
 import kotlin.math.roundToInt
 
 /**

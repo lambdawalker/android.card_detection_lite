@@ -1,6 +1,7 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine
 
 import android.graphics.Bitmap
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -47,7 +48,7 @@ class CardDetectorConcurrencyTest {
             throw InferenceProbeComplete
         }
 
-        val detector = CardDetector(
+        val detector = buildCardDetector(
             yoloDetector = yoloDetector,
             cardClasses = setOf(0)
         )

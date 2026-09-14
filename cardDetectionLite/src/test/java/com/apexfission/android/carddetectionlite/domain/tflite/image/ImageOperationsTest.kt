@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import androidx.compose.ui.unit.dp
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

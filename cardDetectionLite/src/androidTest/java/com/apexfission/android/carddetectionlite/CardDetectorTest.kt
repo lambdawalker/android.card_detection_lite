@@ -7,8 +7,9 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine.CardDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine.buildCardDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHashFromRegion
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
@@ -67,7 +68,7 @@ class CardDetectorTest {
             numThreads = NumThreads.Default
         )
 
-        return CardDetector(
+        return buildCardDetector(
             yoloDetector = yoloDetector,
             cardValidators = emptyList(),
             cardClasses = ModelCatalog.TfLite.cardClasses.toSet(),

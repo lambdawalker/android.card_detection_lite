@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.ui.detector
 
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import java.security.MessageDigest
 

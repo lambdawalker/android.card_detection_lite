@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.ui
 
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import org.junit.Assert.assertEquals

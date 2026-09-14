@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.postprocess
 
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 

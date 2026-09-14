@@ -11,9 +11,9 @@ import androidx.camera.core.MeteringPoint
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.CardDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.YoloDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine.buildCardDetector
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
 import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
@@ -67,7 +67,7 @@ class CardDetectorLiteViewModel(
     private val _flashlightAvailable = MutableStateFlow(true)
     val flashlightAvailable: StateFlow<Boolean> = _flashlightAvailable.asStateFlow()
 
-    private val detector = CardDetector(
+    private val detector = buildCardDetector(
         yoloDetector = YoloDetector(
             context = application,
             modelPath = modelPath,

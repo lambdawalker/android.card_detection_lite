@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui.detector
 
 import androidx.compose.runtime.Immutable
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
 
 /**
  * Configuration preset for tuning card detection pipeline accuracy, performance, and power consumption.

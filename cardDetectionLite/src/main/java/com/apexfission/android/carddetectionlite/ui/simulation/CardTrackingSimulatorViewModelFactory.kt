@@ -3,7 +3,7 @@ package com.apexfission.android.carddetectionlite.ui.simulation
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.PreProcessingImageTransformation
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 

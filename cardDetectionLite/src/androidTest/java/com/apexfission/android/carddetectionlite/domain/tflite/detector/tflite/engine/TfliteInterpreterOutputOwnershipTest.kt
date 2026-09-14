@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -18,7 +18,7 @@ class TfliteInterpreterOutputOwnershipTest {
     @Test
     fun subsequentInferenceReturnsAnIndependentOutputArray() {
         val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
-        val interpreter = TfliteInterpreter(
+        val interpreter = buildInferenceEngine(
             context = context,
             modelPath = ModelCatalog.TfLite.modelPath,
             useGpu = false,
@@ -47,19 +47,19 @@ class TfliteInterpreterOutputOwnershipTest {
     @Test
     fun engineThreadAffinityIsPreservedAcrossLifecycle() {
         val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
-        val interpreter = TfliteInterpreter(
+        val engine = buildThreadConfinedInferenceEngine(
             context = context,
             modelPath = ModelCatalog.TfLite.modelPath,
             useGpu = false,
-        )
+        ) as ThreadConfinedInferenceEngine
         val bitmap = Bitmap.createBitmap(
-            interpreter.inputImageWidth,
-            interpreter.inputImageWidth,
+            engine.inputImageWidth,
+            engine.inputImageWidth,
             Bitmap.Config.ARGB_8888,
         )
 
         try {
-            val engineThreadId = interpreter.engineThreadId
+            val engineThreadId = engine.engineThreadId
             Assert.assertTrue("Engine thread ID must be valid", engineThreadId != -1L)
 
             val recordedInferenceThreadIds = Collections.synchronizedList(mutableListOf<Long>())
@@ -67,8 +67,8 @@ class TfliteInterpreterOutputOwnershipTest {
             // Execute inferences from multiple different caller threads
             val threads = List(5) {
                 Thread {
-                    interpreter.runInference(bitmap)
-                    recordedInferenceThreadIds.add(interpreter.lastInferenceThreadId)
+                    engine.runInference(bitmap)
+                    recordedInferenceThreadIds.add(engine.lastInferenceThreadId)
                 }
             }
             threads.forEach { it.start() }
@@ -82,15 +82,15 @@ class TfliteInterpreterOutputOwnershipTest {
                 )
             }
 
-            interpreter.close()
+            engine.close()
             Assert.assertEquals(
                 "Teardown must execute on the dedicated engine thread",
                 engineThreadId,
-                interpreter.closeThreadId,
+                engine.closeThreadId,
             )
         } finally {
             bitmap.recycle()
-            interpreter.close()
+            engine.close()
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp

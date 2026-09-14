@@ -1,5 +1,6 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.validation
 
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.InferenceEngine
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
@@ -21,7 +22,7 @@ class TensorContractValidatorTest {
         assertEquals(640, contract.inputImageWidth)
         assertEquals(5, contract.outputAttributes)
         assertEquals(8400, contract.outputBoxes)
-        assertEquals(TfliteInterpreter.OutputLayout.ATTRS_X_BOXES, contract.outputLayout)
+        assertEquals(InferenceEngine.OutputLayout.ATTRS_X_BOXES, contract.outputLayout)
         assertEquals(1 * 640 * 640 * 3, contract.inputByteCount)
         assertEquals(1 * 5 * 8400 * 4, contract.outputByteCount)
     }
@@ -35,7 +36,7 @@ class TensorContractValidatorTest {
 
         assertFalse(contract.isInputInt8)
         assertTrue(contract.isOutputInt8)
-        assertEquals(TfliteInterpreter.OutputLayout.BOXES_X_ATTRS, contract.outputLayout)
+        assertEquals(InferenceEngine.OutputLayout.BOXES_X_ATTRS, contract.outputLayout)
         assertEquals(6, contract.outputAttributes)
         assertEquals(2100, contract.outputBoxes)
     }

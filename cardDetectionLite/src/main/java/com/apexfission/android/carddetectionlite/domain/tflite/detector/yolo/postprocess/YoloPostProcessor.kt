@@ -1,10 +1,9 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.postprocess
 
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.InferenceEngine
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Handles the complex task of decoding and post-processing the raw output from a YOLO TFLite model.
@@ -20,7 +19,7 @@ import kotlin.math.min
  * 3.  **Non-Max Suppression (NMS)**: Eliminates redundant, overlapping bounding boxes for the same object,
  *     keeping only the one with the highest confidence score.
  *
- * @param outLayout The memory layout of the model's output tensor, as determined by [TfliteInterpreter].
+ * @param outLayout The memory layout of the model's output tensor, as determined by [InferenceEngine].
  * @param outBoxes The total number of candidate bounding boxes the model produces.
  * @param outAttrs The number of attributes per box (e.g., 4 coordinates + N class scores).
  * @param numClasses The number of distinct object categories the model can detect.
@@ -36,7 +35,7 @@ import kotlin.math.min
  *                          are interpreted—either as normalized values (0..1) or as direct pixel values.
  */
 class YoloPostProcessor(
-    private val outLayout: TfliteInterpreter.OutputLayout,
+    private val outLayout: InferenceEngine.OutputLayout,
     private val outBoxes: Int,
     private val outAttrs: Int,
     private val numClasses: Int,
@@ -73,7 +72,11 @@ class YoloPostProcessor(
             sourceHeight = letterboxResult.sourceHeight,
         )
 
-        return nms(rawDetections)
+        return YoloNms.suppress(
+            detections = rawDetections,
+            iouThreshold = iouThreshold,
+            maxNmsCandidates = maxNmsCandidates,
+        )
     }
 
     /** Decodes the raw model output, reversing the letterboxing transformation. */
@@ -91,7 +94,7 @@ class YoloPostProcessor(
             return detections
         }
 
-        val isBoxesFirst = outLayout == TfliteInterpreter.OutputLayout.ATTRS_X_BOXES
+        val isBoxesFirst = outLayout == InferenceEngine.OutputLayout.ATTRS_X_BOXES
         val strideBox = if (isBoxesFirst) 1 else outAttrs
         val strideAttr = if (isBoxesFirst) outBoxes else 1
 
@@ -154,52 +157,5 @@ class YoloPostProcessor(
         }
 
         return detections
-    }
-
-    /** An optimized Non-Max Suppression algorithm. */
-    private fun nms(detections: ArrayList<Detection>): List<Detection> {
-        if (detections.isEmpty()) return emptyList()
-        val sorted = detections.sortedByDescending { it.confidence }
-        val size = sorted.size
-
-        val areas = FloatArray(size) { i ->
-            val box = sorted[i].box
-            ((box.x2 - box.x) * (box.y2 - box.y)).toFloat()
-        }
-
-        val suppressed = BooleanArray(size)
-        val keep = ArrayList<Detection>(min(size, maxNmsCandidates))
-
-        for (i in 0 until size) {
-            if (suppressed[i]) continue
-            val best = sorted[i]
-            keep.add(best)
-            if (keep.size >= maxNmsCandidates) break
-
-            for (j in i + 1 until size) {
-                if (suppressed[j]) continue
-                val next = sorted[j]
-
-                val isSameClass = next.classId == best.classId
-                if (!isSameClass) continue
-
-                val iou = calculateIoU(best.box, areas[i], next.box, areas[j])
-                if (iou > iouThreshold) {
-                    suppressed[j] = true
-                }
-            }
-        }
-
-        return keep
-    }
-
-    /** Calculates the Intersection over Union of two detections. */
-    private fun calculateIoU(a: ImageBox, areaA: Float, b: ImageBox, areaB: Float): Float {
-        if (a.x > b.x2 || a.x2 < b.x || a.y > b.y2 || a.y2 < b.y) return 0f
-
-        val interW = max(0u, min(a.x2, b.x2) - max(a.x, b.x)).toFloat()
-        val interH = max(0u, min(a.y2, b.y2) - max(a.y, b.y)).toFloat()
-        val inter = interW * interH
-        return (inter / (areaA + areaB - inter + 1e-6f))
     }
 }

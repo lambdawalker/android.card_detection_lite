@@ -1,7 +1,8 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.postprocess
 
 import android.graphics.Bitmap
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.InferenceEngine
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -11,7 +12,7 @@ import org.mockito.Mockito.mock
 class YoloPostProcessorCoordinateSafetyTest {
 
     private val postProcessor = YoloPostProcessor(
-        outLayout = TfliteInterpreter.OutputLayout.ATTRS_X_BOXES,
+        outLayout = InferenceEngine.OutputLayout.ATTRS_X_BOXES,
         outBoxes = 1,
         outAttrs = 5,
         numClasses = 1,

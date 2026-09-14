@@ -1,6 +1,8 @@
-package com.apexfission.android.carddetectionlite.domain.tflite.detector
+package com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.validation
 
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.InferenceEngine
 import org.tensorflow.lite.DataType
+import org.tensorflow.lite.Tensor
 
 internal data class TensorMetadata(
     val shape: IntArray,
@@ -8,6 +10,16 @@ internal data class TensorMetadata(
     val quantizationScale: Float,
     val quantizationZeroPoint: Int,
 )
+
+internal fun Tensor.toMetadata(): TensorMetadata {
+    val quantization = quantizationParams()
+    return TensorMetadata(
+        shape = shape(),
+        dataType = dataType(),
+        quantizationScale = quantization.scale,
+        quantizationZeroPoint = quantization.zeroPoint,
+    )
+}
 
 internal data class ModelTensorContract(
     val inputImageWidth: Int,
@@ -21,7 +33,7 @@ internal data class ModelTensorContract(
     val isOutputInt8: Boolean,
     val outputQuantizationScale: Float,
     val outputQuantizationZeroPoint: Int,
-    val outputLayout: TfliteInterpreter.OutputLayout,
+    val outputLayout: InferenceEngine.OutputLayout,
     val outputAttributes: Int,
     val outputBoxes: Int,
 )
@@ -68,9 +80,9 @@ internal object TensorContractValidator {
             outputQuantizationScale = output.quantizationScale,
             outputQuantizationZeroPoint = output.quantizationZeroPoint,
             outputLayout = if (dim1 == attributes) {
-                TfliteInterpreter.OutputLayout.ATTRS_X_BOXES
+                InferenceEngine.OutputLayout.ATTRS_X_BOXES
             } else {
-                TfliteInterpreter.OutputLayout.BOXES_X_ATTRS
+                InferenceEngine.OutputLayout.BOXES_X_ATTRS
             },
             outputAttributes = attributes,
             outputBoxes = boxes,
