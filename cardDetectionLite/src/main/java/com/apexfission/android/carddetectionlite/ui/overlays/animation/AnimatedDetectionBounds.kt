@@ -105,7 +105,7 @@ data class DetectionAnimationConfig(
     val trackingAnimationDurationMs: Int = 200,
     val resetAnimationDurationMs: Int = 300,
     val fadeAnimationDurationMs: Int = 1_000,
-    val resetDetectionIndicatorTime: Long = 350,
+    val resetDetectionIndicatorTime: Long = 150,
     val enableGuideSmoothing: Boolean = true,
     val resetPositionOnMissing: Boolean = true,
     val enableContinuousAnimations: Boolean = true,

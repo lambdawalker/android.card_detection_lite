@@ -56,7 +56,8 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         detectorPreset = CardDetectorPreset.HighPerformance.copy(
                             scoreThreshold = 0.3f,
                             lockOnThreshold = 5,
-                            noDetectionCountLimit = 8
+                            noDetectionCountLimit = 8,
+                            inferenceIntervalMs = 10L
                         ),
                         cameraPreset = CameraPreset.Default,
                         isDetectionEnabled = isDetectionEnabled,
