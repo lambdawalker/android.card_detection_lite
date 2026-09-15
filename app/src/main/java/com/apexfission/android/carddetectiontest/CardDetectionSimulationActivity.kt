@@ -64,8 +64,8 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         onCaptureRequested = mainViewModel::onCapture,
                         onBackRequested = mainViewModel::onBackRequested,
                         controlOverlay = {
-//                            IdCaptureOverlay()
-                            CardLockOnOverlay()
+                            IdCaptureOverlay()
+//                            CardLockOnOverlay()
                         }
                     )
                 }

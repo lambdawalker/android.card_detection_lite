@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.overlays.animation.x
+package com.apexfission.android.carddetectionlite.ui.overlays.animation.state
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing

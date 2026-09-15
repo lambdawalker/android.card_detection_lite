@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.overlays.animation.x
+package com.apexfission.android.carddetectionlite.ui.overlays.animation.state
 
 internal fun shouldRunContinuousAnimations(
     isTracking: Boolean,

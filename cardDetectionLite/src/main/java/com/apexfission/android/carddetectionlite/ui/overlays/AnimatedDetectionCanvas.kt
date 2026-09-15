@@ -1,11 +1,12 @@
 package com.apexfission.android.carddetectionlite.ui.overlays
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
 import com.apexfission.android.carddetectionlite.ui.overlays.animation.AnimatedDetectionCanvas as AnimationAnimatedDetectionCanvas
 import com.apexfission.android.carddetectionlite.ui.overlays.animation.AnimatedDetectionScope as AnimationAnimatedDetectionScope
-import com.apexfission.android.carddetectionlite.ui.overlays.animation.x.shouldRunContinuousAnimations as animationShouldRunContinuousAnimations
+import com.apexfission.android.carddetectionlite.ui.overlays.animation.state.shouldRunContinuousAnimations as animationShouldRunContinuousAnimations
 
 typealias AnimatedDetectionScope = AnimationAnimatedDetectionScope
 
@@ -19,7 +20,7 @@ fun CardDetectorOverlayScope.AnimatedDetectionCanvas(
     onDraw: AnimatedDetectionScope.() -> Unit
 ) {
     AnimationAnimatedDetectionCanvas(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         config = config,
         onDraw = { onDraw() }
     )

@@ -1,4 +1,4 @@
-package com.apexfission.android.carddetectionlite.ui.overlays.animation.x
+package com.apexfission.android.carddetectionlite.ui.overlays.animation.state
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -9,7 +9,6 @@ import com.apexfission.android.carddetectionlite.ui.overlays.animation.Animation
 import com.apexfission.android.carddetectionlite.ui.overlays.animation.DetectionAnimationConfig
 import com.apexfission.android.carddetectionlite.ui.overlays.animation.LockOnProgressState
 import com.apexfission.android.carddetectionlite.ui.overlays.animation.TrackingMetadata
-import com.apexfission.android.carddetectionlite.ui.overlays.animation.rememberGuideStateMachine
 
 /**
  * Remembers and calculates real-time animated screen coordinates and tracking state for card overlays.
@@ -23,32 +22,35 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
     val spaceChain = imageSpaceChain
     val fallbackCenterBox = remember(defaultBox) { defaultBox ?: ImageBox.from2P(0, 0, 0, 0) }
 
-    val guideStateResult = rememberGuideStateMachine(
+    val animationState = rememberGuideStateMachine(
         activeDetection = activeDetection,
         spaceChain = spaceChain,
-        fallbackCenterBox = fallbackCenterBox,
         config = config,
         detectionSequence = detectionSequence
     )
 
     val animatedCoordinates = rememberAnimatedCoordinates(
-        targetBox = guideStateResult.targetBox,
+        activeDetection = activeDetection,
+        spaceChain = spaceChain,
         fallbackCenterBox = fallbackCenterBox,
-        boundsDurationMs = guideStateResult.boundsDurationMs,
+        internalGuideState = animationState,
+        boundsDurationMs = config.resetAnimationDurationMs,
         config = config
     )
 
     val animatedOpacity = rememberAnimatedOpacity(
-        targetOpacity = guideStateResult.targetOpacity,
-        durationMs = guideStateResult.opacityDurationMs
+        internalGuideState = animationState,
+        config = config
     )
 
     val (rawProgress, smoothProgress) = rememberAnimatedLockOnProgress(
-        activeDetection = activeDetection,
+        internalGuideState = animationState
     )
 
+    val isTracking = animationState != InternalGuideState.IDLE
+
     val (breathe, sweepPhase) = rememberContinuousAnimations(
-        isTracking = true,
+        isTracking = isTracking,
         opacity = animatedOpacity,
         motionEnabled = config.enableContinuousAnimations,
         hasVisibleBounds = animatedCoordinates.right > animatedCoordinates.left &&
@@ -59,6 +61,6 @@ fun CardDetectorOverlayScope.rememberAnimatedDetectionBounds(
         coordinates = animatedCoordinates,
         progress = LockOnProgressState(lockOnProgress = rawProgress, smoothProgress = smoothProgress),
         effects = AnimationEffectsState(breathe = breathe, sweepPhase = sweepPhase, opacity = animatedOpacity),
-        tracking = TrackingMetadata(isTracking = true, activeDetection = activeDetection)
+        tracking = TrackingMetadata(isTracking = isTracking, activeDetection = activeDetection)
     )
 }

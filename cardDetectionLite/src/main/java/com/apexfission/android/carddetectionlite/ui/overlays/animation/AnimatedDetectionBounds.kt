@@ -1,6 +1,5 @@
 package com.apexfission.android.carddetectionlite.ui.overlays.animation
 
-import android.graphics.RectF
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -18,19 +17,14 @@ typealias BoundingBoxCoordinates = ImageBox
 val ImageBox.center: Offset get() = Offset(left + intWidth / 2f, top + intHeight / 2f)
 val ImageBox.topLeft: Offset get() = Offset(left.toFloat(), top.toFloat())
 val ImageBox.size: Size get() = Size(intWidth.toFloat(), intHeight.toFloat())
-val ImageBox.rectF: RectF get() = RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
 
-fun ImageBox.Companion.fromRectF(rectF: RectF): ImageBox {
-    return from2P(rectF.left.toInt(), rectF.top.toInt(), rectF.right.toInt(), rectF.bottom.toInt())
-}
 
 /**
  * Lock-on progress state for card detection.
  */
 @Immutable
 data class LockOnProgressState(
-    val lockOnProgress: Float = 0f,
-    val smoothProgress: Float = lockOnProgress
+    val lockOnProgress: Float = 0f, val smoothProgress: Float = lockOnProgress
 )
 
 /**
@@ -38,9 +32,7 @@ data class LockOnProgressState(
  */
 @Immutable
 data class AnimationEffectsState(
-    val breathe: Float = 1f,
-    val sweepPhase: Float = 0f,
-    val opacity: Float = 1f
+    val breathe: Float = 1f, val sweepPhase: Float = 0f, val opacity: Float = 1f
 )
 
 /**
@@ -48,8 +40,7 @@ data class AnimationEffectsState(
  */
 @Immutable
 data class TrackingMetadata(
-    val isTracking: Boolean = false,
-    val activeDetection: CardDetection? = null
+    val isTracking: Boolean = false, val activeDetection: CardDetection? = null
 )
 
 /**
@@ -87,11 +78,6 @@ data class AnimatedDetectionBounds(
     val right: Float get() = coordinates.right.toFloat()
     val bottom: Float get() = coordinates.bottom.toFloat()
 
-    val intLeft: Int get() = coordinates.left
-    val intTop: Int get() = coordinates.top
-    val intRight: Int get() = coordinates.right
-    val intBottom: Int get() = coordinates.bottom
-
     val lockOnProgress: Float get() = progress.lockOnProgress
     val smoothProgress: Float get() = progress.smoothProgress
 
@@ -107,7 +93,6 @@ data class AnimatedDetectionBounds(
     val center: Offset get() = coordinates.center
     val topLeft: Offset get() = coordinates.topLeft
     val size: Size get() = coordinates.size
-    val rectF: RectF get() = coordinates.rectF
 }
 
 /**
@@ -120,7 +105,7 @@ data class DetectionAnimationConfig(
     val trackingAnimationDurationMs: Int = 200,
     val resetAnimationDurationMs: Int = 300,
     val fadeAnimationDurationMs: Int = 1_000,
-    val resetBoundingBoxWaitTimeMs: Long = 1_000,
+    val resetDetectionIndicatorTime: Long = 700,
     val enableGuideSmoothing: Boolean = true,
     val resetPositionOnMissing: Boolean = true,
     val enableContinuousAnimations: Boolean = true,
