@@ -18,10 +18,8 @@ internal class DefaultCardDetector internal constructor(
     private val candidateSelector: CardCandidateSelector,
     private val stateMachine: CardLockStateMachine,
     private val differenceHashDistanceLimit: Int = 25,
-    private val hashBasedSearch: Int = 3
+    private val hashBasedSearchFrameLimit: Int = 3
 ) : CardDetector {
-
-    private var hashDetectionCount: Int = 0
 
     constructor(
         yoloDetector: Detector,
@@ -36,7 +34,7 @@ internal class DefaultCardDetector internal constructor(
         noDetectionCountLimit: Int = 8,
         differenceHashDistanceLimit: Int = 25,
         allowTemporalDrift: Boolean = true,
-        hashBasedSearch: Int = 3
+        hashBasedSearchFrameLimit: Int = 3
     ) : this(
         yoloDetector = yoloDetector,
         candidateSelector = CardCandidateSelector(
@@ -49,13 +47,14 @@ internal class DefaultCardDetector internal constructor(
             memoryDetectionTimeLimit = memoryDetectionTimeLimit,
             noDetectionCountLimit = noDetectionCountLimit,
             allowTemporalDrift = allowTemporalDrift,
+            hashBasedSearchFrameLimit = hashBasedSearchFrameLimit,
             consistencyChecker = TemporalConsistencyChecker(
                 validateClassIdInLockOnProcess = validateClassIdInLockOnProcess,
                 differenceHashDistanceLimit = differenceHashDistanceLimit
             )
         ),
         differenceHashDistanceLimit = differenceHashDistanceLimit,
-        hashBasedSearch = hashBasedSearch
+        hashBasedSearchFrameLimit = hashBasedSearchFrameLimit
     )
 
     override var enabled: Boolean
@@ -75,19 +74,17 @@ internal class DefaultCardDetector internal constructor(
     }
 
     override fun track(bitmap: Bitmap): CardDetection? {
-        val hashBasedCandidate = if (hashDetectionCount < hashBasedSearch) {
+        val hashBasedCandidate = if (stateMachine.hashDetectionCount < hashBasedSearchFrameLimit) {
             stateMachine.buildCandidateFromLastKnownCoordinates(
                 bitmap,
                 differenceHashDistanceLimit
             )
         } else {
-            hashDetectionCount = 0
             stateMachine.resetHashTrackingState()
             null
         }
 
         if (hashBasedCandidate == null) {
-            hashDetectionCount = 0
             val result = yoloDetector.detect(bitmap)
             val currentTime = SystemClock.elapsedRealtime()
 
@@ -108,16 +105,14 @@ internal class DefaultCardDetector internal constructor(
                 currentTimeMs = currentTime
             )
         } else {
-            hashDetectionCount++
             val currentTime = SystemClock.elapsedRealtime()
             return stateMachine.giveContinuation(
                 card = hashBasedCandidate,
                 bitmap = bitmap,
-                currentTimeMs = currentTime
+                currentTimeMs = currentTime,
             )
         }
     }
-
 
     override fun close() {
         yoloDetector.close()

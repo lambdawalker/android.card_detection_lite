@@ -54,7 +54,8 @@ class MainViewModel : ViewModel() {
      */
     @WorkerThread
     fun onCardDetection(card: CardDetection, bitmap: Bitmap) {
-        Log.d("OnDetection", "Processing card id: ${card.id}, locking status: ${card.lockingStatus}, detection source: ${card.detectionSource}")
+        Log.d("OnDetection", "${card.id.toString().padStart(4, '0')}, ${"%3f".format(card.lockOnProgress).padEnd(4, '0')} ${card.lockingStatus.toString().padStart(10)}, ${card.detectionSource.toString().padEnd(10)}")
+
         if (card.lockingStatus != LockingStatus.NewCard && card.id == null) {
             bitmap.recycle()
             return

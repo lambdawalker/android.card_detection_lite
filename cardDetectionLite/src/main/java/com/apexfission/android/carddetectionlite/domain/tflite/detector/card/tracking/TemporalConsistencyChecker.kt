@@ -20,21 +20,21 @@ internal class TemporalConsistencyChecker(
 
     /**
      * Returns `true` if [candidate] continues the candidate sequence represented by [previousDetection]
-     * and [previousComparisonHash].
+     * and [previousHash].
      */
     fun isConsistent(
         candidate: Detection,
         currentHash: ULong,
         previousDetection: Detection?,
-        previousComparisonHash: ULong?
+        previousHash: ULong?
     ): Boolean {
-        val hasPreviousCandidate = previousDetection != null && previousComparisonHash != null
+        val hasPreviousCandidate = previousDetection != null
 
         val classMatches = !validateClassIdInLockOnProcess ||
             previousDetection == null ||
             candidate.classId == previousDetection.classId
 
-        val visuallyMatches = previousComparisonHash?.let { hash ->
+        val visuallyMatches = previousHash?.let { hash ->
             isVisuallySimilar(
                 hash,
                 currentHash,
@@ -43,5 +43,15 @@ internal class TemporalConsistencyChecker(
         } ?: false
 
         return hasPreviousCandidate && classMatches && visuallyMatches
+    }
+
+    fun isConsistent(currentHash: ULong, previousHash: ULong?): Boolean {
+        return previousHash?.let { hash ->
+            isVisuallySimilar(
+                hash,
+                currentHash,
+                differenceHashDistanceLimit
+            )
+        } ?: false
     }
 }

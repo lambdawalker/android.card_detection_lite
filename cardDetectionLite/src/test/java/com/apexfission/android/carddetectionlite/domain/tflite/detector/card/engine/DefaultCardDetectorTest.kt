@@ -55,7 +55,7 @@ class DefaultCardDetectorTest {
             cardValidators = emptyList(),
             cardClasses = setOf(0),
             lockOnThreshold = 3,
-            hashBasedSearch = 2
+            hashBasedSearchFrameLimit = 2
         )
 
         // Frame 1: count=0, no previous detection -> calls yolo
@@ -65,21 +65,21 @@ class DefaultCardDetectorTest {
         assertEquals(DetectionSource.Yolo, r1?.detectionSource)
         verify(yoloDetector, times(1)).detect(bitmap)
 
-        // Frame 2: count=0 < hashBasedSearch(2), uses dHash match -> does not call yolo
+        // Frame 2: count=0 < hashBasedSearchFrameLimit(2), uses dHash match -> does not call yolo
         val r2 = cardDetector.track(bitmap)
         assertNotNull(r2)
         assertEquals(LockingStatus.LockingCard, r2?.lockingStatus)
         assertEquals(DetectionSource.Hash, r2?.detectionSource)
         verify(yoloDetector, times(1)).detect(bitmap) // count is still 1
 
-        // Frame 3: count=1 < hashBasedSearch(2), uses dHash match -> does not call yolo
+        // Frame 3: count=1 < hashBasedSearchFrameLimit(2), uses dHash match -> does not call yolo
         val r3 = cardDetector.track(bitmap)
         assertNotNull(r3)
         assertEquals(LockingStatus.NewCard, r3?.lockingStatus)
         assertEquals(DetectionSource.Hash, r3?.detectionSource)
         verify(yoloDetector, times(1)).detect(bitmap) // count is still 1
 
-        // Frame 4: count=2 >= hashBasedSearch(2) -> must call yolo again
+        // Frame 4: count=2 >= hashBasedSearchFrameLimit(2) -> must call yolo again
         val r4 = cardDetector.track(bitmap)
         assertNotNull(r4)
         assertEquals(DetectionSource.Yolo, r4?.detectionSource)
@@ -103,7 +103,7 @@ class DefaultCardDetectorTest {
             cardClasses = setOf(0),
             lockOnThreshold = 3,
             differenceHashDistanceLimit = 5,
-            hashBasedSearch = 5
+            hashBasedSearchFrameLimit = 5
         )
 
         // Frame 1 with bitmap1

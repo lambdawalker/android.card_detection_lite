@@ -19,7 +19,7 @@ fun buildCardDetector(
     noDetectionCountLimit: Int = 8,
     differenceHashDistanceLimit: Int = 25,
     allowTemporalDrift: Boolean = true,
-    hashBasedSearch: Int = 3,
+    hashBasedSearchFrameLimit: Int = 3,
     sharedDispatcher: EngineThreadDispatcher? = null
 ): CardDetector = buildThreadConfinedCardDetector(
     yoloDetector = yoloDetector,
@@ -31,7 +31,7 @@ fun buildCardDetector(
     noDetectionCountLimit = noDetectionCountLimit,
     differenceHashDistanceLimit = differenceHashDistanceLimit,
     allowTemporalDrift = allowTemporalDrift,
-    hashBasedSearch = hashBasedSearch,
+    hashBasedSearchFrameLimit = hashBasedSearchFrameLimit,
     sharedDispatcher = sharedDispatcher
 )
 
@@ -48,7 +48,7 @@ fun buildThreadConfinedCardDetector(
     noDetectionCountLimit: Int = 8,
     differenceHashDistanceLimit: Int = 25,
     allowTemporalDrift: Boolean = true,
-    hashBasedSearch: Int = 3,
+    hashBasedSearchFrameLimit: Int = 3,
     sharedDispatcher: EngineThreadDispatcher? = null
 ): CardDetector {
     return ThreadConfinedCardDetector(sharedDispatcher) {
@@ -62,7 +62,7 @@ fun buildThreadConfinedCardDetector(
             noDetectionCountLimit = noDetectionCountLimit,
             differenceHashDistanceLimit = differenceHashDistanceLimit,
             allowTemporalDrift = allowTemporalDrift,
-            hashBasedSearch = hashBasedSearch
+            hashBasedSearchFrameLimit = hashBasedSearchFrameLimit
         )
     }
 }

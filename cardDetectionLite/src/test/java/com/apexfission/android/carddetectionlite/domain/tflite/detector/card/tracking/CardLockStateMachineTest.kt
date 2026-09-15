@@ -17,7 +17,6 @@ class CardLockStateMachineTest {
     fun `progresses locking status after threshold matching frames`() {
         val stateMachine = CardLockStateMachine(
             lockOnThreshold = 3,
-            memoryDetectionTimeLimit = 1000L
         )
 
         val bitmap = mock<Bitmap>()
@@ -56,7 +55,7 @@ class CardLockStateMachineTest {
     fun `resets tracking state after missing detection limit reached`() {
         val stateMachine = CardLockStateMachine(
             lockOnThreshold = 2,
-            noDetectionCountLimit = 2
+            noDetectionCountLimit = 2,
         )
 
         val bitmap = mock<Bitmap>()
@@ -78,7 +77,6 @@ class CardLockStateMachineTest {
     fun `giveContinuation advances candidate lock progression`() {
         val stateMachine = CardLockStateMachine(
             lockOnThreshold = 3,
-            memoryDetectionTimeLimit = 1000L
         )
 
         val bitmap = mock<Bitmap>()
@@ -86,22 +84,27 @@ class CardLockStateMachineTest {
         whenever(bitmap.height).thenReturn(200)
         val detection = Detection(ImageBox.from2P(0, 0, 100, 100), 0.9f, 0)
 
+        assertEquals(0, stateMachine.hashDetectionCount)
+
         // Frame 1 via processDetection
         val f1 = stateMachine.processDetection(detection, bitmap, 1000L)
         assertEquals(LockingStatus.LockingCard, f1.lockingStatus)
         assertEquals(DetectionSource.Yolo, f1.detectionSource)
+        assertEquals(0, stateMachine.hashDetectionCount)
         assertNull(f1.id)
 
         // Frame 2 via giveContinuation
         val f2 = stateMachine.giveContinuation(detection, bitmap, 1100L)
         assertEquals(LockingStatus.LockingCard, f2.lockingStatus)
         assertEquals(DetectionSource.Hash, f2.detectionSource)
+        assertEquals(1, stateMachine.hashDetectionCount)
         assertNull(f2.id)
 
         // Frame 3 via giveContinuation (reaches threshold -> NewCard)
         val f3 = stateMachine.giveContinuation(detection, bitmap, 1200L)
         assertEquals(LockingStatus.NewCard, f3.lockingStatus)
         assertEquals(DetectionSource.Hash, f3.detectionSource)
+        assertEquals(2, stateMachine.hashDetectionCount)
         assertEquals(1L, f3.id)
         assertEquals(1.0f, f3.lockOnProgress, 0.01f)
 
@@ -109,6 +112,10 @@ class CardLockStateMachineTest {
         val f4 = stateMachine.giveContinuation(detection, bitmap, 1300L)
         assertEquals(LockingStatus.CardLocked, f4.lockingStatus)
         assertEquals(DetectionSource.Hash, f4.detectionSource)
+        assertEquals(3, stateMachine.hashDetectionCount)
         assertEquals(1L, f4.id)
+
+        stateMachine.resetHashTrackingState()
+        assertEquals(0, stateMachine.hashDetectionCount)
     }
 }

@@ -15,7 +15,7 @@
       </SelectionState>
       <SelectionState runConfigName="CardDetectionSimulationActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-09-14T17:25:04.892969200Z">
+        <DropdownSelection timestamp="2026-09-15T19:24:10.265955600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=R5CX41W54QB" />
