@@ -2,7 +2,6 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.
 
 import android.content.Context
 import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.EngineThreadDispatcher
 
 fun buildInferenceEngine(
     context: Context,

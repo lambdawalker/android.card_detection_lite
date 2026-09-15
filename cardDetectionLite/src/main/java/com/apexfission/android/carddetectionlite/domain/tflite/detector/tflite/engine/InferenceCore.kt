@@ -133,7 +133,11 @@ internal class InferenceCore(
         try {
             interpreter.close()
         } finally {
-            try { gpuDelegate?.close() } finally { gpuDelegate = null }
+            try {
+                gpuDelegate?.close()
+            } finally {
+                gpuDelegate = null
+            }
         }
     }
 }

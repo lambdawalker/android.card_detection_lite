@@ -1,9 +1,9 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine
 
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.EngineThreadDispatcher
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.EngineThreadDispatcher
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.InferenceEngine
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.buildThreadConfinedInferenceEngine
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.postprocess.YoloPostProcessor
@@ -52,6 +52,7 @@ class YoloDetector(
     private fun <T> onContext(block: () -> T): T =
         if (sharedDispatcher != null) sharedDispatcher.call(block) else block()
 
+    @Synchronized
     override fun detect(bitmap: Bitmap): List<Detection> = onContext {
         synchronized(this) {
             if (!enabled || isClosed.get()) return@synchronized emptyList()

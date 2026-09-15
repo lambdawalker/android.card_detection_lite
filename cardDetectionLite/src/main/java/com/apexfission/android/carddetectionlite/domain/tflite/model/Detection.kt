@@ -15,7 +15,7 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
 @Stable
 data class Detection(
     val box: ImageBox,
-     val confidence: Float,
+    val confidence: Float,
     val classId: Int
 )
 

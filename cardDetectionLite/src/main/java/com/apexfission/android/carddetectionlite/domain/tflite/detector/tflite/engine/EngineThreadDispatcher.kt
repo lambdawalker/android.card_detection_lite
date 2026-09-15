@@ -12,7 +12,8 @@ import java.util.concurrent.FutureTask
  * Nested operations already on the worker execute inline, avoiding single-thread deadlocks.
  */
 class EngineThreadDispatcher : Closeable {
-    @Volatile private var worker: Thread? = null
+    @Volatile
+    private var worker: Thread? = null
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "SingleThreadEngineWorker").also { worker = it }
     }
@@ -34,7 +35,9 @@ class EngineThreadDispatcher : Closeable {
         return task.awaitCompletion()
     }
 
-    override fun close() { executor.shutdown() }
+    override fun close() {
+        executor.shutdown()
+    }
 }
 
 /** A synchronous caller retains ownership until native work completes, even on interruption. */

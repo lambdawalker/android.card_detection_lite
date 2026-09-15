@@ -276,7 +276,8 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
                             enabled = isCaptureEnabled,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { capture() }), contentAlignment = Alignment.Center) {
+                            onClick = { capture() }), contentAlignment = Alignment.Center
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()

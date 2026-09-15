@@ -38,11 +38,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import kotlinx.coroutines.CancellationException
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
 /**

@@ -11,6 +11,7 @@ import androidx.compose.runtime.Stable
  * @property card The primary detected card [Feature].
  * @property features Secondary detected features found within the frame.
  * @property lockingStatus The current tracking lifecycle state ([LockingStatus.LockingCard], [LockingStatus.NewCard], or [LockingStatus.CardLocked]).
+ * @property detectionSource The source mechanism used to track or detect the card ([DetectionSource.Yolo] or [DetectionSource.Hash]).
  */
 @Immutable
 @Stable
@@ -20,7 +21,21 @@ data class CardDetection(
     val card: Feature,
     val features: List<Feature>,
     val lockingStatus: LockingStatus,
+    val detectionSource: DetectionSource = DetectionSource.Yolo,
 )
+
+/**
+ * Represents the source mechanism used to generate a card detection.
+ */
+@Immutable
+@Stable
+enum class DetectionSource {
+    /** The card was detected via YOLO object detector inference. */
+    Yolo,
+
+    /** The card was tracked via difference hash (dHash) visual similarity matching. */
+    Hash
+}
 
 /**
  * Represents the temporal tracking state of a detected card.

@@ -2,9 +2,9 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.en
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.EngineThreadDispatcher
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.ThreadConfinedResource
+import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 
 /** Confines native construction, operations and cleanup to an owned or shared physical thread. */
 class ThreadConfinedCardDetector private constructor(
@@ -33,7 +33,9 @@ class ThreadConfinedCardDetector private constructor(
 
     override var enabled: Boolean
         get() = resource.call({ false }) { it.enabled }
-        set(value) { resource.call({ Unit }) { it.enabled = value } }
+        set(value) {
+            resource.call({ }) { it.enabled = value }
+        }
 
     override fun close() {
         resource.close()

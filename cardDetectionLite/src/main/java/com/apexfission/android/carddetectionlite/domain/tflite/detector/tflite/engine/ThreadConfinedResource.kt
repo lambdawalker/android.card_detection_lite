@@ -13,9 +13,11 @@ internal class ThreadConfinedResource<T : Closeable>(
     private val ownsContext = sharedContext == null
     private val admission = Any()
     private var closeTask: FutureTask<Unit>? = null
+
     // Accessed only on the worker; nested inline close may overtake queued calls.
     private var disposed = false
-    @Volatile var closeThreadId: Long = -1L
+    @Volatile
+    var closeThreadId: Long = -1L
         private set
     val value: T = try {
         context.call(factory)
@@ -42,7 +44,11 @@ internal class ThreadConfinedResource<T : Closeable>(
             FutureTask(Callable {
                 disposed = true
                 closeThreadId = Thread.currentThread().id
-                try { value.close() } finally { if (ownsContext) context.close() }
+                try {
+                    value.close()
+                } finally {
+                    if (ownsContext) context.close()
+                }
             }).also {
                 closeTask = it
                 context.execute(it)

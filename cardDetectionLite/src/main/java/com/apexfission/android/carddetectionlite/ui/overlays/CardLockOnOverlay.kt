@@ -123,7 +123,7 @@ fun CardDetectorOverlayScope.CardLockOnOverlay(
                 val sweepPoints = listOf(startX to top, endX to top)
                 val sweepColor = Color.White.copy(alpha = 0.85f * sweepAlpha)
 
-                listOf(2,2,4).forEach {
+                listOf(2, 2, 4).forEach {
                     drawGlowPath(
                         points = sweepPoints,
                         blurRadius = blurRadius,

@@ -43,7 +43,15 @@ fun rotateIfNeeded(bm: Bitmap, deg: Int): Bitmap {
  * @return A new [Bitmap] cropped to the target aspect ratio.
  */
 fun cropToAspectRatio(src: Bitmap, canvasWidth: Int, canvasHeight: Int, square: Boolean = false, top: Dp = 0.dp): Bitmap {
-    val rect = getAspectRatioRect(src.width, src.height, canvasWidth, canvasHeight, square, top, android.content.res.Resources.getSystem().displayMetrics.density)
+    val rect = getAspectRatioRect(
+        src.width,
+        src.height,
+        canvasWidth,
+        canvasHeight,
+        square,
+        top,
+        android.content.res.Resources.getSystem().displayMetrics.density
+    )
     return Bitmap.createBitmap(src, rect.left, rect.top, rect.width(), rect.height())
 }
 
@@ -77,18 +85,26 @@ data class CroppedResult(
     val yOffset: Int
 )
 
-fun getCropRect(imageMode: PreProcessingImageTransformation, srcWidth: Int, srcHeight: Int, canvasWidth: Int = srcWidth, canvasHeight: Int = srcHeight): Rect {
+fun getCropRect(
+    imageMode: PreProcessingImageTransformation,
+    srcWidth: Int,
+    srcHeight: Int,
+    canvasWidth: Int = srcWidth,
+    canvasHeight: Int = srcHeight
+): Rect {
     val density = android.content.res.Resources.getSystem().displayMetrics.density
     return when (imageMode) {
         is PreProcessingImageTransformation.FullImage -> {
             Rect(0, 0, srcWidth, srcHeight)
         }
+
         is PreProcessingImageTransformation.CenterSquareCrop -> {
             val size = minOf(srcWidth, srcHeight)
             val left = (srcWidth - size) / 2
             val top = (srcHeight - size) / 2
             Rect(left, top, left + size, top + size)
         }
+
         is PreProcessingImageTransformation.SquareCrop -> {
             val size = minOf(srcWidth, srcHeight)
             val left = (srcWidth - size) / 2
@@ -97,15 +113,19 @@ fun getCropRect(imageMode: PreProcessingImageTransformation, srcWidth: Int, srcH
             val finalTop = (defaultTop + topPx).coerceIn(0, (srcHeight - size).coerceAtLeast(0))
             Rect(left, finalTop, left + size, finalTop + size)
         }
+
         is PreProcessingImageTransformation.CenterVisibleImage -> {
             getAspectRatioRect(srcWidth, srcHeight, canvasWidth, canvasHeight, false, 0.dp, density)
         }
+
         is PreProcessingImageTransformation.VisibleImage -> {
             getAspectRatioRect(srcWidth, srcHeight, canvasWidth, canvasHeight, false, imageMode.top, density)
         }
+
         is PreProcessingImageTransformation.CenterVisibleImageSquareCrop -> {
             getAspectRatioRect(srcWidth, srcHeight, canvasWidth, canvasHeight, true, 0.dp, density)
         }
+
         is PreProcessingImageTransformation.VisibleImageSquareCrop -> {
             getAspectRatioRect(srcWidth, srcHeight, canvasWidth, canvasHeight, true, imageMode.top, density)
         }
@@ -154,7 +174,11 @@ private fun getAspectRatioRect(
 /**
  * Crops a [Bitmap] according to the specified [PreProcessingImageTransformation] strategy, returning both the cropped bitmap and its offset.
  */
-fun cropWithOffset(imageMode: PreProcessingImageTransformation, bitmap: Bitmap, canvasSize: IntSize = IntSize(bitmap.width, bitmap.height)): CroppedResult {
+fun cropWithOffset(
+    imageMode: PreProcessingImageTransformation,
+    bitmap: Bitmap,
+    canvasSize: IntSize = IntSize(bitmap.width, bitmap.height)
+): CroppedResult {
     val rect = getCropRect(imageMode, bitmap.width, bitmap.height, canvasSize.width, canvasSize.height)
     val croppedBitmap = Bitmap.createBitmap(bitmap, rect.left, rect.top, rect.width(), rect.height())
     return CroppedResult(croppedBitmap, rect.left, rect.top)

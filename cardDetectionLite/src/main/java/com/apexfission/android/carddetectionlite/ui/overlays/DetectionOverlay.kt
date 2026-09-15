@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -19,7 +18,6 @@ import com.apexfission.android.carddetectionlite.domain.coordinates.models.Image
 import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlayScope
-import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Scoped variant of [DetectionOverlay] using [CardDetectorOverlayScope].
@@ -69,7 +67,8 @@ fun DetectionOverlay(
             drawText(textLayoutResult = errorLogLayout, topLeft = Offset(10f, 60f))
         } else {
             val infoTextStyle = TextStyle(color = Color.Green, fontSize = 12.sp, background = Color.Black.copy(alpha = 0.5f))
-            val infoLog = "lockOnProgress: ${cardDetection.lockOnProgress} | id: ${cardDetection.id} | confidence: ${(cardDetection.card.confidence * 100).toInt()}%"
+            val infoLog =
+                "lockOnProgress: ${cardDetection.lockOnProgress} | id: ${cardDetection.id} | confidence: ${(cardDetection.card.confidence * 100).toInt()}%"
             val infoLogLayout = textMeasurer.measure(infoLog, infoTextStyle)
             drawText(textLayoutResult = infoLogLayout, topLeft = Offset(10f, 60f))
         }

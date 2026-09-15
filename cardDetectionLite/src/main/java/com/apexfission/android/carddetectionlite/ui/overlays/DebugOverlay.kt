@@ -147,6 +147,7 @@ fun DebugOverlay(
                             is PreProcessingImageTransformation.CenterVisibleImageSquareCrop -> "CenterVisibleImageSquareCrop"
                             is PreProcessingImageTransformation.VisibleImageSquareCrop -> "VisibleImageSquareCrop(top=${value.top})"
                         }
+
                         is NumThreads -> value.toString()
                         null -> "Default"
                         else -> value.toString()
@@ -158,8 +159,13 @@ fun DebugOverlay(
                         is PreProcessingImageTransformation -> when (value) {
                             is PreProcessingImageTransformation.SquareCrop, is PreProcessingImageTransformation.CenterSquareCrop -> Color(0xFFFFC107)
                             is PreProcessingImageTransformation.FullImage -> Color(0xFF9C27B0)
-                            is PreProcessingImageTransformation.VisibleImage, is PreProcessingImageTransformation.CenterVisibleImage -> Color(0xFF00BCD4)
-                            is PreProcessingImageTransformation.VisibleImageSquareCrop, is PreProcessingImageTransformation.CenterVisibleImageSquareCrop -> Color(0xFFF44336)
+                            is PreProcessingImageTransformation.VisibleImage, is PreProcessingImageTransformation.CenterVisibleImage -> Color(
+                                0xFF00BCD4
+                            )
+
+                            is PreProcessingImageTransformation.VisibleImageSquareCrop, is PreProcessingImageTransformation.CenterVisibleImageSquareCrop -> Color(
+                                0xFFF44336
+                            )
                         }
 
                         is NumThreads -> Color.White

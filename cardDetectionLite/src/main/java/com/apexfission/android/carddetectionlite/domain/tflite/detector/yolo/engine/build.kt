@@ -1,8 +1,8 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine
 
 import android.content.Context
-import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.EngineThreadDispatcher
+import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
 
 fun buildYoloDetector(
     context: Context,

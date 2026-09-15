@@ -48,6 +48,10 @@ extensions.configure<LibraryExtension> {
         compose = true
     }
 
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
 
 }
 

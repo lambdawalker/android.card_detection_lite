@@ -15,8 +15,8 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.eng
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
 import com.apexfission.android.carddetectionlite.domain.tflite.image.crop
+import com.apexfission.android.carddetectionlite.domain.tflite.image.cropWithOffset
 import com.apexfission.android.carddetectionlite.domain.tflite.image.toUprightBitmap
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import java.util.concurrent.atomic.AtomicBoolean

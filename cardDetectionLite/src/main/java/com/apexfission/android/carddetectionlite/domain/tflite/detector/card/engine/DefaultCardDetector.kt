@@ -16,8 +16,12 @@ import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetecti
 internal class DefaultCardDetector internal constructor(
     private val yoloDetector: Detector,
     private val candidateSelector: CardCandidateSelector,
-    private val stateMachine: CardLockStateMachine
+    private val stateMachine: CardLockStateMachine,
+    private val differenceHashDistanceLimit: Int = 25,
+    private val hashBasedSearch: Int = 3
 ) : CardDetector {
+
+    private var hashDetectionCount: Int = 0
 
     constructor(
         yoloDetector: Detector,
@@ -31,7 +35,8 @@ internal class DefaultCardDetector internal constructor(
         validateClassIdInLockOnProcess: Boolean = true,
         noDetectionCountLimit: Int = 8,
         differenceHashDistanceLimit: Int = 25,
-        allowTemporalDrift: Boolean = true
+        allowTemporalDrift: Boolean = true,
+        hashBasedSearch: Int = 3
     ) : this(
         yoloDetector = yoloDetector,
         candidateSelector = CardCandidateSelector(
@@ -48,7 +53,9 @@ internal class DefaultCardDetector internal constructor(
                 validateClassIdInLockOnProcess = validateClassIdInLockOnProcess,
                 differenceHashDistanceLimit = differenceHashDistanceLimit
             )
-        )
+        ),
+        differenceHashDistanceLimit = differenceHashDistanceLimit,
+        hashBasedSearch = hashBasedSearch
     )
 
     override var enabled: Boolean
@@ -68,26 +75,49 @@ internal class DefaultCardDetector internal constructor(
     }
 
     override fun track(bitmap: Bitmap): CardDetection? {
-        val result = yoloDetector.detect(bitmap)
-        val currentTime = SystemClock.elapsedRealtime()
-
-        val candidate = candidateSelector.selectCandidate(
-            detections = result,
-            previousDetection = stateMachine.previousCardDetection,
-            bitmap = bitmap
-        )
-
-        if (candidate == null) {
-            stateMachine.handleMissingDetection()
-            return null
+        val hashBasedCandidate = if (hashDetectionCount < hashBasedSearch) {
+            stateMachine.buildCandidateFromLastKnownCoordinates(
+                bitmap,
+                differenceHashDistanceLimit
+            )
+        } else {
+            hashDetectionCount = 0
+            stateMachine.resetHashTrackingState()
+            null
         }
 
-        return stateMachine.processDetection(
-            card = candidate,
-            bitmap = bitmap,
-            currentTimeMs = currentTime
-        )
+        if (hashBasedCandidate == null) {
+            hashDetectionCount = 0
+            val result = yoloDetector.detect(bitmap)
+            val currentTime = SystemClock.elapsedRealtime()
+
+            val candidate = candidateSelector.selectCandidate(
+                detections = result,
+                previousDetection = stateMachine.previousCardDetection,
+                bitmap = bitmap
+            )
+
+            if (candidate == null) {
+                stateMachine.handleMissingDetection()
+                return null
+            }
+
+            return stateMachine.processDetection(
+                card = candidate,
+                bitmap = bitmap,
+                currentTimeMs = currentTime
+            )
+        } else {
+            hashDetectionCount++
+            val currentTime = SystemClock.elapsedRealtime()
+            return stateMachine.giveContinuation(
+                card = hashBasedCandidate,
+                bitmap = bitmap,
+                currentTimeMs = currentTime
+            )
+        }
     }
+
 
     override fun close() {
         yoloDetector.close()
