@@ -1,0 +1,18 @@
+# `com.apexfission.android.carddetectionlite.ui.camerapreview`
+
+Source set: `test` · Module: [`:cardDetectionLite`](../../../../../../../../../docs/README.md)
+
+## Contribution
+
+Checks focus policy, preview coordinate mapping, and binding/disposal races.
+
+## Responsibilities and boundaries
+
+This is verification code, not a production API. Runs through the module's JVM test task. Android-facing tests use configured mocks/stubs and do not establish real-device performance.
+
+## Source files
+
+- [AutoFocusPolicyTest.kt](AutoFocusPolicyTest.kt)
+- [CameraProviderSessionTest.kt](CameraProviderSessionTest.kt)
+- [CreatePreviewImageSpaceChainTest.kt](CreatePreviewImageSpaceChainTest.kt)
+- [FocusPointTransformTest.kt](FocusPointTransformTest.kt)
