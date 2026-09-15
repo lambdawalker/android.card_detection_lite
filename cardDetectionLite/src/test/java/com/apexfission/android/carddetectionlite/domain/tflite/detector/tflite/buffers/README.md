@@ -1,0 +1,16 @@
+# `com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.buffers`
+
+Source set: `test` · Module: [`:cardDetectionLite`](../../../../../../../../../../../../docs/README.md)
+
+## Contribution
+
+Checks pixel normalization, INT8 quantization, and output decoding.
+
+## Responsibilities and boundaries
+
+This is verification code, not a production API. Runs through the module's JVM test task. Android-facing tests use configured mocks/stubs and do not establish real-device performance.
+
+## Source files
+
+- [BitmapTensorConverterTest.kt](BitmapTensorConverterTest.kt)
+- [TensorBuffersTest.kt](TensorBuffersTest.kt)
