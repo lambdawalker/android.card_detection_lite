@@ -50,9 +50,6 @@ class CardTrackingSimulatorViewModel(
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
-    private val _cardDetection = MutableStateFlow<CardDetection?>(null)
-    val cardDetection = _cardDetection.asStateFlow()
-
     private val detectionFrameSequencer = DetectionFrameSequencer()
     private val _detectionFrame = MutableStateFlow(DetectionFrame.Initial)
     internal val detectionFrame = _detectionFrame.asStateFlow()
@@ -94,7 +91,6 @@ class CardTrackingSimulatorViewModel(
     fun setDetectionEnabled(enabled: Boolean) {
         detector.enabled = enabled
         if (!enabled) {
-            _cardDetection.value = null
             _detectionFrame.value = detectionFrameSequencer.reset()
         }
     }
@@ -186,7 +182,6 @@ class CardTrackingSimulatorViewModel(
     }
 
     private fun publishDetectionFrame(detection: CardDetection?) {
-        _cardDetection.value = detection
         _detectionFrame.value = detectionFrameSequencer.next(detection)
     }
 

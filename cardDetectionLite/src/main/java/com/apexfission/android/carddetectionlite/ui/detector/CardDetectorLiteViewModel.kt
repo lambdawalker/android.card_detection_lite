@@ -51,10 +51,9 @@ class CardDetectorLiteViewModel(
     numThreads: NumThreads,
 ) : AndroidViewModel(application) {
 
-    private val _cardDetection = MutableStateFlow<CardDetection?>(null)
-    val cardDetection: StateFlow<CardDetection?> = _cardDetection.asStateFlow()
 
     private val detectionFrameSequencer = DetectionFrameSequencer()
+
     private val _detectionFrame = MutableStateFlow(DetectionFrame.Initial)
     internal val detectionFrame: StateFlow<DetectionFrame> = _detectionFrame.asStateFlow()
 
@@ -102,7 +101,6 @@ class CardDetectorLiteViewModel(
         detector.enabled = enabled
 
         if (!enabled) {
-            _cardDetection.value = null
             _detectionFrame.value = detectionFrameSequencer.reset()
         }
     }
@@ -210,7 +208,6 @@ class CardDetectorLiteViewModel(
     }
 
     private fun publishDetectionFrame(detection: CardDetection?) {
-        _cardDetection.value = detection
         _detectionFrame.value = detectionFrameSequencer.next(detection)
     }
 

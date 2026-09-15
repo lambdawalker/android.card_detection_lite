@@ -41,8 +41,6 @@ class AnimatedDetectionBoundsTest {
 
         assertEquals(0.35f, config.idleOpacity, 0.001f)
         assertEquals(0.85f, config.detectedOpacity, 0.001f)
-        assertEquals(2_000L, config.missingCardResetDelayMs)
-        assertNull(config.maxConsecutiveMisses)
         assertEquals(200, config.trackingAnimationDurationMs)
         assertEquals(300, config.resetAnimationDurationMs)
         assertEquals(1_000, config.fadeAnimationDurationMs)

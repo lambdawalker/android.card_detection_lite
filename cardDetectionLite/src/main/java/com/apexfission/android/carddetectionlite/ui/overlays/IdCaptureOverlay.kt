@@ -69,13 +69,12 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
             config = DetectionAnimationConfig(
                 idleOpacity = config.idleOpacity,
                 detectedOpacity = config.detectedOpacity,
-                missingCardResetDelayMs = config.missingCardResetDelayMs,
-                maxConsecutiveMisses = config.maxConsecutiveMisses,
                 trackingAnimationDurationMs = config.trackingAnimationDurationMs,
                 resetAnimationDurationMs = config.resetAnimationDurationMs,
                 fadeAnimationDurationMs = config.fadeAnimationDurationMs,
                 enableGuideSmoothing = config.enableGuideSmoothing,
                 enableContinuousAnimations = config.enableContinuousAnimations,
+                resetBoundingBoxWaitTimeMs = config.resetBoundingBoxWaitTimeMs
             )
         ) {
             val left = bounds.left
@@ -235,7 +234,6 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Retain capture enabled state once a best detection is stored.
             val isCaptureEnabled = if (config.requiresCardDetectionForCapture) captureEnabled else true
 
             val animatedShutterAlpha by animateFloatAsState(

@@ -19,6 +19,7 @@ import com.apexfission.android.carddetectionlite.tfmodel.classes
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
+import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureOverlay
 import com.apexfission.android.carddetectionlite.ui.simulation.CardTrackingSimulator
 import com.apexfission.android.carddetectiontest.ui.theme.CardDetectionTestTheme
@@ -63,7 +64,8 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         onCaptureRequested = mainViewModel::onCapture,
                         onBackRequested = mainViewModel::onBackRequested,
                         controlOverlay = {
-                            IdCaptureOverlay()
+//                            IdCaptureOverlay()
+                            CardLockOnOverlay()
                         }
                     )
                 }

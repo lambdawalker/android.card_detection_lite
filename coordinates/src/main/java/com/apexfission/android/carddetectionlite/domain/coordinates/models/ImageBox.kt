@@ -22,6 +22,14 @@ data class ImageBox(
     val width: UInt,
     val height: UInt
 ) {
+    val left: Int get() = x.toInt()
+    val top: Int get() = y.toInt()
+    val right: Int get() = x2.toInt()
+    val bottom: Int get() = y2.toInt()
+    val intWidth: Int get() = width.toInt()
+    val intHeight: Int get() = height.toInt()
+    val isEmpty: Boolean get() = width == 0u || height == 0u
+
     /**
      * Returns a new [ImageBox] shifted by [dx] and [dy].
      * Intermediate calculations are performed in 64-bit signed integers to prevent wrapping/overflows.
@@ -88,6 +96,5 @@ data class ImageBox(
             return fromPS(validX, validY, validW, validH)
         }
 
-        operator fun invoke(x: UInt, y: UInt, x2: UInt, y2: UInt): ImageBox = from2P(x, y, x2, y2)
     }
 }
