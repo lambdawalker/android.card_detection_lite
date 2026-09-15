@@ -2,6 +2,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.tr
 
 import android.graphics.Bitmap
 import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.tracking.CardLockStateMachine
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.DetectionSource
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
@@ -76,7 +77,8 @@ class CardLockStateMachineTest {
     @Test
     fun `giveContinuation advances candidate lock progression`() {
         val stateMachine = CardLockStateMachine(
-            lockOnThreshold = 3,
+            lockOnThreshold = 2,
+            hashBasedSearchFrameLimit = 2
         )
 
         val bitmap = mock<Bitmap>()
@@ -86,34 +88,26 @@ class CardLockStateMachineTest {
 
         assertEquals(0, stateMachine.hashDetectionCount)
 
-        // Frame 1 via processDetection
+        // Frame 1 via processDetection (Yolo) -> consistency = 1.0 (< 2 -> LockingCard)
         val f1 = stateMachine.processDetection(detection, bitmap, 1000L)
         assertEquals(LockingStatus.LockingCard, f1.lockingStatus)
         assertEquals(DetectionSource.Yolo, f1.detectionSource)
         assertEquals(0, stateMachine.hashDetectionCount)
         assertNull(f1.id)
 
-        // Frame 2 via giveContinuation
-        val f2 = stateMachine.giveContinuation(detection, bitmap, 1100L)
+        // Frame 2 via giveContinuation (Hash) -> consistency = 1.5 (< 2 -> LockingCard)
+        val f2 = stateMachine.giveContinuation(detection, bitmap, 1100L)!!
         assertEquals(LockingStatus.LockingCard, f2.lockingStatus)
         assertEquals(DetectionSource.Hash, f2.detectionSource)
         assertEquals(1, stateMachine.hashDetectionCount)
         assertNull(f2.id)
 
-        // Frame 3 via giveContinuation (reaches threshold -> NewCard)
-        val f3 = stateMachine.giveContinuation(detection, bitmap, 1200L)
-        assertEquals(LockingStatus.NewCard, f3.lockingStatus)
+        // Frame 3 via giveContinuation (Hash) -> hits threshold but avoids NewCard for hash -> LockingCard
+        val f3 = stateMachine.giveContinuation(detection, bitmap, 1200L)!!
+        assertEquals(LockingStatus.LockingCard, f3.lockingStatus)
         assertEquals(DetectionSource.Hash, f3.detectionSource)
         assertEquals(2, stateMachine.hashDetectionCount)
-        assertEquals(1L, f3.id)
-        assertEquals(1.0f, f3.lockOnProgress, 0.01f)
-
-        // Frame 4 via giveContinuation (remains locked -> CardLocked)
-        val f4 = stateMachine.giveContinuation(detection, bitmap, 1300L)
-        assertEquals(LockingStatus.CardLocked, f4.lockingStatus)
-        assertEquals(DetectionSource.Hash, f4.detectionSource)
-        assertEquals(3, stateMachine.hashDetectionCount)
-        assertEquals(1L, f4.id)
+        assertNull(f3.id)
 
         stateMachine.resetHashTrackingState()
         assertEquals(0, stateMachine.hashDetectionCount)

@@ -76,7 +76,7 @@ fun CardDetectorOverlayScope.DebugOverlay(
  * @param inferenceIntervalMs Minimum time between inferences in milliseconds.
  * @param tapToFocusEnabled Whether tap-to-focus is enabled.
  * @param focusOnCardEnabled Whether smart auto-focus on card is enabled.
- * @param lockOnThreshold Number of consistent frames required for lock-on.
+ * @param lockOnThreshold Target consistency points required for lock-on (hash-based detections contribute fractionally).
  * @param numThreads CPU thread configuration.
  * @param modifier Composable modifier.
  * @param noDetectionCountLimit Missing detection limit before tracking resets.

@@ -89,8 +89,8 @@ To verify visual consistency without expensive deep-feature extraction, `CardDet
 ```
 
 ### Locking Progression Criteria:
-- **`LockingCard`**: Card candidate detected, progress increments linearly (`candidateConsistencyCount / lockOnThreshold`).
-- **`NewCard`**: Threshold reached (e.g., 5 consistent frames). Generates a unique monotonic `card.id` and emits `NewCard` status.
+- **`LockingCard`**: Card candidate detected, progress increments linearly (`candidateConsistencyCount / lockOnThreshold`). With hash-based search enabled to alleviate GPU load, lightweight dHash matches contribute fractional increments (`candidateConsistencyCount += 1f / hashBasedSearchFrameLimit`) toward `lockOnThreshold`, while full YOLO inference detections contribute `1f`.
+- **`NewCard`**: Threshold reached (consistency count meets or exceeds `lockOnThreshold`). Generates a unique monotonic `card.id` and emits `NewCard` status.
 - **`CardLocked`**: Subsequent frames maintain identity `card.id` and `lockOnProgress = 1.0f`.
 
 ### Robustness & Auto-Focus Resilience:

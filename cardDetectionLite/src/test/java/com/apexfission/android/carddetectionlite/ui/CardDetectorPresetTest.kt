@@ -16,7 +16,7 @@ class CardDetectorPresetTest {
 
         assertEquals(0.80f, preset.scoreThreshold, 0.001f)
         assertEquals(0.45f, preset.iouThreshold, 0.001f)
-        assertEquals(6, preset.lockOnThreshold)
+        assertEquals(7, preset.lockOnThreshold)
         assertEquals(10, preset.noDetectionCountLimit)
         assertEquals(33L, preset.inferenceIntervalMs)
         assertTrue(preset.useGpu)
@@ -30,7 +30,7 @@ class CardDetectorPresetTest {
 
         assertEquals(0.50f, preset.scoreThreshold, 0.001f)
         assertEquals(0.45f, preset.iouThreshold, 0.001f)
-        assertEquals(4, preset.lockOnThreshold)
+        assertEquals(5, preset.lockOnThreshold)
         assertEquals(8, preset.noDetectionCountLimit)
         assertEquals(33L, preset.inferenceIntervalMs)
         assertTrue(preset.useGpu)

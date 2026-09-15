@@ -8,7 +8,8 @@ import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.tra
  *
  * @property scoreThreshold Minimum confidence score (0.0 to 1.0) required for candidate detections.
  * @property iouThreshold Intersection-over-Union threshold for Non-Max Suppression.
- * @property lockOnThreshold Number of consecutive consistent frames required before confirming lock-on.
+ * @property lockOnThreshold Target number of consistency points required before confirming lock-on.
+ * Hash-based detections contribute fractional increments (`1f / hashBasedSearchFrameLimit`) toward this threshold.
  * @property noDetectionCountLimit Maximum number of missing detection frames allowed before tracking resets.
  * @property memoryDetectionTimeLimit Maximum elapsed time in milliseconds that tracking state may survive without a valid detection.
  * @property validateClassIdInLockOnProcess Whether a class-ID change should start a new candidate.
@@ -74,7 +75,7 @@ data class CardDetectorPreset(
         val HighAccuracy = CardDetectorPreset(
             scoreThreshold = 0.80f,
             iouThreshold = 0.45f,
-            lockOnThreshold = 6,
+            lockOnThreshold = 7,
             noDetectionCountLimit = 10,
             inferenceIntervalMs = 33L,
             useGpu = true,
@@ -89,7 +90,7 @@ data class CardDetectorPreset(
         val HighPerformance = CardDetectorPreset(
             scoreThreshold = 0.50f,
             iouThreshold = 0.45f,
-            lockOnThreshold = 4,
+            lockOnThreshold = 5,
             noDetectionCountLimit = 8,
             inferenceIntervalMs = 33L,
             useGpu = true,
