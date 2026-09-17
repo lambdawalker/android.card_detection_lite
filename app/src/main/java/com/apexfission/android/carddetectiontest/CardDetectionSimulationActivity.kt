@@ -20,6 +20,8 @@ import com.apexfission.android.carddetectionlite.tfmodel.modelPath
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
 import com.apexfission.android.carddetectionlite.ui.overlays.CardLockOnOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureControlsOverlay
+import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureIndicatorOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.IdCaptureOverlay
 import com.apexfission.android.carddetectionlite.ui.simulation.CardTrackingSimulator
 import com.apexfission.android.carddetectiontest.ui.theme.CardDetectionTestTheme
@@ -44,7 +46,7 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         }
                     }
 
-                    val videoUri = "android.resource://$packageName/raw/in_move_out".toUri()
+                    val videoUri = "android.resource://$packageName/raw/x".toUri()
 
                     CardTrackingSimulator(
                         modifier = Modifier.padding(innerPadding),
@@ -65,8 +67,8 @@ class CardDetectionSimulationActivity : ComponentActivity() {
                         onCaptureRequested = mainViewModel::onCapture,
                         onBackRequested = mainViewModel::onBackRequested,
                         controlOverlay = {
-                            IdCaptureOverlay()
-//                            CardLockOnOverlay()
+                            IdCaptureIndicatorOverlay()
+                            IdCaptureControlsOverlay()
                         }
                     )
                 }

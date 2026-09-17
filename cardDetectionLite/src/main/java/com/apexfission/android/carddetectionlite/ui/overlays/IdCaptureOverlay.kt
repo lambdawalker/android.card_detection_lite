@@ -50,112 +50,119 @@ import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorOverlay
 import com.apexfission.android.carddetectionlite.ui.overlays.draw.lerpF
 
 /**
- * Built-in ID capture overlay following the standard ID verification UI layout.
- *
- * Renders a back button, top text instructions, an animated card guide frame,
- * a bottom-center shutter button, and a flashlight toggle button.
+ * Renders the animated card detection indicator / guide frame for ID capture.
  *
  * Built on top of [AnimatedDetectionCanvas].
  *
  * @param config Configuration parameters for opacity, timers, smoothing, and capture behavior.
  */
 @Composable
-fun CardDetectorOverlayScope.IdCaptureOverlay(
+fun CardDetectorOverlayScope.IdCaptureIndicatorOverlay(
     config: IdCaptureOverlayConfig = IdCaptureOverlayConfig()
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        AnimatedDetectionCanvas(
-            config = DetectionAnimationConfig(
-                idleOpacity = config.idleOpacity,
-                detectedOpacity = config.detectedOpacity,
-                trackingAnimationDurationMs = config.trackingAnimationDurationMs,
-                resetAnimationDurationMs = config.resetAnimationDurationMs,
-                fadeAnimationDurationMs = config.fadeAnimationDurationMs,
-                enableGuideSmoothing = config.enableGuideSmoothing,
-                enableContinuousAnimations = config.enableContinuousAnimations,
-                resetDetectionIndicatorTime = config.resetBoundingBoxWaitTimeMs
-            )
-        ) {
-            val left = bounds.left
-            val top = bounds.top
-            val right = bounds.right
-            val bottom = bounds.bottom
+    AnimatedDetectionCanvas(
+        config = DetectionAnimationConfig(
+            idleOpacity = config.idleOpacity,
+            detectedOpacity = config.detectedOpacity,
+            trackingAnimationDurationMs = config.trackingAnimationDurationMs,
+            resetAnimationDurationMs = config.resetAnimationDurationMs,
+            fadeAnimationDurationMs = config.fadeAnimationDurationMs,
+            enableGuideSmoothing = config.enableGuideSmoothing,
+            enableContinuousAnimations = config.enableContinuousAnimations,
+            resetDetectionIndicatorTime = config.resetBoundingBoxWaitTimeMs
+        )
+    ) {
+        val left = bounds.left
+        val top = bounds.top
+        val right = bounds.right
+        val bottom = bounds.bottom
 
-            val progress = bounds.smoothProgress
+        val progress = bounds.smoothProgress
 
-            // Animate corner bracket thickness and length when an ID is detected
-            val cornerLen = lerpF(15.dp.toPx(), 22.dp.toPx(), progress)
-            val strokeWidth = lerpF(2.dp.toPx(), 6.dp.toPx(), progress)
+        // Animate corner bracket thickness and length when an ID is detected
+        val cornerLen = lerpF(15.dp.toPx(), 22.dp.toPx(), progress)
+        val strokeWidth = lerpF(2.dp.toPx(), 6.dp.toPx(), progress)
 
-            // Transition guide color to bright electric blue on lock-on
-            val brightBlue = Color(0xFF00E5FF)
-            val activeColor = lerp(config.guideColor, brightBlue, progress)
-            val color = activeColor.copy(alpha = bounds.opacity)
+        // Transition guide color to bright electric blue on lock-on
+        val brightBlue = Color(0xFF00E5FF)
+        val activeColor = lerp(config.guideColor, brightBlue, progress)
+        val color = activeColor.copy(alpha = bounds.opacity)
 
-            // Padding to offset the corner brackets from the dashed line
-            val cornerPadding = 4.dp.toPx()
-            val pLeft = left - cornerPadding
-            val pTop = top - cornerPadding
-            val pRight = right + cornerPadding
-            val pBottom = bottom + cornerPadding
+        // Padding to offset the corner brackets from the dashed line
+        val cornerPadding = 4.dp.toPx()
+        val pLeft = left - cornerPadding
+        val pTop = top - cornerPadding
+        val pRight = right + cornerPadding
+        val pBottom = bottom + cornerPadding
 
-            // Outer dashed boundary line
-            val dashedPath = Path().apply {
-                addRoundRect(
-                    androidx.compose.ui.geometry.RoundRect(
-                        left = left, top = top, right = right, bottom = bottom, cornerRadius = CornerRadius(12.dp.toPx(), 10.dp.toPx())
-                    )
+        // Outer dashed boundary line
+        val dashedPath = Path().apply {
+            addRoundRect(
+                androidx.compose.ui.geometry.RoundRect(
+                    left = left, top = top, right = right, bottom = bottom, cornerRadius = CornerRadius(12.dp.toPx(), 10.dp.toPx())
                 )
-            }
-
-            drawPath(
-                path = dashedPath, color = color, style = Stroke(
-                    width = 2.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(16f, 12f))
-                )
-            )
-
-            // Top-Left corner bracket
-            drawPath(
-                path = Path().apply {
-                    moveTo(pLeft, pTop + cornerLen)
-                    lineTo(pLeft, pTop + 12.dp.toPx())
-                    quadraticBezierTo(pLeft, pTop, pLeft + 12.dp.toPx(), pTop)
-                    lineTo(pLeft + cornerLen, pTop)
-                }, color = color, style = Stroke(width = strokeWidth)
-            )
-
-            // Top-Right corner bracket
-            drawPath(
-                path = Path().apply {
-                    moveTo(pRight - cornerLen, pTop)
-                    lineTo(pRight - 12.dp.toPx(), pTop)
-                    quadraticBezierTo(pRight, pTop, pRight, pTop + 12.dp.toPx())
-                    lineTo(pRight, pTop + cornerLen)
-                }, color = color, style = Stroke(width = strokeWidth)
-            )
-
-            // Bottom-Right corner bracket
-            drawPath(
-                path = Path().apply {
-                    moveTo(pRight, pBottom - cornerLen)
-                    lineTo(pRight, pBottom - 12.dp.toPx())
-                    quadraticBezierTo(pRight, pBottom, pRight - 12.dp.toPx(), pBottom)
-                    lineTo(pRight - cornerLen, pBottom)
-                }, color = color, style = Stroke(width = strokeWidth)
-            )
-
-            // Bottom-Left corner bracket
-            drawPath(
-                path = Path().apply {
-                    moveTo(pLeft + cornerLen, pBottom)
-                    lineTo(pLeft + 12.dp.toPx(), pBottom)
-                    quadraticBezierTo(pLeft, pBottom, pLeft, pBottom - 12.dp.toPx())
-                    lineTo(pLeft, pBottom - cornerLen)
-                }, color = color, style = Stroke(width = strokeWidth)
             )
         }
 
+        drawPath(
+            path = dashedPath, color = color, style = Stroke(
+                width = 2.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(16f, 12f))
+            )
+        )
+
+        // Top-Left corner bracket
+        drawPath(
+            path = Path().apply {
+                moveTo(pLeft, pTop + cornerLen)
+                lineTo(pLeft, pTop + 12.dp.toPx())
+                quadraticBezierTo(pLeft, pTop, pLeft + 12.dp.toPx(), pTop)
+                lineTo(pLeft + cornerLen, pTop)
+            }, color = color, style = Stroke(width = strokeWidth)
+        )
+
+        // Top-Right corner bracket
+        drawPath(
+            path = Path().apply {
+                moveTo(pRight - cornerLen, pTop)
+                lineTo(pRight - 12.dp.toPx(), pTop)
+                quadraticBezierTo(pRight, pTop, pRight, pTop + 12.dp.toPx())
+                lineTo(pRight, pTop + cornerLen)
+            }, color = color, style = Stroke(width = strokeWidth)
+        )
+
+        // Bottom-Right corner bracket
+        drawPath(
+            path = Path().apply {
+                moveTo(pRight, pBottom - cornerLen)
+                lineTo(pRight, pBottom - 12.dp.toPx())
+                quadraticBezierTo(pRight, pBottom, pRight - 12.dp.toPx(), pBottom)
+                lineTo(pRight - cornerLen, pBottom)
+            }, color = color, style = Stroke(width = strokeWidth)
+        )
+
+        // Bottom-Left corner bracket
+        drawPath(
+            path = Path().apply {
+                moveTo(pLeft + cornerLen, pBottom)
+                lineTo(pLeft + 12.dp.toPx(), pBottom)
+                quadraticBezierTo(pLeft, pBottom, pLeft, pBottom - 12.dp.toPx())
+                lineTo(pLeft, pBottom - cornerLen)
+            }, color = color, style = Stroke(width = strokeWidth)
+        )
+    }
+}
+
+/**
+ * Renders the ID capture controls and text (header, title, instructions, shutter button, flashlight toggle).
+ *
+ * @param config Configuration parameters for titles and capture behavior.
+ */
+@Composable
+fun CardDetectorOverlayScope.IdCaptureControlsOverlay(
+    config: IdCaptureOverlayConfig = IdCaptureOverlayConfig()
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -314,5 +321,22 @@ fun CardDetectorOverlayScope.IdCaptureOverlay(
                 }
             }
         }
+    }
+}
+
+/**
+ * Built-in ID capture overlay combining the card detection indicator and controls/text.
+ *
+ * Renders [IdCaptureIndicatorOverlay] and [IdCaptureControlsOverlay] together.
+ *
+ * @param config Configuration parameters for opacity, timers, smoothing, and capture behavior.
+ */
+@Composable
+fun CardDetectorOverlayScope.IdCaptureOverlay(
+    config: IdCaptureOverlayConfig = IdCaptureOverlayConfig()
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        IdCaptureIndicatorOverlay(config)
+        IdCaptureControlsOverlay(config)
     }
 }

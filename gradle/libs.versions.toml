@@ -29,6 +29,7 @@ testServices = "1.6.0"
 mockito = "5.23.0"
 mockitoKotlin = "6.3.0"
 composeRuntime = "1.7.8"
+androidBuiltInKotlin = "9.3.2"
 
 [libraries]
 
@@ -83,3 +84,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+android-built-in1-kotlin = { id = "com.android.built-in-kotlin", version.ref = "androidBuiltInKotlin" }
