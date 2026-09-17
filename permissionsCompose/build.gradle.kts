@@ -1,14 +1,13 @@
-import com.android.build.api.dsl.LibraryExtension
+
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
     id("com.vanniktech.maven.publish") version "0.36.0"
 }
 
-extensions.configure<LibraryExtension> {
+android {
     namespace = "com.apexfission.android.permissionscompose"
     compileSdk = 36
 
