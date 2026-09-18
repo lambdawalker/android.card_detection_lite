@@ -1,9 +1,9 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.selection
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.postprocess.intersectionOverUnion
+import com.apexfission.android.yolo.postprocess.intersectionOverUnion
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.yolo.engine.Detection
 
 /**
  * Handles filtering raw model detections and selecting the best spatial candidate matching previous tracking state.

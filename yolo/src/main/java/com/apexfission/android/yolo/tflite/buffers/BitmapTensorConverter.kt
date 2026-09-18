@@ -6,14 +6,14 @@ import java.nio.ByteBuffer
 /**
  * Applies the INT8 quantization formula to a single float value.
  */
-internal fun quantizeToInt8(v: Float, zeroPoint: Int): Byte =
+fun quantizeToInt8(v: Float, zeroPoint: Int): Byte =
     (v + zeroPoint).toInt().coerceIn(-128, 127).toByte()
 
 /**
  * Prepares bitmap data for an FP32 model by normalizing pixel values to the [0.0, 1.0] range
  * and writing them to the destination [buf].
  */
-internal fun fillBitmapToFloatBuffer(
+fun fillBitmapToFloatBuffer(
     bitmap: Bitmap,
     buf: ByteBuffer,
     pixelBuffer: IntArray,
@@ -33,7 +33,7 @@ internal fun fillBitmapToFloatBuffer(
  * Prepares bitmap data for an INT8 model by normalizing and then quantizing pixel values,
  * writing them to the destination [buf].
  */
-internal fun fillBitmapToByteBuffer(
+fun fillBitmapToByteBuffer(
     bitmap: Bitmap,
     buf: ByteBuffer,
     pixelBuffer: IntArray,

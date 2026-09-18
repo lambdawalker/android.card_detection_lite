@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.yolo.engine.Detection
 
 /**
  * A functional interface for creating custom validation rules for detected objects.

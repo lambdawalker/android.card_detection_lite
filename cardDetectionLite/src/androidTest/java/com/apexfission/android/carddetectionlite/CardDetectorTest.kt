@@ -9,12 +9,12 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine.CardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine.buildCardDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
+import com.apexfission.android.yolo.engine.YoloDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHashFromRegion
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import com.apexfission.android.carddetectionlite.tfmodel.cardClasses
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
-import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
+import com.apexfission.android.yolo.engine.NumThreads
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue

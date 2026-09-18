@@ -61,6 +61,7 @@ kotlin {
 
 dependencies {
     implementation(project(":coordinates"))
+    implementation(project(":yolo"))
 
     implementation(libs.androidx.compose.material.icons.extended)
 

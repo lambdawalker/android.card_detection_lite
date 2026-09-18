@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine
 
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.EngineThreadDispatcher
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.Detector
+import com.apexfission.android.yolo.tflite.engine.EngineThreadDispatcher
+import com.apexfission.android.yolo.engine.Detector
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.AspectRatioValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.MarginValidator

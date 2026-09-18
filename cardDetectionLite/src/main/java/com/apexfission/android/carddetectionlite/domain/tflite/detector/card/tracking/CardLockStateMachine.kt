@@ -5,9 +5,9 @@ import android.os.SystemClock
 import com.apexfission.android.carddetectionlite.domain.tflite.image.generateDHashFromRegion
 import com.apexfission.android.carddetectionlite.domain.tflite.image.isVisuallySimilar
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.yolo.engine.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.DetectionSource
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Feature
+import com.apexfission.android.yolo.engine.Feature
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 
 /**

@@ -5,7 +5,7 @@ import com.apexfission.android.yolo.tflite.engine.InferenceEngine
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Tensor
 
-internal data class TensorMetadata(
+data class TensorMetadata(
     val shape: IntArray,
     val dataType: DataType,
     val quantizationScale: Float,
@@ -22,7 +22,7 @@ internal fun Tensor.toMetadata(): TensorMetadata {
     )
 }
 
-internal data class ModelTensorContract(
+data class ModelTensorContract(
     val inputImageWidth: Int,
     val inputElementCount: Int,
     val inputByteCount: Int,
@@ -39,7 +39,7 @@ internal data class ModelTensorContract(
     val outputBoxes: Int,
 )
 
-internal object TensorContractValidator {
+object TensorContractValidator {
     private const val INPUT_CHANNELS = 3
     private const val MIN_OUTPUT_ATTRIBUTES = 5
 

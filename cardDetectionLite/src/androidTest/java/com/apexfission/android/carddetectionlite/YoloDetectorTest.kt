@@ -4,10 +4,10 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.apexfission.android.carddetectionlite.domain.ModelCatalog
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.YoloDetector
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.yolo.engine.YoloDetector
+import com.apexfission.android.yolo.engine.Detection
 import com.apexfission.android.carddetectionlite.tfmodel.modelPath
-import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
+import com.apexfission.android.yolo.engine.NumThreads
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test

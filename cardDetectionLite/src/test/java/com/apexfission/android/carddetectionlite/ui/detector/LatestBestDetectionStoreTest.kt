@@ -3,7 +3,7 @@ package com.apexfission.android.carddetectionlite.ui.detector
 import android.graphics.Bitmap
 import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Feature
+import com.apexfission.android.yolo.engine.Feature
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors

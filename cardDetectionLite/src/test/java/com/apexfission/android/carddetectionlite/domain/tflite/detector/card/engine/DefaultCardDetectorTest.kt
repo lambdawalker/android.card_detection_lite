@@ -3,8 +3,8 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.en
 import android.graphics.Bitmap
 import android.graphics.Color
 import com.apexfission.android.math.models.ImageBox
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.Detector
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.yolo.engine.Detector
+import com.apexfission.android.yolo.engine.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.DetectionSource
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import org.junit.Assert.assertEquals
@@ -73,7 +73,7 @@ class DefaultCardDetectorTest {
         // Frame 3: count=1 < hashBasedSearchFrameLimit(2), uses dHash match -> does not call yolo
         val r3 = cardDetector.track(bitmap)
         assertNotNull(r3)
-        assertEquals(LockingStatus.NewCard, r3?.lockingStatus)
+        assertEquals(LockingStatus.LockingCard, r3?.lockingStatus)
         assertEquals(DetectionSource.Hash, r3?.detectionSource)
         verify(yoloDetector, times(1)).detect(bitmap) // count is still 1
 

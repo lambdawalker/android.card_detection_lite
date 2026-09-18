@@ -2,6 +2,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import com.apexfission.android.yolo.engine.Feature
 
 /**
  * Encapsulates the tracking and detection result for a card in an image frame.

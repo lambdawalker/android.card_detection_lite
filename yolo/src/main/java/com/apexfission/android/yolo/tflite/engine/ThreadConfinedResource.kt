@@ -5,7 +5,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
 
 /** Shared admission/ownership protocol used by all pipeline wrappers. */
-internal class ThreadConfinedResource<T : Closeable>(
+class ThreadConfinedResource<T : Closeable>(
     sharedContext: EngineThreadDispatcher? = null,
     factory: () -> T,
 ) : Closeable {

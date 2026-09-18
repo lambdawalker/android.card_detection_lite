@@ -1,8 +1,8 @@
 package com.apexfission.android.carddetectionlite.ui
 
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
+import com.apexfission.android.yolo.image.PreProcessingImageTransformation
 import com.apexfission.android.carddetectionlite.ui.detector.CardDetectorPreset
-import com.apexfission.android.carddetectionlite.ui.detector.NumThreads
+import com.apexfission.android.yolo.engine.NumThreads
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -17,7 +17,7 @@ class CardDetectorPresetTest {
         assertEquals(0.80f, preset.scoreThreshold, 0.001f)
         assertEquals(0.45f, preset.iouThreshold, 0.001f)
         assertEquals(7, preset.lockOnThreshold)
-        assertEquals(10, preset.noDetectionCountLimit)
+        assertEquals(6, preset.noDetectionCountLimit)
         assertEquals(33L, preset.inferenceIntervalMs)
         assertTrue(preset.useGpu)
         assertEquals(PreProcessingImageTransformation.FullImage, preset.preProcessingImageTransformation)
@@ -45,7 +45,7 @@ class CardDetectorPresetTest {
         assertEquals(0.50f, preset.scoreThreshold, 0.001f)
         assertEquals(0.45f, preset.iouThreshold, 0.001f)
         assertEquals(4, preset.lockOnThreshold)
-        assertEquals(6, preset.noDetectionCountLimit)
+        assertEquals(10, preset.noDetectionCountLimit)
         assertEquals(100L, preset.inferenceIntervalMs)
         assertFalse(preset.useGpu)
         assertEquals(PreProcessingImageTransformation.SquareCrop(), preset.preProcessingImageTransformation)

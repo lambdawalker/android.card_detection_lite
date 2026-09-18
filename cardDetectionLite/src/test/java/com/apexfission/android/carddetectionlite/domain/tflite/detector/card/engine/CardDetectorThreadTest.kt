@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
 import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Feature
+import com.apexfission.android.yolo.engine.Feature
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

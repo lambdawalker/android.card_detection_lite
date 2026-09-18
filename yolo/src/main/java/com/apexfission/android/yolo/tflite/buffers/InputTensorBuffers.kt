@@ -10,7 +10,7 @@ import java.nio.ByteOrder
  * Encapsulates the input specifications, quantization parameters, and pre-allocated I/O buffers
  * required to prepare bitmap data for model inference.
  */
-internal class InputTensorBuffers(
+class InputTensorBuffers(
     val imageWidth: Int,
     val isInt8: Boolean,
     val scale: Float,

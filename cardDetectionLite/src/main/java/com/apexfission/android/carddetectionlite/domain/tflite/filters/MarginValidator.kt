@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.filters
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.yolo.engine.Detection
 
 /**
  * A [CardValidator] that checks if a detection is within a specified margin from the image edges.

@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.tracking
 
 import com.apexfission.android.carddetectionlite.domain.tflite.image.isVisuallySimilar
-import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
+import com.apexfission.android.yolo.engine.Detection
 
 /**
  * Determines whether a candidate detection is visually and categorically consistent with

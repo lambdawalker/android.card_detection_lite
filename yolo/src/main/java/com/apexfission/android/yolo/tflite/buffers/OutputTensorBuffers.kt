@@ -10,7 +10,7 @@ import java.nio.ByteOrder
  * Encapsulates the output specifications, quantization parameters, and pre-allocated I/O buffers
  * required to extract raw float arrays from model inference.
  */
-internal class OutputTensorBuffers(
+class OutputTensorBuffers(
     val count: Int,
     val layout: InferenceEngine.OutputLayout,
     val attributes: Int,

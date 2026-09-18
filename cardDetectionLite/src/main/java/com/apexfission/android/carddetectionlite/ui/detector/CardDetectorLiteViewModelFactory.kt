@@ -3,7 +3,8 @@ package com.apexfission.android.carddetectionlite.ui.detector
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.transformation.PreProcessingImageTransformation
+import com.apexfission.android.yolo.image.PreProcessingImageTransformation
+import com.apexfission.android.yolo.engine.NumThreads
 import com.apexfission.android.carddetectionlite.domain.tflite.filters.CardValidator
 
 /**
