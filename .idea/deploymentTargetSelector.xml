@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="CardDetectionSimulationActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-09-15T19:24:10.265955600Z">
+        <DropdownSelection timestamp="2026-09-17T18:08:05.043071400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R5CX41W54QB" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\D\.android\avd\Sv2-001.avd" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -81,10 +81,10 @@
       </SelectionState>
       <SelectionState runConfigName="main">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-09-15T19:24:10.265955600Z">
+        <DropdownSelection timestamp="2026-09-17T18:07:52.806288800Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R5CX41W54QB" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\D\.android\avd\Sv2-001.avd" />
             </handle>
           </Target>
         </DropdownSelection>

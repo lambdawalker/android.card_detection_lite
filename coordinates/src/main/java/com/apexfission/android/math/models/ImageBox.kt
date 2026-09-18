@@ -1,0 +1,100 @@
+package com.apexfission.android.math.models
+
+/**
+ * Represents a 2D bounding box defined by top-left (x, y), bottom-right (x2, y2),
+ * and dimensions (width, height).
+ *
+ * All coordinates and dimensions are unsigned integers in bitmap pixel space.
+ * (x, y) is guaranteed to be top-left, and (x2, y2) bottom-right.
+ *
+ * @property x The top-left X-coordinate.
+ * @property y The top-left Y-coordinate.
+ * @property x2 The bottom-right X-coordinate.
+ * @property y2 The bottom-right Y-coordinate.
+ * @property width The horizontal dimension (x2 - x).
+ * @property height The vertical dimension (y2 - y).
+ */
+data class ImageBox(
+    val x: UInt,
+    val y: UInt,
+    val x2: UInt,
+    val y2: UInt,
+    val width: UInt,
+    val height: UInt
+) {
+    val left: Int get() = x.toInt()
+    val top: Int get() = y.toInt()
+    val right: Int get() = x2.toInt()
+    val bottom: Int get() = y2.toInt()
+    val intWidth: Int get() = width.toInt()
+    val intHeight: Int get() = height.toInt()
+    val isEmpty: Boolean get() = width == 0u || height == 0u
+
+    /**
+     * Returns a new [ImageBox] shifted by [dx] and [dy].
+     * Intermediate calculations are performed in 64-bit signed integers to prevent wrapping/overflows.
+     */
+    fun offset(dx: Int, dy: Int): ImageBox {
+        return from2P(
+            x1 = (x.toLong() + dx).coerceIn(0, UInt.MAX_VALUE.toLong()).toUInt(),
+            y1 = (y.toLong() + dy).coerceIn(0, UInt.MAX_VALUE.toLong()).toUInt(),
+            x2 = (x2.toLong() + dx).coerceIn(0, UInt.MAX_VALUE.toLong()).toUInt(),
+            y2 = (y2.toLong() + dy).coerceIn(0, UInt.MAX_VALUE.toLong()).toUInt()
+        )
+    }
+
+    companion object {
+        /**
+         * Constructs an [ImageBox] from two points: (x1, y1) and (x2, y2).
+         * Ensures (x, y) is top-left and (x2, y2) is bottom-right.
+         */
+        fun from2P(x1: UInt, y1: UInt, x2: UInt, y2: UInt): ImageBox {
+            val minX = minOf(x1, x2)
+            val maxX = maxOf(x1, x2)
+            val minY = minOf(y1, y2)
+            val maxY = maxOf(y1, y2)
+            return ImageBox(
+                x = minX,
+                y = minY,
+                x2 = maxX,
+                y2 = maxY,
+                width = maxX - minX,
+                height = maxY - minY
+            )
+        }
+
+        fun from2P(x1: Int, y1: Int, x2: Int, y2: Int): ImageBox {
+            return from2P(
+                x1.coerceAtLeast(0).toUInt(),
+                y1.coerceAtLeast(0).toUInt(),
+                x2.coerceAtLeast(0).toUInt(),
+                y2.coerceAtLeast(0).toUInt()
+            )
+        }
+
+        /**
+         * Constructs an [ImageBox] from top-left point (x, y) and dimensions (width, height).
+         */
+        fun fromPS(x: UInt, y: UInt, width: UInt, height: UInt): ImageBox {
+            val x2 = (x.toLong() + width.toLong()).coerceAtMost(UInt.MAX_VALUE.toLong()).toUInt()
+            val y2 = (y.toLong() + height.toLong()).coerceAtMost(UInt.MAX_VALUE.toLong()).toUInt()
+            return ImageBox(
+                x = x,
+                y = y,
+                x2 = x2,
+                y2 = y2,
+                width = x2 - x,
+                height = y2 - y
+            )
+        }
+
+        fun fromPS(x: Int, y: Int, width: Int, height: Int): ImageBox {
+            val validX = x.coerceAtLeast(0).toUInt()
+            val validY = y.coerceAtLeast(0).toUInt()
+            val validW = width.coerceAtLeast(0).toUInt()
+            val validH = height.coerceAtLeast(0).toUInt()
+            return fromPS(validX, validY, validW, validH)
+        }
+
+    }
+}

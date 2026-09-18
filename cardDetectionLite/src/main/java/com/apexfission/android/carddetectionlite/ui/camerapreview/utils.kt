@@ -1,11 +1,11 @@
 package com.apexfission.android.carddetectionlite.ui.camerapreview
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.SpaceRelationship
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.chain
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.cropAtCenter
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.scale
+import com.apexfission.android.math.models.ImageSpace
+import com.apexfission.android.math.models.ImageSpaceChain
+import com.apexfission.android.math.models.SpaceRelationship
+import com.apexfission.android.math.models.chain
+import com.apexfission.android.math.models.cropAtCenter
+import com.apexfission.android.math.models.scale
 
 /**
  * Creates an [ImageSpaceChain] mapping coordinates from source frame dimensions to preview display dimensions.

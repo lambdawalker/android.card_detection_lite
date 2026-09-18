@@ -1,8 +1,9 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates.transformations
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.NormImageBox
+import com.apexfission.android.math.models.ImageBox
+import com.apexfission.android.math.models.ImageSpace
+import com.apexfission.android.math.models.NormImageBox
+import com.apexfission.android.math.transformations.toParentSpace
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

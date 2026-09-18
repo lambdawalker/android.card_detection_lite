@@ -2,9 +2,8 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.en
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.Detector
-import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.DetectionSource
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
@@ -14,7 +13,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever

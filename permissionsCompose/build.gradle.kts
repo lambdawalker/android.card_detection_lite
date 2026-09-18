@@ -9,7 +9,9 @@ plugins {
 
 android {
     namespace = "com.apexfission.android.permissionscompose"
-    compileSdk = 36
+    compileSdk {
+        version = release(37)
+    }
 
     defaultConfig {
         minSdk = 26

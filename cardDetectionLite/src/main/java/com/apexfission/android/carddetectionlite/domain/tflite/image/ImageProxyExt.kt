@@ -2,7 +2,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 
 /**
  * Converts a CameraX [ImageProxy] into a correctly oriented [Bitmap].

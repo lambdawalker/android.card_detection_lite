@@ -9,9 +9,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
+import com.apexfission.android.math.models.ImageBox
+import com.apexfission.android.math.models.ImageSpaceChain
+import com.apexfission.android.math.transformations.translate
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.overlays.animation.DetectionAnimationConfig
 

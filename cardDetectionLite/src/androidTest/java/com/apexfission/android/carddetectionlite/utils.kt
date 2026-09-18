@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.test.services.storage.TestStorage
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus
 import kotlin.math.max
 import kotlin.math.min

@@ -1,10 +1,10 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.SpaceRelationship
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.chain
-import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.translate
+import com.apexfission.android.math.models.ImagePoint
+import com.apexfission.android.math.models.ImageSpace
+import com.apexfission.android.math.models.SpaceRelationship
+import com.apexfission.android.math.models.chain
+import com.apexfission.android.math.transformations.translate
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

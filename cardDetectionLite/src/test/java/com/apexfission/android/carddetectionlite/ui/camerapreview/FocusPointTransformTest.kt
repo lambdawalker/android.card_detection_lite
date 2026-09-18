@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.ui.camerapreview
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.math.models.ImageSpaceChain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

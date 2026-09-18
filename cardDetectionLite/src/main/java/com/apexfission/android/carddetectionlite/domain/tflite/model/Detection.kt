@@ -2,7 +2,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 
 /**
  * Represents a raw object detection output from the model.

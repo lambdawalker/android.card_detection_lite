@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.ui.detector
 
 import androidx.compose.runtime.Stable
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
+import com.apexfission.android.math.models.ImageSpaceChain
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.ui.camerapreview.CameraPreset
 

@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.postprocess
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import kotlin.math.max
 import kotlin.math.min

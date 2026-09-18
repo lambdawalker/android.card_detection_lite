@@ -1,9 +1,9 @@
 package com.apexfission.android.carddetectionlite.ui.camerapreview
 
 import androidx.compose.runtime.Immutable
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpaceChain
-import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toChildSpace
+import com.apexfission.android.math.models.ImagePoint
+import com.apexfission.android.math.models.ImageSpaceChain
+import com.apexfission.android.math.transformations.toChildSpace
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import kotlin.math.abs
 

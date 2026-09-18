@@ -1,8 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.card.tracking
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
-import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.tracking.CardLockStateMachine
+import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Detection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.DetectionSource
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus

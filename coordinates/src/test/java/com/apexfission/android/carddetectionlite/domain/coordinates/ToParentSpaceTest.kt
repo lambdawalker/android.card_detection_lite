@@ -1,8 +1,8 @@
 package com.apexfission.android.carddetectionlite.domain.coordinates
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImagePoint
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageSpace
-import com.apexfission.android.carddetectionlite.domain.coordinates.transformations.toParentSpace
+import com.apexfission.android.math.models.ImagePoint
+import com.apexfission.android.math.models.ImageSpace
+import com.apexfission.android.math.transformations.toParentSpace
 import org.junit.Test
 
 

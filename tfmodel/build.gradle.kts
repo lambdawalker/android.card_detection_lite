@@ -8,7 +8,9 @@ plugins {
 
 android {
     namespace = "com.apexfission.android.carddetectionlite.tfmodel"
-    compileSdk = 36
+    compileSdk {
+        version = release(37)
+    }
 
     defaultConfig {
         minSdk = 26

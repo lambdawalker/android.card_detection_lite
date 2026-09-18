@@ -3,7 +3,7 @@ package com.apexfission.android.carddetectionlite.ui.overlays.animation
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 
 /**

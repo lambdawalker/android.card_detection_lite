@@ -1,7 +1,7 @@
 package com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.postprocess
 
 import android.graphics.Bitmap
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.engine.InferenceEngine
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LetterboxResult
 import org.junit.Assert.assertEquals

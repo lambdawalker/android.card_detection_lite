@@ -1,6 +1,6 @@
 package com.apexfission.android.carddetectionlite.ui.camerapreview
 
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.model.CardDetection
 import com.apexfission.android.carddetectionlite.domain.tflite.model.Feature
 import com.apexfission.android.carddetectionlite.domain.tflite.model.LockingStatus

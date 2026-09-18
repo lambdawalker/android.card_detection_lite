@@ -10,8 +10,9 @@ plugins {
 
 android {
     namespace = "com.apexfission.android.carddetectionlite"
-    compileSdk = 36
-
+    compileSdk {
+        version = release(37)
+    }
     defaultConfig {
         minSdk = 26
 

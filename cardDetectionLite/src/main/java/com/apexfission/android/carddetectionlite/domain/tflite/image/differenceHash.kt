@@ -3,7 +3,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.image
 
 import android.graphics.Bitmap
 import androidx.core.graphics.scale
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 
 /**
  * Implements the Difference Hash (dHash) algorithm for fast, perceptual image comparison.

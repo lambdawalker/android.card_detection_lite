@@ -2,7 +2,7 @@ package com.apexfission.android.carddetectionlite.domain.tflite.detector.tflite.
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageProxy
-import com.apexfission.android.carddetectionlite.domain.coordinates.models.ImageBox
+import com.apexfission.android.math.models.ImageBox
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine.CardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.card.engine.ThreadConfinedCardDetector
 import com.apexfission.android.carddetectionlite.domain.tflite.detector.yolo.engine.Detector
